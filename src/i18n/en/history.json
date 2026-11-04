@@ -1,0 +1,81 @@
+[
+  {
+    "version": "3.0",
+    "date": null,
+    "summary": "20 years later - off to the web! Step one: dragging everything we had into the new world.",
+    "changes": [
+      {
+        "kind": "major",
+        "text": "The editor moved from a Windows .exe to the browser. No install, no gzip.exe, nothing to unpack: open a save, edit, save. Your saves never leave your machine."
+      },
+      {
+        "kind": "changed",
+        "text": "English is now the main language, Russian is still here. Switch it any time."
+      },
+      {
+        "kind": "changed",
+        "text": "Dark and light themes, both in the spirit of good old Heroes 3."
+      },
+      {
+        "kind": "changed",
+        "text": "The jokes and wisecracks of the old version moved in too."
+      },
+      {
+        "kind": "added",
+        "text": "Just drop a save onto the window."
+      },
+      {
+        "kind": "added",
+        "text": "Ctrl+O opens a file, Ctrl+S saves it."
+      },
+      {
+        "kind": "added",
+        "text": "Saving goes through the system \"Save as\" window: the default name gets an se_ prefix, the original stays untouched."
+      },
+      {
+        "kind": "added",
+        "text": "A warning about unsaved edits when you close the tab or open another file."
+      },
+      {
+        "kind": "added",
+        "text": "The editor figures out what wrote the save: The Shadow of Death, HD Edition or Horn of the Abyss. For HotA it warns that editing is risky."
+      },
+      {
+        "kind": "added",
+        "text": "HD Edition joins the edition list, still on a test drive."
+      },
+      {
+        "kind": "added",
+        "text": "The edition is picked from the file header, not just from the heroes."
+      },
+      {
+        "kind": "added",
+        "text": "Creature, artifact and spell lists you can search by the first letters."
+      },
+      {
+        "kind": "added",
+        "text": "Level and experience are linked: change the level and the experience follows."
+      },
+      {
+        "kind": "fixed",
+        "text": "Fixed old bugs nobody noticed in 20 years (well, almost nobody)."
+      },
+      {
+        "kind": "fixed",
+        "text": "Searching for \"Adela\" no longer finds \"Adelaide\"."
+      },
+      {
+        "kind": "fixed",
+        "text": "Saves with a broken gzip checksum (and Heroes writes exactly those) open without complaints."
+      },
+      {
+        "kind": "fixed",
+        "text": "Half-learned spells in a save no longer get lost when a hero is written back."
+      },
+      {
+        "kind": "removed",
+        "text": "Presets are off to the warehouse for now, but they will be back soon."
+      }
+    ]
+  }
+]

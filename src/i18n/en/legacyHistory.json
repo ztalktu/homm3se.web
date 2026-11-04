@@ -1,0 +1,584 @@
+[
+  {
+    "version": "2.05",
+    "date": "2005-04-14",
+    "changes": [
+      {
+        "kind": "changed",
+        "text": "New installer look."
+      },
+      {
+        "kind": "changed",
+        "text": "Changed e-mail addresses in the \"About...\" window."
+      },
+      {
+        "kind": "changed",
+        "text": "Small display changes."
+      },
+      {
+        "kind": "fixed",
+        "text": "\"Help\" would not open from the program."
+      },
+      {
+        "kind": "fixed",
+        "text": "With 2 monitors, the window popped up between the monitors."
+      }
+    ]
+  },
+  {
+    "version": "2.04",
+    "date": "2003-05-06",
+    "changes": [
+      {
+        "kind": "changed",
+        "text": "New installer version - NullSoft Install System 2."
+      },
+      {
+        "kind": "added",
+        "text": "Since the program's file structure changed a lot, the Installer offers to remove the old version before installing."
+      },
+      {
+        "kind": "added",
+        "text": "New functions in the \"Hero Parameters\" window - full saving of a hero under its own name (the \"Save...\" button) and selective loading of parameters from the list of saved heroes (the \"Load...\" button). The old functions for saving/loading settings are kept."
+      },
+      {
+        "kind": "added",
+        "text": "A new flag in the \"options\" lets you remember the options of the \"hero parameter load\" window."
+      },
+      {
+        "kind": "changed",
+        "text": "The functions for saving and loading hero settings were renamed to \"quick save\" and \"quick load\"."
+      },
+      {
+        "kind": "added",
+        "text": "In the \"options\" you can choose to load the hero name and class with the \"quick load attributes\" button. Earlier versions did not load them."
+      },
+      {
+        "kind": "added",
+        "text": "In the \"options\" you can choose to add or overwrite artifacts with the \"quick load artifacts\" button. Earlier they were only added."
+      },
+      {
+        "kind": "added",
+        "text": "In the \"options\" you can choose to add or overwrite spells with the \"quick load magic\" button. Earlier they were only added."
+      },
+      {
+        "kind": "changed",
+        "text": "In the stats window, the \"game\" line now shows not only the file extension but the game type too."
+      },
+      {
+        "kind": "changed",
+        "text": "A built-in \"GZip\" module, so the program no longer needs the external \"GZip.exe\" archiver that came in the \"Heroes III SaveEditor\" package and opens and closes save files on its own."
+      },
+      {
+        "kind": "added",
+        "text": "While a file is being saved, the window title shows the progress percentage."
+      },
+      {
+        "kind": "added",
+        "text": "Auto-detection of the saved game version. If the save contains items that don't belong to the version you selected, the version is switched automatically. The version switch message can be turned off in the options."
+      },
+      {
+        "kind": "changed",
+        "text": "The \"Class\" list no longer shows extra items that don't match the selected version."
+      },
+      {
+        "kind": "changed",
+        "text": "The list of \"Artifacts\" you can add to the backpack contains only artifacts matching the save version."
+      },
+      {
+        "kind": "changed",
+        "text": "The \"Units\" (creature) lists contain only creatures matching the saved game version."
+      },
+      {
+        "kind": "changed",
+        "text": "The \"Units\" lists no longer show the empty units with the numbers: #122, #124, #126, #128, #149."
+      },
+      {
+        "kind": "fixed",
+        "text": "It was possible to remove all units (creatures) from a hero. A captain without an army!"
+      },
+      {
+        "kind": "added",
+        "text": "New options that control messages. You can skip the messages: \"Saving complete\", \"Hero parameters changed\", \"Resources changed\"."
+      },
+      {
+        "kind": "added",
+        "text": "Auto-calculation of hero experience from the level."
+      },
+      {
+        "kind": "added",
+        "text": "Also auto-calculation of the level from experience."
+      },
+      {
+        "kind": "changed",
+        "text": "The flag that blocked editing the hero level is gone. Now that there's auto-calculation, it isn't needed."
+      },
+      {
+        "kind": "changed",
+        "text": "In the windows the \"Ok\" and \"Cancel\" buttons now react to \"Enter\" and \"ESC\"."
+      },
+      {
+        "kind": "fixed",
+        "text": "The \"Add artifact\" button was unavailable if you did the following: completely stuff the hero's backpack, press \"Cancel\" and open the hero parameter editor again - the backpack is empty, yet you can't add anything."
+      },
+      {
+        "kind": "fixed",
+        "text": "In the unit lists the line \"lack Dragon...\" was fixed to \"Black Dragon...\"."
+      },
+      {
+        "kind": "changed",
+        "text": "The history and license files were rewritten from TXT to HTML format."
+      },
+      {
+        "kind": "changed",
+        "text": "Yet another new Helpformat. The help was rewritten in HTML. I think it's handier this way."
+      },
+      {
+        "kind": "added",
+        "text": "A new e-mail and the address of the \"Heroes III SaveEditor\" web page were added to \"about...\"."
+      },
+      {
+        "kind": "changed",
+        "text": "Other internal changes."
+      }
+    ]
+  },
+  {
+    "version": "2.03",
+    "date": "2003-02-06",
+    "changes": [
+      {
+        "kind": "fixed",
+        "text": "If a hero's mana was above 255, the value could load incorrectly."
+      },
+      {
+        "kind": "added",
+        "text": "Since editing the hero level is usually pointless (in the game it gets set according to the hero's experience anyway), there is now a flag that blocks changing the level. Better edit the experience, it pays off much more."
+      },
+      {
+        "kind": "changed",
+        "text": "The author changed his nick to Ztalker, so don't be scared if you see a new name in \"About\"."
+      }
+    ]
+  },
+  {
+    "version": "2.02",
+    "date": "2002-04-11",
+    "changes": [
+      {
+        "kind": "major",
+        "text": "The program was released in a hurry because of a serious glitch in the previous version."
+      },
+      {
+        "kind": "changed",
+        "text": "Since the program had outgrown a simple cracker and became more like an editor, it was decided to rename the program to \"Heroes III SaveEditor\"."
+      },
+      {
+        "kind": "fixed",
+        "text": "Version 2.01 could not always tell that this is really a \"Heroes 3\" savefile."
+      },
+      {
+        "kind": "changed",
+        "text": "The default file name offered for saving now starts with \"se_\" (it used to be crack.xxx)."
+      },
+      {
+        "kind": "added",
+        "text": "Added the \"options...\" item, where you can set the compression level for saved files."
+      },
+      {
+        "kind": "changed",
+        "text": "Updated the program icon (smoother)."
+      }
+    ]
+  },
+  {
+    "version": "2.01",
+    "date": "2002-04-01",
+    "changes": [
+      {
+        "kind": "major",
+        "text": "Added a remake of the lost Custom.ini function. All settings were moved to the registry. And the Crack got handier overall."
+      },
+      {
+        "kind": "changed",
+        "text": "The Crack's settings are no longer written to hmm3crak.cfg, they are stored in the Windows registry. During Uninstall you are asked whether to delete the settings, so if you refuse, the settings can be used the next time you install the Crack. If you answer yes, all settings are removed from the registry."
+      },
+      {
+        "kind": "added",
+        "text": "I did promise that a remake of the \"Custom.ini\" function would be built in. The Hero Hack tabs got two new buttons each: \"Save settings\" and \"Load settings\". Now once you've filled in the hack fields, you can save them and load them for another Hero. You don't need to edit any extra files like before (custom.ini), all settings go into the registry and are removed on uninstall."
+      },
+      {
+        "kind": "fixed",
+        "text": "Fixed a small flaw with the \"add/remove artifact\" buttons. They could become active and inactive at the wrong moments."
+      },
+      {
+        "kind": "added",
+        "text": "You can hack the Hero name."
+      },
+      {
+        "kind": "added",
+        "text": "Artifacts can be removed from the list with the Delete key."
+      },
+      {
+        "kind": "added",
+        "text": "Artifacts can be added to the list with the Insert key."
+      },
+      {
+        "kind": "changed",
+        "text": "The maximum number of artifacts in the list was raised again. Now you can hack the maximum that fits in the backpack - 64 artifacts."
+      },
+      {
+        "kind": "added",
+        "text": "The magic hack menu got a \"Spell book\" flag, now you can give the spell book with this flag."
+      },
+      {
+        "kind": "added",
+        "text": "In the Hero Hack window the numeric values now have little up/down buttons that increase/decrease them."
+      },
+      {
+        "kind": "added",
+        "text": "The resource hack tab has up/down buttons too, increasing/decreasing resource values."
+      },
+      {
+        "kind": "fixed",
+        "text": "If you filled in the secondary skill fields and then changed one of the upper fields, the secondary skill settings got messed up after saving."
+      },
+      {
+        "kind": "fixed",
+        "text": "The picture in \"About...\" now displays correctly with any Windows panel colors."
+      },
+      {
+        "kind": "added",
+        "text": "In the \"About...\" window, clicking Version shows the Crack's history."
+      },
+      {
+        "kind": "changed",
+        "text": "The info panel changed a bit. At the bottom there is now info about the Crack's version; clicking it opens About... ."
+      },
+      {
+        "kind": "fixed",
+        "text": "The version switch buttons no longer pop up again when pressed a second time."
+      },
+      {
+        "kind": "changed",
+        "text": "Small fixes and changes to messages."
+      },
+      {
+        "kind": "changed",
+        "text": "To find the right Hero more reliably, extra checks were added during the search. Earlier versions had similar checks, but not as effective."
+      },
+      {
+        "kind": "added",
+        "text": "Now you can search for resources using not only the gold value but other resource values too. You can also search the old way (with the default flag values)."
+      },
+      {
+        "kind": "fixed",
+        "text": "The percentage indicator was not reset when entering a new gold value or hero name."
+      },
+      {
+        "kind": "fixed",
+        "text": "After resources were hacked, the stats were not refreshed."
+      },
+      {
+        "kind": "changed",
+        "text": "Some internal functions were replaced with newer ones (DOS -> Win32)."
+      },
+      {
+        "kind": "changed",
+        "text": "The check for GZip on the computer now also looks in the folders listed in PATH. So GZip in the Crack's folder is no longer required, of course, if you already have GZip.exe (v1.2.4) in your PATH."
+      },
+      {
+        "kind": "changed",
+        "text": "Saving the hack got a bit faster by replacing system commands with processor commands."
+      },
+      {
+        "kind": "changed",
+        "text": "The (un)packing console windows were pushed to the background."
+      },
+      {
+        "kind": "added",
+        "text": "Added checks for opening and saving the file correctly; if something goes wrong, the Crack shows a message and avoids hanging."
+      },
+      {
+        "kind": "added",
+        "text": "A message about a successful save now shows up."
+      },
+      {
+        "kind": "changed",
+        "text": "Help can be opened from the Hero Hack window."
+      },
+      {
+        "kind": "fixed",
+        "text": "If you installed HoMM III CRACK into the \"Heroes 3\" saves folder, you could lose all your saves on uninstall. Now the Crack removes only the files it wrote during installation."
+      }
+    ]
+  },
+  {
+    "version": "2.00",
+    "date": "2002-03-12",
+    "changes": [
+      {
+        "kind": "major",
+        "text": "The program moved from DOS to Win32! All functions were inherited from the old versions, except \"custom.ini\". The Crack now knows the new version of \"Heroes 3\" - \"In the Wake of Gods\". Besides that, serious search glitches were fixed."
+      },
+      {
+        "kind": "changed",
+        "text": "A completely new and handier interface for the Win32 shell."
+      },
+      {
+        "kind": "changed",
+        "text": "HoMM 3 CRACK tries to keep up with the times and started to understand the \"In the Wake of Gods\" version. Granted, it's not \"Heroes 3\" but \"Heroes 3.5\", but still - you've got to know it!"
+      },
+      {
+        "kind": "changed",
+        "text": "The program now understands saves with long names."
+      },
+      {
+        "kind": "added",
+        "text": "Thanks to NullSoft for their great installer! The Crack is now installed with the \"NullSoft Install System\" and has its own UnInstall (before, the Crack was spread around any old way, or rather, however people copied it)."
+      },
+      {
+        "kind": "changed",
+        "text": "Rejoice, world, the Crack got a new form of \"Help\", handier, with footnotes and a nice look (and why did I bang my head so long on upgrading the DOS help in the previous versions?)."
+      },
+      {
+        "kind": "changed",
+        "text": "The hero magic hack was extended: before you could only \"Set all spells\" and \"Remove all spells\", now you can pick the spells you need from a list."
+      },
+      {
+        "kind": "changed",
+        "text": "The structure of the Artifact hack changed and the number of artifacts was raised, now there are 20."
+      },
+      {
+        "kind": "changed",
+        "text": "Now the \"Spell Scroll\" can't be put into the backpack, to avoid glitches in the game itself."
+      },
+      {
+        "kind": "changed",
+        "text": "The Artifact hack for \"The Restoration of Erathia\" and \"Armageddon's Blade\" now works more precisely (for the other versions everything has been fine for a long time)."
+      },
+      {
+        "kind": "added",
+        "text": "A hack of the \"hero class\"."
+      },
+      {
+        "kind": "changed",
+        "text": "When there are no more matches in the file, the search position stops at the last found item instead of starting over as it used to."
+      },
+      {
+        "kind": "added",
+        "text": "For convenient searching, a percentage indicator was added that shows the position of the found object."
+      },
+      {
+        "kind": "fixed",
+        "text": "Completely fixed the glitch with searching for resources that are multiples of 256, 65536, 16777216."
+      },
+      {
+        "kind": "fixed",
+        "text": "Fixed a serious glitch in the Hero and resource search that could make the program just skip the items being searched for."
+      },
+      {
+        "kind": "added",
+        "text": "The program now saves some settings and restores them at the next start, namely: the version, the name of the last hero searched for and the last open folder. It keeps all its settings in hmm3crak.cfg."
+      },
+      {
+        "kind": "added",
+        "text": "The Crack now checks whether you saved your hack; if you forgot and pressed Exit, the Crack warns you to save the hack."
+      },
+      {
+        "kind": "added",
+        "text": "On exit the program now deletes the file it created when unpacking the Save - \"hmm3edit.\"."
+      },
+      {
+        "kind": "added",
+        "text": "The program now checks for \"GZip.exe\", which the crack needs to work. Even if your GZip lives in another folder listed in PATH (Autoexec.bat), removing GZip is not recommended."
+      },
+      {
+        "kind": "added",
+        "text": "The program can't be started twice at once (purely for the sake of your memory)."
+      },
+      {
+        "kind": "removed",
+        "text": "The \"Custom.ini\" function was turned off (yep, the old lady didn't suffer for long, just one version); basically under Windows it isn't needed, everything is fast and handy as it is. But a remake of this function built into the crack is still planned."
+      }
+    ]
+  },
+  {
+    "version": "1.04",
+    "date": "2002-02-14",
+    "changes": [
+      {
+        "kind": "major",
+        "text": "The main focus of this version -> the custom.ini function."
+      },
+      {
+        "kind": "added",
+        "text": "A new function \"Hack as \"CUSTOM.INI\"\" that hacks according to the settings in the custom.ini file, which everyone can edit their own way. This speeds up hacking if you keep hacking roughly the same thing."
+      },
+      {
+        "kind": "fixed",
+        "text": "When hacking a Hero's \"Secondary Skill\" with PageUp and PageDown you could create a wrong hack, namely you could enter the same skills twice, after which Crack.gmX could load any which way ;)"
+      },
+      {
+        "kind": "fixed",
+        "text": "When hacking the \"Secondary skill\", if one of the skills was \"Pathfinding\" and you tried to remove the last skill entry, an error popped up: \"name not found\"."
+      },
+      {
+        "kind": "changed",
+        "text": "The \"Help\" algorithm was changed."
+      }
+    ]
+  },
+  {
+    "version": "1.03",
+    "date": "2001-11-02",
+    "changes": [
+      {
+        "kind": "major",
+        "text": "This version fixes the errors in (un)packing saves and speeds these functions up."
+      },
+      {
+        "kind": "changed",
+        "text": "\"Help\" now scrolls more smoothly."
+      },
+      {
+        "kind": "changed",
+        "text": "In \"(un)packing\" the DOS operations were replaced with internal commands, which sped up (un)packing."
+      },
+      {
+        "kind": "changed",
+        "text": "Now unpacking checks: is this a save or not?"
+      },
+      {
+        "kind": "changed",
+        "text": "The \"units\" hack got \"Page Down\" and \"Page Up\" keys that jump to the next/prev. castle."
+      },
+      {
+        "kind": "changed",
+        "text": "Also added \"Page Down\" and \"Page Up\" keys in the \"artifacts\" hack that jump 5 steps down/up."
+      },
+      {
+        "kind": "changed",
+        "text": "The \"artifact hack\" function now shows the artifact number, so you can look into hmm3crak.ini (remember the serial number) and set the artifacts you need by their numbers (admit it, that's handier :))"
+      },
+      {
+        "kind": "fixed",
+        "text": "Removed an unplanned prompt that could pop up while packing :\n\"gzip: homm3cr.gmz already exists; do you wish to overwrite (y or n)?\".",
+        "credit": "Dron aka Bulit"
+      },
+      {
+        "kind": "fixed",
+        "text": "If the hack file already existed and had the \"read-only\" attribute, packing didn't work properly and no messages came up. Now in such cases packing works fine, and if access to the file is blocked, a message pops up.",
+        "credit": "Dron aka Bulit"
+      },
+      {
+        "kind": "fixed",
+        "text": "The file was not unpacked over a previous one with the \"read-only\" attribute."
+      }
+    ]
+  },
+  {
+    "version": "1.02",
+    "date": "2001-04-25",
+    "changes": [
+      {
+        "kind": "major",
+        "text": "HoMM III Crack was tested on all Heroes III versions known at the moment. As a result, fixes were made to the hacks of some versions. A lot of work went into the \"resource hack\"."
+      },
+      {
+        "kind": "fixed",
+        "text": "Most menus had a small memory leak."
+      },
+      {
+        "kind": "changed",
+        "text": "A note about resource hacks was added to the Help."
+      },
+      {
+        "kind": "fixed",
+        "text": "The gold search didn't work if the amount of gold was a multiple of 256."
+      },
+      {
+        "kind": "fixed",
+        "text": "The gold search menu (when viewing next) flickered and sometimes showed negative numbers, which can't be."
+      },
+      {
+        "kind": "added",
+        "text": "HoMM III CRACK - now knows the \"Heroes Chronicles III\"."
+      },
+      {
+        "kind": "fixed",
+        "text": "The magic hack in \"The Restoration of Erathia\" and \"Armageddon's Blade\" was not quite correct: it set the \"Titan's Lightning Bolt\" spell, although these versions don't have this spell."
+      },
+      {
+        "kind": "changed",
+        "text": "Unreal references were excluded from the gold search, so now \"find your resources\" offers the closest matches (which sped up the search)."
+      },
+      {
+        "kind": "changed",
+        "text": "Now the resource hack is not done if gold = 0. So try to save up at least a bit of gold before hacking. Also the hack is not done if you have more than 999,999,999 gold (for the especially cheeky)."
+      },
+      {
+        "kind": "fixed",
+        "text": "Without hmm3crak.ini an extra warning popped up during packing."
+      },
+      {
+        "kind": "fixed",
+        "text": "A wrong entry in .ini: \"Orb of Driving Rain (+50% effect of Air Magic)\" was fixed to: \"Orb of Driving Rain (+50% effect of Water)\".",
+        "credit": "Zuruev Dmitry"
+      },
+      {
+        "kind": "fixed",
+        "text": "When hacking \"Serpent Flies\", \"Basilisks\" or \"Gorgons\" things got mixed up: instead of \"Gorgons\" - \"Basilisks\", instead of \"Basilisks\" - \"Serpent Flies\", instead of \"Serpent Flies\" - \"Gorgons\".",
+        "credit": "Zuruev Dmitry"
+      }
+    ]
+  },
+  {
+    "version": "1.01",
+    "date": "2001-03-17",
+    "changes": [
+      {
+        "kind": "major",
+        "text": "The improvements in this version were mostly about speed and memory rather than new features."
+      },
+      {
+        "kind": "changed",
+        "text": "Internal functions were grouped better and the dynamic memory functions were updated. HoMM III CRACK works faster and needs less memory."
+      },
+      {
+        "kind": "changed",
+        "text": "Cosmetic fixes to the menus (frames, top and bottom lines)."
+      },
+      {
+        "kind": "fixed",
+        "text": "In the Help, scrolling worked not only with the cursor keys but also with \"Shift+H\", \"Shift+P\", \"Shift+I\", \"Shift+Q\"."
+      },
+      {
+        "kind": "fixed",
+        "text": "The .ini had: \"Endless Sack of Gold (gold +10000)\" instead of \"(gold +1000)\""
+      },
+      {
+        "kind": "added",
+        "text": "The Main Menu got a \"CHOOSE HOMM III VERSION\" function, i.e. the Save version can be chosen at any moment."
+      },
+      {
+        "kind": "added",
+        "text": "Warns when HMM3CRAK.INI is missing."
+      },
+      {
+        "kind": "changed",
+        "text": "Changed the name of the file created when unpacking: \"hmm3edit.\", it used to be: \"homm3cr.\""
+      }
+    ]
+  },
+  {
+    "version": "1.00",
+    "date": "2001-02-28",
+    "changes": [
+      {
+        "kind": "major",
+        "text": "Created \"Heroes Of Might and Magic III CRACK\" as a Heroes III save cracker. Cracks three editions of Heroes: \"The Restoration of Erathia\" (The Restoration of Erathia), \"Armageddon's Blade\" (Armageddon's Blade), \"The Shadow of Death\" (The Shadow of Death).\nCan:\n- hack resources;\n- hack the Hero's attributes, units, artifacts, magic, skills;\nMore in the program's \"Help\"."
+      }
+    ]
+  }
+]

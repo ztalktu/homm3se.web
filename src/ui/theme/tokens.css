@@ -1,0 +1,139 @@
+/*
+ * Design tokens. Components use only these variables, never raw colors.
+ * Dark "Classic": leather, gold frames, parchment fields.
+ * Light "Heraldry": ivory, gold frames, Castle blue.
+ */
+
+:root {
+  --font-heading: 'Cinzel', 'Forum', 'Times New Roman', serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --radius-small: 5px;
+  --radius: 8px;
+  --radius-large: 12px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --control-height: 34px;
+  --transition-fast: 120ms ease-out;
+}
+
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-page: #24140c;
+  --color-header: #3b1f12;
+  --color-header-text: #e6c25a;
+  --color-header-label: #d9c48f;
+  --color-header-control: #4a2817;
+  --color-header-control-hover: #57301c;
+  --color-header-control-border: #8a6a24;
+  --color-panel: #5a2a17;
+  --color-text: #ecdcb0;
+  --color-text-muted: #bfa978;
+  --color-label: #d9c48f;
+  --color-heading: #f3d678;
+
+  --color-frame: #b8922f;
+  --color-frame-soft: #8a6a24;
+
+  --color-field: #e9d9ad;
+  --color-field-text: #3a2210;
+  --color-field-border: #8a6a24;
+
+  --color-primary: #b8922f;
+  --color-primary-hover: #cba23c;
+  --color-primary-text: #2a1608;
+
+  --color-secondary-border: #8a6a24;
+  --color-secondary-hover: #6a3420;
+
+  --color-danger: #8f2a1c;
+  --color-danger-hover: #a53424;
+  --color-danger-text: #f6e2c0;
+
+  --color-field-placeholder: #8a7350;
+  --color-field-disabled: #b9a882;
+  --color-field-error: #b3261e;
+  --color-error-text: #f0a08f;
+
+  --color-option-hover: #f3e6c2;
+  --color-option-selected: #d8bf7e;
+
+  --color-popover: #f1e4bf;
+  --color-popover-text: #3a2210;
+  --color-tooltip: #1a0e08;
+  --color-tooltip-text: #ecdcb0;
+
+  --color-success: #3f6b2a;
+  --color-success-text: #e9f2d8;
+  --color-warning: #8a6114;
+  --color-warning-text: #fbefd4;
+
+  --color-focus: #f3d678;
+  --color-tab-inactive: #bfa978;
+  --color-overlay: rgb(10 5 2 / 70%);
+  --shadow-popover: 0 8px 24px rgb(0 0 0 / 45%);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --color-page: #f1e8d4;
+  --color-header: #1f2d4a;
+  --color-header-text: #e8c766;
+  --color-header-label: #d8c7a0;
+  --color-header-control: #2a3b5e;
+  --color-header-control-hover: #33476e;
+  --color-header-control-border: #8a7440;
+  --color-panel: #fbf6ea;
+  --color-text: #2e2617;
+  --color-text-muted: #6a5c3e;
+  --color-label: #6a5c3e;
+  --color-heading: #1f2d4a;
+
+  --color-frame: #b08e3e;
+  --color-frame-soft: #cdb57c;
+
+  --color-field: #ffffff;
+  --color-field-text: #2e2617;
+  --color-field-border: #cdb57c;
+
+  --color-primary: #1f2d4a;
+  --color-primary-hover: #2c3f66;
+  --color-primary-text: #fbf6ea;
+
+  --color-secondary-border: #cdb57c;
+  --color-secondary-hover: #f3ead6;
+
+  --color-danger: #8a2a1e;
+  --color-danger-hover: #a33526;
+  --color-danger-text: #fbeed2;
+
+  --color-field-placeholder: #9a8c6c;
+  --color-field-disabled: #f1ece0;
+  --color-field-error: #a3261b;
+  --color-error-text: #a3261b;
+
+  --color-option-hover: #f6efdd;
+  --color-option-selected: #e6d6ad;
+
+  --color-popover: #ffffff;
+  --color-popover-text: #2e2617;
+  --color-tooltip: #1f2d4a;
+  --color-tooltip-text: #fbf6ea;
+
+  --color-success: #3f6b2a;
+  --color-success-text: #f3f8ea;
+  --color-warning: #8a6114;
+  --color-warning-text: #fdf6e6;
+
+  --color-focus: #b08e3e;
+  --color-tab-inactive: #6a5c3e;
+  --color-overlay: rgb(31 45 74 / 45%);
+  --shadow-popover: 0 8px 24px rgb(31 45 74 / 22%);
+}

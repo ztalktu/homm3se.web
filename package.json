@@ -1,0 +1,45 @@
+{
+  "name": "heroes3-saveeditor",
+  "version": "3.0.0",
+  "description": "Save game editor for Heroes of Might and Magic III that runs in the browser",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": "Ztalker",
+  "repository": "github:ztalktu/homm3se.web",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "check": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@fontsource/cinzel": "~5.3.0",
+    "@fontsource/forum": "~5.3.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "~10.0.1",
+    "@sveltejs/vite-plugin-svelte": "~7.3.1",
+    "@tsconfig/svelte": "~5.0.8",
+    "@types/node": "~22.20.5",
+    "eslint": "~10.14.0",
+    "eslint-plugin-svelte": "~3.24.0",
+    "globals": "~17.14.0",
+    "jsdom": "~30.1.3",
+    "prettier": "~3.9.10",
+    "prettier-plugin-svelte": "~4.1.1",
+    "svelte": "~5.57.3",
+    "svelte-check": "~4.7.8",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "~8.72.1",
+    "vite": "~8.3.5",
+    "vitest": "~5.1.0"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

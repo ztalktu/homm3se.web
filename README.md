@@ -4,6 +4,8 @@ A save game editor for **Heroes of Might and Magic III** that runs entirely in t
 browser. It is the web successor of Heroes III SaveEditor 2.05
 (Windows, 2001–2005).
 
+**Live at <https://heroes3se.vitonic.ru/>**
+
 Everything happens on your machine: the save file is read, edited and written back
 in the browser, nothing is uploaded anywhere. Settings are kept
 in the browser's local storage.

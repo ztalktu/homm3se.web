@@ -63,7 +63,7 @@
   "info.gameScenarioOne": "Single player game",
   "info.gameUnknown": "Unknown game type",
   "info.emptyTitle": "Open a save file to get going.",
-  "info.emptyText": "Pick a .gm1–.gm8 or .cgm file from the Games folder of Heroes 3, or drop it onto the window. The file never leaves your computer.",
+  "info.emptyText": "Pick a .gm1–.gm8 or .cgm file from the Games folder of Heroes 3, or drop it onto the window. The file never leaves your computer, all the magic happens right in your browser.",
   "info.warning": "Health warning: excessive editing blocks the development of your logic and thinking, and kills your interest in the game itself.",
   "hero.searchTitle": "Find a hero",
   "hero.name": "Hero name",

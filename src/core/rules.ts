@@ -11,7 +11,7 @@ import { MAX_LEVEL } from '../data/experience';
 import { MAX_SECONDARY_SKILLS, SECONDARY_SKILL_COUNT } from '../data/skills';
 import { SPELLS } from '../data/spells';
 import type { Hero } from './hero';
-import { HERO_LAYOUT, MAX_RESOURCE_AMOUNT } from './layout';
+import { COMMON_HERO_FIELDS, MAX_RESOURCE_AMOUNT } from './layouts';
 
 /** Field limits: the storage size, or the cap the 2.05 editor used for big numbers. */
 export const HERO_LIMITS = {
@@ -130,7 +130,7 @@ export function validateHero(hero: Hero, edition: Edition): HeroProblem[] {
     seenSkills.add(skillId);
   }
 
-  if (hero.backpack.length > HERO_LAYOUT.backpackSlots) {
+  if (hero.backpack.length > COMMON_HERO_FIELDS.backpackSlots) {
     problems.push({ code: 'backpackFull' });
   }
   for (const artifactId of hero.backpack) {

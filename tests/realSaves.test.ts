@@ -11,7 +11,8 @@ import { findHero, findNextHero } from '../src/core/heroSearch';
 import { decompressGzip } from '../src/core/gzip';
 import { SaveBuffer } from '../src/core/saveBuffer';
 import { SaveGame } from '../src/core/saveGame';
-import { backpackOffsetFor, isEditingTested } from '../src/core/saveFormat';
+import { isEditingTested } from '../src/core/saveFormat';
+import { layoutFor } from '../src/core/layouts';
 import { EDITIONS, type Edition } from '../src/data/editions';
 import { HERO_NAMES } from '../src/data/heroNames';
 
@@ -43,6 +44,16 @@ describe.skipIf(files.length === 0)('real saves', () => {
       const view = new DataView(unpacked.buffer, unpacked.byteOffset);
       const version = [view.getUint32(8, true), view.getUint32(12, true)];
 
+      // The header picks the layout: HD Edition its own, The Shadow of Death the newer one.
+      const expectedLayout = file.includes(`${SAVES_DIR}/H2HD/`)
+        ? 'hdEdition'
+        : file.includes(`${SAVES_DIR}/SoD/`)
+          ? 'shadowOfDeath'
+          : null;
+      if (expectedLayout) {
+        expect(layoutFor(save.format, 'restorationOfErathia').id).toBe(expectedLayout);
+      }
+
       // Every known hero name that the search accepts as a hero record.
       const buffer = save.buffer;
       const found: string[] = [];
@@ -54,7 +65,7 @@ describe.skipIf(files.length === 0)('real saves', () => {
           const hero = readHero(
             buffer,
             match.position,
-            backpackOffsetFor(save.format, edition),
+            layoutFor(save.format, edition).hero,
             match.codePage,
           );
           const needed = requiredEdition(hero, edition);
@@ -81,12 +92,12 @@ describe.skipIf(files.length === 0)('real saves', () => {
       const first = names.map((name) => findHero(buffer, name)).find(Boolean);
       if (first && isEditingTested(save.format)) {
         const copy = new SaveBuffer(buffer.bytes.slice());
-        const offset = backpackOffsetFor(save.format, edition);
+        const layout = layoutFor(save.format, edition).hero;
         for (const name of names) {
           let match = findHero(buffer, name);
           while (match) {
-            const hero = readHero(copy, match.position, offset, match.codePage);
-            writeHero(copy, match.position, offset, match.codePage, hero);
+            const hero = readHero(copy, match.position, layout, match.codePage);
+            writeHero(copy, match.position, layout, match.codePage, hero);
             match = findNextHero(buffer, name, match);
           }
         }
@@ -94,15 +105,15 @@ describe.skipIf(files.length === 0)('real saves', () => {
         expect(changed, 'first changed byte after rewriting every hero unchanged').toBe(-1);
 
         // A real edit survives packing and reopening, and touches only the edited bytes.
-        const hero = readHero(buffer, first.position, offset, first.codePage);
+        const hero = readHero(buffer, first.position, layout, first.codePage);
         const edited = {
           ...hero,
           attack: hero.attack === 99 ? 98 : 99,
           experience: hero.experience + 1000,
         };
-        save.edit((target) => writeHero(target, first.position, offset, first.codePage, edited));
+        save.edit((target) => writeHero(target, first.position, layout, first.codePage, edited));
         const reopened = await SaveGame.open(file, await save.pack());
-        const reread = readHero(reopened.buffer, first.position, offset, first.codePage);
+        const reread = readHero(reopened.buffer, first.position, layout, first.codePage);
         expect(reread).toEqual(edited);
         const differences = reopened.buffer.bytes.filter(
           (byte, index) => byte !== unpacked[index],

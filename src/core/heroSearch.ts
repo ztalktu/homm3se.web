@@ -3,7 +3,7 @@
  * the spell flags around the hit are all 0 or 1, which random text almost never is.
  */
 
-import { HERO_LAYOUT, SEARCH_CHECKED_SPELLS } from './layout';
+import { COMMON_HERO_FIELDS, SEARCH_CHECKED_SPELLS } from './layouts';
 import type { SaveBuffer } from './saveBuffer';
 import { codePagesFor, encodeText, type CodePage } from './textEncoding';
 
@@ -18,8 +18,8 @@ export interface HeroMatch {
 
 function looksLikeHero(buffer: SaveBuffer, position: number): boolean {
   for (let spell = 0; spell < SEARCH_CHECKED_SPELLS; spell += 1) {
-    const learned = buffer.readU8(position + HERO_LAYOUT.spellsLearned + spell);
-    const available = buffer.readU8(position + HERO_LAYOUT.spellsAvailable + spell);
+    const learned = buffer.readU8(position + COMMON_HERO_FIELDS.spellsLearned + spell);
+    const available = buffer.readU8(position + COMMON_HERO_FIELDS.spellsAvailable + spell);
     if (learned === undefined || available === undefined || learned > 1 || available > 1) {
       return false;
     }

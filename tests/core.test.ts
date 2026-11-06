@@ -14,8 +14,12 @@ import {
   gameTypeFromFileName,
 } from '../src/core/saveGame';
 import { codePagesFor, decodeText, encodeText } from '../src/core/textEncoding';
-import { backpackOffsetFor, detectSaveFormat, minimumEditionFor } from '../src/core/saveFormat';
+import { detectSaveFormat, minimumEditionFor } from '../src/core/saveFormat';
+import { LAYOUTS, layoutFor } from '../src/core/layouts';
 import { ascii, buildSave } from './fixtures/syntheticSave';
+
+const SOD = LAYOUTS.shadowOfDeath.hero;
+const ROE = LAYOUTS.restorationOfErathia.hero;
 
 const GELU = {
   position: 1000,
@@ -146,12 +150,12 @@ describe('hero record', () => {
 
   it('reads every field, skills in slot order', () => {
     const buffer = new SaveBuffer(buildSave(4000, [GELU]));
-    expect(readHero(buffer, 1000, 365, 'windows-1252')).toEqual(expected);
+    expect(readHero(buffer, 1000, SOD, 'windows-1252')).toEqual(expected);
   });
 
   it('uses the older backpack position for Erathia and Armageddon saves', () => {
     const buffer = new SaveBuffer(buildSave(4000, [{ ...GELU, backpackOffset: 357 }]));
-    expect(readHero(buffer, 1000, 357, 'windows-1252').backpack).toEqual([7, 45, 92]);
+    expect(readHero(buffer, 1000, ROE, 'windows-1252').backpack).toEqual([7, 45, 92]);
   });
 
   it('writes changes and reads them back unchanged', () => {
@@ -177,8 +181,8 @@ describe('hero record', () => {
       hasSpellBook: false,
       backpack: [128, 129],
     };
-    writeHero(buffer, 1000, 365, 'windows-1252', changed);
-    expect(readHero(buffer, 1000, 365, 'windows-1252')).toEqual(changed);
+    writeHero(buffer, 1000, SOD, 'windows-1252', changed);
+    expect(readHero(buffer, 1000, SOD, 'windows-1252')).toEqual(changed);
   });
 
   it('refuses names that do not fit and leaves the save untouched', () => {
@@ -186,13 +190,13 @@ describe('hero record', () => {
     const before = bytes.slice();
     const buffer = new SaveBuffer(bytes);
     expect(() =>
-      writeHero(buffer, 1000, 365, 'windows-1252', {
+      writeHero(buffer, 1000, SOD, 'windows-1252', {
         ...expected,
         name: 'A name far too long',
       }),
     ).toThrow(InvalidHeroNameError);
     expect(() =>
-      writeHero(buffer, 1000, 365, 'windows-1252', { ...expected, name: 'Джелу' }),
+      writeHero(buffer, 1000, SOD, 'windows-1252', { ...expected, name: 'Джелу' }),
     ).toThrow(InvalidHeroNameError);
     expect(bytes).toEqual(before);
   });
@@ -272,7 +276,7 @@ describe('edition detection', () => {
   const base = readHero(
     new SaveBuffer(buildSave(4000, [{ ...GELU, spells: [], backpack: [] }])),
     1000,
-    365,
+    SOD,
     'windows-1252',
   );
 
@@ -299,7 +303,7 @@ describe('rules', () => {
   const hero = readHero(
     new SaveBuffer(buildSave(4000, [{ ...GELU, spells: [] }])),
     1000,
-    365,
+    SOD,
     'windows-1252',
   );
 
@@ -345,13 +349,13 @@ describe('save format', () => {
     bytes[1000 + 143 + 54] = 1; // only the second flag of Slow, as found in a real save
     const before = bytes.slice();
     const buffer = new SaveBuffer(bytes);
-    const hero = readHero(buffer, 1000, 365, 'windows-1252');
+    const hero = readHero(buffer, 1000, SOD, 'windows-1252');
     expect(hero.spells).not.toContain(54);
-    writeHero(buffer, 1000, 365, 'windows-1252', hero);
+    writeHero(buffer, 1000, SOD, 'windows-1252', hero);
     expect([...bytes]).toEqual([...before]);
   });
 
-  it('picks the backpack offset from the header version when it is known', () => {
+  it('picks the layout from the header version when it is known', () => {
     const header = (major: number): SaveBuffer => {
       const bytes = new Uint8Array(32);
       bytes.set([0x48, 0x33, 0x53, 0x56, 0x47]); // H3SVG
@@ -362,13 +366,36 @@ describe('save format', () => {
     expect(detectSaveFormat(header(0x12)).kind).toBe('hdEdition');
     expect(detectSaveFormat(header(0x2c)).kind).toBe('hornOfTheAbyss');
     expect(detectSaveFormat(new SaveBuffer(new Uint8Array(32))).kind).toBe('unknown');
-    expect(backpackOffsetFor(detectSaveFormat(header(0x2a)), 'restorationOfErathia')).toBe(365);
-    expect(backpackOffsetFor(detectSaveFormat(header(0x12)), 'shadowOfDeath')).toBe(357);
-    expect(backpackOffsetFor({ kind: 'unknown' }, 'armageddonsBlade')).toBe(357);
-    expect(backpackOffsetFor({ kind: 'unknown' }, 'inTheWakeOfGods')).toBe(365);
+    expect(layoutFor(detectSaveFormat(header(0x2a)), 'restorationOfErathia').id).toBe(
+      'shadowOfDeath',
+    );
+    expect(layoutFor(detectSaveFormat(header(0x10)), 'shadowOfDeath').id).toBe(
+      'restorationOfErathia',
+    );
+    expect(layoutFor(detectSaveFormat(header(0x12)), 'shadowOfDeath').id).toBe('hdEdition');
+    expect(layoutFor({ kind: 'unknown' }, 'armageddonsBlade').hero.backpack).toBe(357);
+    expect(layoutFor({ kind: 'unknown' }, 'hdEdition').hero.backpack).toBe(357);
+    expect(layoutFor({ kind: 'unknown' }, 'inTheWakeOfGods').hero.backpack).toBe(365);
     expect(minimumEditionFor(detectSaveFormat(header(0x2a)))).toBe('shadowOfDeath');
     expect(minimumEditionFor(detectSaveFormat(header(0x12)))).toBeNull();
     expect(minimumEditionFor(detectSaveFormat(header(0x10)))).toBeNull();
     expect(minimumEditionFor({ kind: 'unknown' })).toBeNull();
+  });
+});
+
+describe('layouts', () => {
+  it('differ only where the hero records of the editions differ', () => {
+    const roe = LAYOUTS.restorationOfErathia.hero;
+    const hd = LAYOUTS.hdEdition.hero;
+    expect(hd).toEqual(roe);
+    expect(LAYOUTS.armageddonsBlade.hero).toEqual(roe);
+    const differences = Object.keys(SOD).filter(
+      (field) => SOD[field as keyof typeof SOD] !== roe[field as keyof typeof roe],
+    );
+    expect(differences.sort()).toEqual(
+      ['backpack', 'combinationCounters', 'equipmentSlots', 'recordSize'].sort(),
+    );
+    expect(roe.backpack).toBe(357);
+    expect(SOD.backpack).toBe(365);
   });
 });

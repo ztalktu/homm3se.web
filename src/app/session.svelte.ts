@@ -7,7 +7,7 @@ import { EDITIONS, isAvailableIn, type Edition } from '../data/editions';
 import { requiredEdition } from '../core/editionDetection';
 import { readHero, writeHero, type Hero } from '../core/hero';
 import { findHero, findNextHero, type HeroMatch } from '../core/heroSearch';
-import { RESOURCES, type Resource } from '../core/layout';
+import { layoutFor, RESOURCES, type HeroLayout, type Resource } from '../core/layouts';
 import {
   findResources,
   readResources,
@@ -15,7 +15,7 @@ import {
   type ResourceAmounts,
 } from '../core/resources';
 import { NotASaveError, SaveGame, editedFileName } from '../core/saveGame';
-import { backpackOffsetFor, isEditingTested, minimumEditionFor } from '../core/saveFormat';
+import { isEditingTested, minimumEditionFor } from '../core/saveFormat';
 import { editionName } from '../i18n/game.svelte';
 import { formatName } from '../ui/format';
 import { t } from '../i18n/index.svelte';
@@ -179,8 +179,9 @@ export function setEdition(edition: Edition): void {
 
 // ---------- hero ----------
 
-function backpackOffset(save: SaveGame): number {
-  return backpackOffsetFor(save.format, session.edition);
+/** Hero record offsets for the open save: from its header, or from the selected edition. */
+function heroLayout(save: SaveGame): HeroLayout {
+  return layoutFor(save.format, session.edition).hero;
 }
 
 /** The found hero read with the current edition, or null. Reactive through `revision`. */
@@ -191,7 +192,7 @@ export function currentHero(): Hero | null {
     return null;
   }
   try {
-    return readHero(save.buffer, heroMatch.position, backpackOffset(save), heroMatch.codePage);
+    return readHero(save.buffer, heroMatch.position, heroLayout(save), heroMatch.codePage);
   } catch {
     return null;
   }
@@ -203,7 +204,7 @@ function detectEdition(save: SaveGame, match: HeroMatch): void {
   for (let attempt = 0; attempt < EDITIONS.length; attempt += 1) {
     let hero: Hero;
     try {
-      hero = readHero(save.buffer, match.position, backpackOffset(save), match.codePage);
+      hero = readHero(save.buffer, match.position, heroLayout(save), match.codePage);
     } catch {
       // The raised edition moved the backpack past the end of the file: it was a false lead.
       session.edition = before;
@@ -260,7 +261,7 @@ export function applyHero(hero: Hero): void {
     return;
   }
   save.edit((buffer) =>
-    writeHero(buffer, heroMatch.position, backpackOffset(save), heroMatch.codePage, hero),
+    writeHero(buffer, heroMatch.position, heroLayout(save), heroMatch.codePage, hero),
   );
   session.heroName = hero.name;
   remember();

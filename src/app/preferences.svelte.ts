@@ -18,7 +18,7 @@ const STORAGE_KEY = 'preferences';
 const DEFAULT_PREFERENCES: StoredPreferences = {
   version: 1,
   locale: 'en',
-  theme: 'light',
+  theme: 'system',
 };
 
 function isStoredPreferences(value: unknown): value is StoredPreferences {

@@ -509,9 +509,9 @@
     }
   }
 
-  /* The narrowest phones (320–400px): the emblem goes so the title, language and theme
-     still fit on one line without scrolling sideways. */
-  @media (max-width: 400px) {
+  /* Phones up to 440px (Russian labels are wider): the emblem goes so the title, language
+     and theme still fit on one line without scrolling sideways. */
+  @media (max-width: 440px) {
     .emblem {
       display: none;
     }

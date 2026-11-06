@@ -9,6 +9,17 @@
     <link rel="icon" href="./favicon-32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
     <title>Heroes III SaveEditor</title>
+    <script>
+      // Paint the right theme before the app loads, so a dark system never flashes light.
+      try {
+        var stored = JSON.parse(localStorage.getItem('homm3se.preferences') || 'null');
+        var theme = stored && stored.theme !== 'system' ? stored.theme : null;
+        if (theme !== 'dark' && theme !== 'light') {
+          theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="app"></div>

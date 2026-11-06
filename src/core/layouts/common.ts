@@ -16,8 +16,10 @@ export const COMMON_HERO_FIELDS = {
   heroClass: -158,
   /** u32 */
   experience: -130,
-  /** u8, movement points left (as 2.05 wrote it; the real field is a u32 at -134) */
-  movementPoints: -133,
+  /** u32, movement points for a full day */
+  maxMovementPoints: -138,
+  /** u32, movement points left today (2.05 wrote a u8 at -133, the second byte of this) */
+  movementPoints: -134,
   /** u8, number of secondary skills */
   secondarySkillCount: -126,
   /** u16 */

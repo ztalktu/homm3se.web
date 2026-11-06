@@ -14,8 +14,13 @@ import {
   gameTypeFromFileName,
 } from '../src/core/saveGame';
 import { codePagesFor, decodeText, encodeText } from '../src/core/textEncoding';
-import { detectSaveFormat, minimumEditionFor } from '../src/core/saveFormat';
-import { LAYOUTS, layoutFor } from '../src/core/layouts';
+import {
+  detectSaveFormat,
+  editionFromHeader,
+  isEditingTested,
+  minimumEditionFor,
+} from '../src/core/saveFormat';
+import { heroLayoutAt, LAYOUTS, layoutFor } from '../src/core/layouts';
 import { ascii, buildSave } from './fixtures/syntheticSave';
 
 const SOD = LAYOUTS.shadowOfDeath.hero;
@@ -29,7 +34,8 @@ const GELU = {
   experience: 25_280,
   primary: [4, 3, 2, 1] as [number, number, number, number],
   mana: 300,
-  movementPoints: 21,
+  movementPoints: 1745,
+  maxMovementPoints: 1560,
   troops: [[26, 5], null, [13, 2], null, null, null, null] as ([number, number] | null)[],
   skills: [
     [7, 3],
@@ -129,7 +135,8 @@ describe('hero record', () => {
     spellPower: 2,
     knowledge: 1,
     mana: 300,
-    movementPoints: 21,
+    movementPoints: 1745,
+    maxMovementPoints: 1560,
     troops: [
       { creatureId: 26, count: 5 },
       null,
@@ -167,6 +174,8 @@ describe('hero record', () => {
       experience: 496_685,
       attack: 99,
       mana: 999,
+      movementPoints: 30_000,
+      maxMovementPoints: 2_000,
       troops: [
         { creatureId: 132, count: 100 },
         null,
@@ -356,10 +365,11 @@ describe('save format', () => {
   });
 
   it('picks the layout from the header version when it is known', () => {
-    const header = (major: number): SaveBuffer => {
+    const header = (major: number, minor = 0): SaveBuffer => {
       const bytes = new Uint8Array(32);
       bytes.set([0x48, 0x33, 0x53, 0x56, 0x47]); // H3SVG
       new DataView(bytes.buffer).setUint32(8, major, true);
+      new DataView(bytes.buffer).setUint32(12, minor, true);
       return new SaveBuffer(bytes);
     };
     expect(detectSaveFormat(header(0x2a)).kind).toBe('classic');
@@ -377,9 +387,35 @@ describe('save format', () => {
     expect(layoutFor({ kind: 'unknown' }, 'hdEdition').hero.backpack).toBe(357);
     expect(layoutFor({ kind: 'unknown' }, 'inTheWakeOfGods').hero.backpack).toBe(365);
     expect(minimumEditionFor(detectSaveFormat(header(0x2a)))).toBe('shadowOfDeath');
-    expect(minimumEditionFor(detectSaveFormat(header(0x12)))).toBeNull();
+    expect(minimumEditionFor(detectSaveFormat(header(0x2a, 2)))).toBe('shadowOfDeath');
+    expect(minimumEditionFor(detectSaveFormat(header(0x12)))).toBe('hdEdition');
     expect(minimumEditionFor(detectSaveFormat(header(0x10)))).toBeNull();
     expect(minimumEditionFor({ kind: 'unknown' })).toBeNull();
+  });
+
+  it("recognises Armageddon's Blade by header 42/1", () => {
+    const bytes = new Uint8Array(32);
+    bytes.set(ascii('H3SVG'));
+    new DataView(bytes.buffer).setUint32(8, 42, true);
+    new DataView(bytes.buffer).setUint32(12, 1, true);
+    const format = detectSaveFormat(new SaveBuffer(bytes));
+    expect(format).toEqual({ kind: 'classic', major: 42, minor: 1 });
+    expect(editionFromHeader(format)).toBe('armageddonsBlade');
+    expect(minimumEditionFor(format)).toBe('armageddonsBlade');
+    expect(layoutFor(format, 'shadowOfDeath').id).toBe('armageddonsBlade');
+    expect(isEditingTested(format)).toBe(true);
+  });
+
+  it('recognises Heroes Chronicles by its longer signature', () => {
+    const bytes = new Uint8Array(32);
+    bytes.set(ascii('HCHRONSVG'));
+    new DataView(bytes.buffer).setUint32(9, 42, true);
+    new DataView(bytes.buffer).setUint32(13, 0, true);
+    const format = detectSaveFormat(new SaveBuffer(bytes));
+    expect(format).toEqual({ kind: 'heroesChronicles', major: 42, minor: 0 });
+    expect(editionFromHeader(format)).toBe('heroesChronicles');
+    expect(layoutFor(format, 'restorationOfErathia').id).toBe('shadowOfDeath');
+    expect(isEditingTested(format)).toBe(true);
   });
 });
 
@@ -388,7 +424,8 @@ describe('layouts', () => {
     const roe = LAYOUTS.restorationOfErathia.hero;
     const hd = LAYOUTS.hdEdition.hero;
     expect(hd).toEqual(roe);
-    expect(LAYOUTS.armageddonsBlade.hero).toEqual(roe);
+    expect(LAYOUTS.armageddonsBlade.hero).toEqual({ ...roe, recordSize: null });
+    expect(LAYOUTS.armageddonsBladeGog.hero).toEqual({ ...roe, recordSize: null, backpack: 365 });
     const differences = Object.keys(SOD).filter(
       (field) => SOD[field as keyof typeof SOD] !== roe[field as keyof typeof roe],
     );
@@ -397,5 +434,31 @@ describe('layouts', () => {
     );
     expect(roe.backpack).toBe(357);
     expect(SOD.backpack).toBe(365);
+  });
+});
+
+describe("Armageddon's Blade variants", () => {
+  const AB_HEADER = { kind: 'classic', major: 42, minor: 1 } as const;
+
+  it('reads the original variant with the backpack at +357', () => {
+    const buffer = new SaveBuffer(buildSave(4000, [{ ...GELU, backpackOffset: 357 }]));
+    const layout = heroLayoutAt(AB_HEADER, 'armageddonsBlade', buffer, 1000);
+    expect(layout.backpack).toBe(357);
+    expect(readHero(buffer, 1000, layout, 'windows-1252').backpack).toEqual([7, 45, 92]);
+  });
+
+  it('reads the newer variant when the eight bytes before its backpack are padding', () => {
+    const bytes = buildSave(4000, [{ ...GELU, backpackOffset: 365 }]);
+    bytes.fill(0, 1000 + 357, 1000 + 365);
+    const buffer = new SaveBuffer(bytes);
+    const layout = heroLayoutAt(AB_HEADER, 'armageddonsBlade', buffer, 1000);
+    expect(layout.backpack).toBe(365);
+    expect(readHero(buffer, 1000, layout, 'windows-1252').backpack).toEqual([7, 45, 92]);
+  });
+
+  it('keeps the other layouts as they are', () => {
+    const buffer = new SaveBuffer(buildSave(4000, [GELU]));
+    const sod = { kind: 'classic', major: 42, minor: 2 } as const;
+    expect(heroLayoutAt(sod, 'shadowOfDeath', buffer, 1000)).toBe(SOD);
   });
 });

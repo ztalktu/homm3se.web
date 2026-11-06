@@ -133,6 +133,13 @@
         label={t('hero.movementPoints')}
         bind:value={hero.movementPoints}
         max={HERO_LIMITS.movementPoints}
+        bigStep={100}
+      />
+      <NumberField
+        label={t('hero.maxMovementPoints')}
+        bind:value={hero.maxMovementPoints}
+        max={HERO_LIMITS.movementPoints}
+        bigStep={100}
       />
     </div>
   </Fieldset>

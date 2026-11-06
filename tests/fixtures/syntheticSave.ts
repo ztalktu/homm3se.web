@@ -14,6 +14,7 @@ export interface RawHero {
   primary?: [number, number, number, number];
   mana?: number;
   movementPoints?: number;
+  maxMovementPoints?: number;
   /** [creatureId, count] per slot, null for empty. */
   troops?: ([number, number] | null)[];
   /** [skillId, level] in slot order. */
@@ -53,7 +54,8 @@ export function buildSave(
     bytes[p - 120] = hero.level ?? 1;
     u32(p - 130, hero.experience ?? 0);
     view.setUint16(p - 122, hero.mana ?? 10, true);
-    bytes[p - 133] = hero.movementPoints ?? 20;
+    u32(p - 134, hero.movementPoints ?? 20);
+    u32(p - 138, hero.maxMovementPoints ?? 1500);
     const [attack, defense, power, knowledge] = hero.primary ?? [1, 1, 1, 1];
     bytes[p + 69] = attack;
     bytes[p + 70] = defense;

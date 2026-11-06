@@ -49,6 +49,8 @@ export function formatName(format: SaveFormat): string {
       return t('format.hornOfTheAbyss');
     case 'hdEdition':
       return t('format.hdEdition');
+    case 'heroesChronicles':
+      return t('format.heroesChronicles', { version: `${format.major}.${format.minor}` });
     case 'unknown':
       return t('format.unknown');
   }

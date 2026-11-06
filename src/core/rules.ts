@@ -19,7 +19,8 @@ export const HERO_LIMITS = {
   level: MAX_LEVEL,
   experience: 2_147_483_647,
   mana: 65_535,
-  movementPoints: 255,
+  // Real values are about 1500–3000; the field is a u32, the cap keeps typos out.
+  movementPoints: 99_999,
   // The same cap as the resource fields: what the 2.05 editor allowed in a count.
   troopCount: MAX_RESOURCE_AMOUNT,
 } as const;
@@ -92,6 +93,7 @@ export function validateHero(hero: Hero, edition: Edition): HeroProblem[] {
     ['knowledge', hero.knowledge, HERO_LIMITS.primarySkill],
     ['mana', hero.mana, HERO_LIMITS.mana],
     ['movementPoints', hero.movementPoints, HERO_LIMITS.movementPoints],
+    ['maxMovementPoints', hero.maxMovementPoints, HERO_LIMITS.movementPoints],
   ];
   for (const [field, value, max, min] of numbers) {
     if (!inRange(value, max, min)) {

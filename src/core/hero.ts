@@ -27,6 +27,7 @@ export interface Hero {
   knowledge: number;
   mana: number;
   movementPoints: number;
+  maxMovementPoints: number;
   /** Always seven slots, null for an empty one. */
   troops: (Troop | null)[];
   /** In slot order, at most eight. */
@@ -145,7 +146,8 @@ export function readHero(
     spellPower: u8(buffer, position + layout.spellPower),
     knowledge: u8(buffer, position + layout.knowledge),
     mana: u16(buffer, position + layout.mana),
-    movementPoints: u8(buffer, position + layout.movementPoints),
+    movementPoints: u32(buffer, position + layout.movementPoints),
+    maxMovementPoints: u32(buffer, position + layout.maxMovementPoints),
     troops,
     secondarySkills: readSecondarySkills(buffer, layout, position),
     spells,
@@ -195,7 +197,8 @@ export function writeHero(
   buffer.writeU8(position + layout.level, hero.level);
   buffer.writeU32(position + layout.experience, hero.experience);
   buffer.writeU16(position + layout.mana, hero.mana);
-  buffer.writeU8(position + layout.movementPoints, hero.movementPoints);
+  buffer.writeU32(position + layout.movementPoints, hero.movementPoints);
+  buffer.writeU32(position + layout.maxMovementPoints, hero.maxMovementPoints);
   buffer.writeU8(position + layout.attack, hero.attack);
   buffer.writeU8(position + layout.defense, hero.defense);
   buffer.writeU8(position + layout.spellPower, hero.spellPower);

@@ -7,7 +7,7 @@ import { EDITIONS, isAvailableIn, type Edition } from '../data/editions';
 import { requiredEdition } from '../core/editionDetection';
 import { readHero, writeHero, type Hero } from '../core/hero';
 import { findHero, findNextHero, type HeroMatch } from '../core/heroSearch';
-import { layoutFor, RESOURCES, type HeroLayout, type Resource } from '../core/layouts';
+import { heroLayoutAt, RESOURCES, type HeroLayout, type Resource } from '../core/layouts';
 import {
   findResources,
   readResources,
@@ -15,7 +15,7 @@ import {
   type ResourceAmounts,
 } from '../core/resources';
 import { NotASaveError, SaveGame, editedFileName } from '../core/saveGame';
-import { isEditingTested, minimumEditionFor } from '../core/saveFormat';
+import { editionFromHeader, isEditingTested, minimumEditionFor } from '../core/saveFormat';
 import { editionName } from '../i18n/game.svelte';
 import { formatName } from '../ui/format';
 import { t } from '../i18n/index.svelte';
@@ -128,15 +128,17 @@ export async function openSaveFile(file: File): Promise<void> {
 }
 
 /**
- * The header already names the game. An HD Edition save gets that edition outright;
+ * The header already names the game. When only one edition writes it (HD Edition,
+ * Heroes Chronicles, Armageddon's Blade) the save gets that edition outright;
  * for the others the edition is raised to what the header needs, never lowered.
  */
 function applyEditionFromFormat(save: SaveGame): void {
-  if (save.format.kind === 'hdEdition') {
-    if (session.edition !== 'hdEdition') {
-      session.edition = 'hdEdition';
+  const exact = editionFromHeader(save.format);
+  if (exact) {
+    if (session.edition !== exact) {
+      session.edition = exact;
       remember();
-      showToast(t('message.editionFromHeader', { edition: editionName('hdEdition') }));
+      showToast(t('message.editionFromHeader', { edition: editionName(exact) }));
     }
     return;
   }
@@ -179,9 +181,12 @@ export function setEdition(edition: Edition): void {
 
 // ---------- hero ----------
 
-/** Hero record offsets for the open save: from its header, or from the selected edition. */
-function heroLayout(save: SaveGame): HeroLayout {
-  return layoutFor(save.format, session.edition).hero;
+/**
+ * Hero record offsets for the hero at `match` in the open save: from the header, or from the
+ * selected edition when the header does not tell.
+ */
+function heroLayout(save: SaveGame, match: HeroMatch): HeroLayout {
+  return heroLayoutAt(save.format, session.edition, save.buffer, match.position);
 }
 
 /** The found hero read with the current edition, or null. Reactive through `revision`. */
@@ -192,7 +197,12 @@ export function currentHero(): Hero | null {
     return null;
   }
   try {
-    return readHero(save.buffer, heroMatch.position, heroLayout(save), heroMatch.codePage);
+    return readHero(
+      save.buffer,
+      heroMatch.position,
+      heroLayout(save, heroMatch),
+      heroMatch.codePage,
+    );
   } catch {
     return null;
   }
@@ -204,7 +214,7 @@ function detectEdition(save: SaveGame, match: HeroMatch): void {
   for (let attempt = 0; attempt < EDITIONS.length; attempt += 1) {
     let hero: Hero;
     try {
-      hero = readHero(save.buffer, match.position, heroLayout(save), match.codePage);
+      hero = readHero(save.buffer, match.position, heroLayout(save, match), match.codePage);
     } catch {
       // The raised edition moved the backpack past the end of the file: it was a false lead.
       session.edition = before;
@@ -261,7 +271,7 @@ export function applyHero(hero: Hero): void {
     return;
   }
   save.edit((buffer) =>
-    writeHero(buffer, heroMatch.position, heroLayout(save), heroMatch.codePage, hero),
+    writeHero(buffer, heroMatch.position, heroLayout(save, heroMatch), heroMatch.codePage, hero),
   );
   session.heroName = hero.name;
   remember();

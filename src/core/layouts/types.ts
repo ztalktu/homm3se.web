@@ -3,7 +3,12 @@
 import type { COMMON_HERO_FIELDS } from './common';
 
 /** Save layouts the editor knows. Several editions can share one layout. */
-export type LayoutId = 'restorationOfErathia' | 'hdEdition' | 'armageddonsBlade' | 'shadowOfDeath';
+export type LayoutId =
+  | 'restorationOfErathia'
+  | 'hdEdition'
+  | 'armageddonsBlade'
+  | 'armageddonsBladeGog'
+  | 'shadowOfDeath';
 
 type CommonHeroFields = { readonly [Field in keyof typeof COMMON_HERO_FIELDS]: number };
 
@@ -15,8 +20,8 @@ export interface HeroLayout extends CommonHeroFields {
   readonly equipmentSlots: number;
   /** First of the 10 counters of slots taken by combination artifacts, or null without them. */
   readonly combinationCounters: number | null;
-  /** Record size from one hero to the next when the biography is empty. */
-  readonly recordSize: number;
+  /** Record size from one hero to the next when the biography is empty; null if not measured. */
+  readonly recordSize: number | null;
 }
 
 export interface SaveLayout {

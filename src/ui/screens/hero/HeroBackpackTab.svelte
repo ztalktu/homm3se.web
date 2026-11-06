@@ -2,7 +2,7 @@
   import { session } from '../../../app/session.svelte';
   import { showToast } from '../../../app/toasts.svelte';
   import type { Hero } from '../../../core/hero';
-  import { HERO_LAYOUT } from '../../../core/layout';
+  import { COMMON_HERO_FIELDS } from '../../../core/layouts';
   import { BLOCKED_ARTIFACT_IDS, artifactAllowed } from '../../../core/rules';
   import { ARTIFACTS } from '../../../data/artifacts';
   import { isAvailableIn } from '../../../data/editions';
@@ -21,7 +21,7 @@
   let { hero = $bindable() }: Props = $props();
 
   let toAdd: number | null = $state(null);
-  const max = HERO_LAYOUT.backpackSlots;
+  const max = COMMON_HERO_FIELDS.backpackSlots;
   const full = $derived(hero.backpack.length >= max);
 
   function describe(id: number): string | undefined {

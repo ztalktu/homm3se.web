@@ -3,7 +3,7 @@
  * and reading or writing the seven resource values around it.
  */
 
-import { MAX_RESOURCE_AMOUNT, RESOURCE_OFFSETS, RESOURCES, type Resource } from './layout';
+import { MAX_RESOURCE_AMOUNT, RESOURCE_OFFSETS, RESOURCES, type Resource } from './layouts';
 import { u32LittleEndian, type SaveBuffer } from './saveBuffer';
 
 export type ResourceAmounts = Record<Resource, number>;

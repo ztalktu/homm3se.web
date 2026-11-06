@@ -5,7 +5,7 @@
     searchResources,
     session,
   } from '../../app/session.svelte';
-  import { MAX_RESOURCE_AMOUNT, RESOURCES, type Resource } from '../../core/layout';
+  import { MAX_RESOURCE_AMOUNT, RESOURCES, type Resource } from '../../core/layouts';
   import type { ResourceAmounts } from '../../core/resources';
   import { t, type MessageKey } from '../../i18n/index.svelte';
   import Button from '../components/Button.svelte';

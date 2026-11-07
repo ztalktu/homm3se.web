@@ -80,7 +80,12 @@
   }
 </script>
 
-<Dialog bind:open title={t('heroDialog.title', { name: original.name })} size="large">
+<Dialog
+  bind:open
+  title={t('heroDialog.title', { name: original.name })}
+  size="large"
+  scrollable={false}
+>
   <div class="body">
     <Tabs items={tabs} bind:active={activeTab} label={t('heroDialog.tabs')} />
     <div
@@ -123,11 +128,16 @@
 <style>
   .body {
     --tabs-inset: 0;
+    flex: 1;
+    min-height: 0;
     display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
+  /* Only the panel scrolls, so the tabs stay in sight. */
   .panel {
-    min-height: 360px;
+    min-height: min(360px, 40vh);
+    overflow-y: auto;
     padding: var(--space-4);
     border: 1px solid var(--color-frame);
     border-radius: 0 var(--radius) var(--radius) var(--radius);

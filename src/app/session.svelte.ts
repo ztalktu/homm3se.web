@@ -56,6 +56,8 @@ interface Session {
   save: SaveGame | null;
   revision: number;
   edition: Edition;
+  /** Counts the times the editor changed the edition by itself, so the header can point it out. */
+  editionAutoChanges: number;
   /** File name and time (ms since epoch) of the last successful save. */
   savedAs: { fileName: string; at: number } | null;
   heroName: string;
@@ -81,6 +83,7 @@ export const session: Session = $state({
   save: null,
   revision: 0,
   edition: stored.edition,
+  editionAutoChanges: 0,
   savedAs: null,
   heroName: stored.heroName,
   heroMatch: null,
@@ -137,6 +140,7 @@ function applyEditionFromFormat(save: SaveGame): void {
   if (exact) {
     if (session.edition !== exact) {
       session.edition = exact;
+      session.editionAutoChanges += 1;
       remember();
       showToast(t('message.editionFromHeader', { edition: editionName(exact) }));
     }
@@ -145,6 +149,7 @@ function applyEditionFromFormat(save: SaveGame): void {
   const minimum = minimumEditionFor(save.format);
   if (minimum && !isAvailableIn(minimum, session.edition)) {
     session.edition = minimum;
+    session.editionAutoChanges += 1;
     remember();
     showToast(t('message.editionRaised', { edition: editionName(minimum) }), { kind: 'warning' });
   }
@@ -227,6 +232,7 @@ function detectEdition(save: SaveGame, match: HeroMatch): void {
     session.edition = next;
   }
   if (session.edition !== before) {
+    session.editionAutoChanges += 1;
     remember();
     showToast(t('message.editionRaised', { edition: editionName(session.edition) }), {
       kind: 'warning',

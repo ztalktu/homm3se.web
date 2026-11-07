@@ -238,6 +238,7 @@
         value={session.edition}
         options={editionOptions}
         onchange={setEdition}
+        flash={session.editionAutoChanges}
       />
     </div>
   </header>

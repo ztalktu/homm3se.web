@@ -41,12 +41,15 @@
   }: Props = $props();
 
   const POPUP_MAX_HEIGHT_PX = 300;
+  const POPUP_GAP_PX = 4;
+  /** Keeps a popup that opens near the window edge from touching it. */
+  const VIEWPORT_MARGIN_PX = 8;
   const id = $props.id();
   const listboxId = `${id}-listbox`;
 
   let input: HTMLInputElement | undefined = $state();
   let popup: HTMLDivElement | undefined = $state();
-  let opensUp = $state(false);
+  let popupStyle = $state('');
   let open = $state(false);
   let typed = $state(false);
   let focused = $state(false);
@@ -91,20 +94,52 @@
     }
     typed = false;
     open = true;
-    opensUp = shouldOpenUp();
+    placePopup();
     const selectedIndex = items.findIndex((item) => item.value === value);
     activeIndex = selectedIndex >= 0 ? selectedIndex : firstEnabledIndex(items);
   }
 
-  /** Open the list upwards when there is not enough room below the field. */
-  function shouldOpenUp(): boolean {
+  /**
+   * The popup is fixed to the window, not to the field: inside a scrolling area (a dialog tab,
+   * say) an absolutely placed list would stretch that area and get a scrollbar of its own there.
+   * It opens upwards when there is not enough room below the field.
+   */
+  function placePopup(): void {
     if (!input) {
-      return false;
+      return;
     }
     const rect = input.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    return spaceBelow < POPUP_MAX_HEIGHT_PX && rect.top > spaceBelow;
+    const viewportHeight = document.documentElement.clientHeight;
+    const spaceBelow = viewportHeight - rect.bottom - POPUP_GAP_PX - VIEWPORT_MARGIN_PX;
+    const spaceAbove = rect.top - POPUP_GAP_PX - VIEWPORT_MARGIN_PX;
+    const opensUp = spaceBelow < POPUP_MAX_HEIGHT_PX && spaceAbove > spaceBelow;
+    const maxHeight = Math.min(POPUP_MAX_HEIGHT_PX, opensUp ? spaceAbove : spaceBelow);
+    const vertical = opensUp
+      ? `bottom: ${viewportHeight - rect.top + POPUP_GAP_PX}px`
+      : `top: ${rect.bottom + POPUP_GAP_PX}px`;
+    popupStyle =
+      `${vertical}; left: ${rect.left}px; width: ${rect.width}px; ` +
+      `max-height: ${Math.max(maxHeight, 0)}px`;
   }
+
+  // A fixed popup would drift away from a field that scrolls or moves: close it on any scroll
+  // outside the list (as native selects do) and follow the field when the window resizes.
+  $effect(() => {
+    if (!open) {
+      return;
+    }
+    const onScroll = (event: Event): void => {
+      if (!(event.target instanceof Node && popup?.contains(event.target))) {
+        close();
+      }
+    };
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', placePopup);
+    return () => {
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('resize', placePopup);
+    };
+  });
 
   function close(): void {
     open = false;
@@ -154,7 +189,7 @@
   function onInput(): void {
     typed = true;
     if (!open) {
-      opensUp = shouldOpenUp();
+      placePopup();
     }
     open = true;
     activeIndex = firstEnabledIndex(filterOptions(items, text));
@@ -242,7 +277,7 @@
     </button>
 
     {#if open}
-      <div class="popup" class:up={opensUp} bind:this={popup}>
+      <div class="popup" style={popupStyle} bind:this={popup}>
         {#if visibleItems.length === 0}
           <p class="empty">{t('common.noMatches')}</p>
         {/if}
@@ -303,23 +338,16 @@
   }
 
   .popup {
-    position: absolute;
+    position: fixed;
     z-index: 50;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    max-height: 300px;
     overflow-y: auto;
+    /* Scrolling to the end of the list must not scroll (and so close) what lies beneath. */
+    overscroll-behavior: contain;
     border: 1px solid var(--color-frame);
     border-radius: var(--radius-small);
     background: var(--color-popover);
     color: var(--color-popover-text);
     box-shadow: var(--shadow-popover);
-  }
-
-  .popup.up {
-    top: auto;
-    bottom: calc(100% + 4px);
   }
 
   ul {

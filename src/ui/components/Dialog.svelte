@@ -15,6 +15,11 @@
     dismissible?: boolean | undefined;
     /** The scrolling content area, for callers that need to scroll it themselves. */
     contentElement?: HTMLDivElement | undefined;
+    /**
+     * False: the content area does not scroll and lays its child out as a column that fills
+     * the available height, so the caller can scroll a part of it (a tab panel, say).
+     */
+    scrollable?: boolean | undefined;
     onclose?: (() => void) | undefined;
     children: Snippet;
     footer?: Snippet | undefined;
@@ -26,6 +31,7 @@
     size = 'medium',
     dismissible = true,
     contentElement = $bindable(),
+    scrollable = true,
     onclose,
     children,
     footer,
@@ -95,7 +101,7 @@
     {/if}
   </header>
 
-  <div class="content" bind:this={contentElement}>
+  <div class="content" class:fixed={!scrollable} bind:this={contentElement}>
     {@render children()}
   </div>
 
@@ -132,6 +138,7 @@
 
   .large {
     width: min(900px, calc(100vw - 2 * var(--space-4)));
+    max-height: min(94vh, 960px);
   }
 
   dialog::backdrop {
@@ -178,6 +185,12 @@
     min-height: 0;
     padding: var(--space-4);
     overflow-y: auto;
+  }
+
+  .content.fixed {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   footer {

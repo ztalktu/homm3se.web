@@ -17,11 +17,24 @@
     options: Option[];
     value: Value;
     onchange: (value: Value) => void;
+    /** Each change of this number blinks the select, to show the app changed its value itself. */
+    flash?: number | undefined;
   }
 
-  let { label, hint, options, value, onchange }: Props = $props();
+  let { label, hint, options, value, onchange, flash = 0 }: Props = $props();
 
   const id = $props.id();
+  let select: HTMLSelectElement | undefined = $state();
+
+  $effect(() => {
+    if (!select || flash === 0) {
+      return;
+    }
+    // Restart the animation even when it is still running from the previous change.
+    delete select.dataset['flash'];
+    void select.offsetWidth;
+    select.dataset['flash'] = '';
+  });
 
   function handleChange(event: Event): void {
     const option = selectedOption(event, options);
@@ -34,7 +47,14 @@
 <div class="header-select">
   <label for={id}>{label}</label>
   <span class="control">
-    <select {id} {value} onchange={handleChange} use:tooltip={hint}>
+    <select
+      bind:this={select}
+      {id}
+      {value}
+      onchange={handleChange}
+      onanimationend={() => select && delete select.dataset['flash']}
+      use:tooltip={hint}
+    >
       {#each options as option (option.value)}
         <option value={option.value}>{option.label}</option>
       {/each}
@@ -86,6 +106,19 @@
     transition:
       background var(--transition-fast),
       border-color var(--transition-fast);
+  }
+
+  /* Set from the script, so Svelte cannot see it in the markup. */
+  select:global([data-flash]) {
+    animation: flash 1.5s ease-in-out;
+  }
+
+  @keyframes flash {
+    50% {
+      border-color: var(--color-frame);
+      background: var(--color-header-control-hover);
+      box-shadow: 0 0 0 3px var(--color-frame);
+    }
   }
 
   select:hover {

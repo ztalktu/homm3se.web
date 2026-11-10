@@ -36,6 +36,7 @@
   type TabId = 'info' | 'heroEditor' | 'resourceEditor';
 
   const REPOSITORY_URL = 'https://github.com/ztalktu/homm3se.web';
+  const VITONIC_URL = 'https://vitonic.ru/';
   const CURRENT_YEAR = new Date().getFullYear();
 
   const systemDark = new MediaQuery('(prefers-color-scheme: dark)');
@@ -152,10 +153,13 @@
     document.documentElement.lang = preferences.locale;
   });
 
+  // The search-friendly title from index.html stays while no save is open: crawlers that run
+  // scripts index the page in that state.
+  const startTitle = document.title;
   $effect(() => {
     document.title = save
       ? `${save.fileName}${unsaved ? ' *' : ''} · ${t('app.title')}`
-      : t('app.title');
+      : startTitle;
   });
 </script>
 
@@ -267,7 +271,9 @@
       </div>
     {/if}
     <p class="credits">
-      {t('credits.author', { year: CURRENT_YEAR })} · {t('credits.openProject')}
+      {t('credits.author', { year: CURRENT_YEAR })} ·
+      <a href={VITONIC_URL} target="_blank" rel="noopener">VItonIC Group</a> ·
+      {t('credits.openProject')}
       <a href={`${REPOSITORY_URL}/blob/main/LICENSE`} target="_blank" rel="noopener"
         >{t('credits.license')}</a
       >

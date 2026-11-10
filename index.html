@@ -3,12 +3,96 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Save game editor for Heroes of Might and Magic III" />
+    <title>Heroes 3 Save Editor online — HoMM3 savegame editor | Heroes III SaveEditor</title>
+    <meta
+      name="description"
+      content="Free online save game editor for Heroes of Might and Magic III (HoMM3) — edit heroes, skills, army, artifacts, spells and resources in .GM1/.CGM saves right in your browser. Редактор сохранений Героев 3 онлайн."
+    />
+    <meta
+      name="keywords"
+      content="heroes 3 save editor, heroes iii save editor, homm3 save editor, homm 3 se, heroes 3 savegame editor, hmm3se, vitonic, vitonic group, редактор сохранений героев 3, редактор сейвов герои 3, герои меча и магии 3 редактор"
+    />
+    <meta name="author" content="Ztalker, VItonIC Group" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://heroes3se.vitonic.ru/" />
     <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#141d30" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="./favicon-32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
-    <title>Heroes III SaveEditor</title>
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Heroes III SaveEditor" />
+    <meta property="og:url" content="https://heroes3se.vitonic.ru/" />
+    <meta property="og:title" content="Heroes III SaveEditor — HoMM3 save game editor online" />
+    <meta
+      property="og:description"
+      content="Edit Heroes of Might and Magic III saves in your browser: heroes, skills, army, artifacts, spells, resources. Free, nothing is uploaded."
+    />
+    <meta property="og:image" content="https://heroes3se.vitonic.ru/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Heroes III SaveEditor — HoMM3 save game editor" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="ru_RU" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Heroes III SaveEditor — HoMM3 save game editor online" />
+    <meta
+      name="twitter:description"
+      content="Edit Heroes of Might and Magic III saves in your browser. Free, nothing is uploaded."
+    />
+    <meta name="twitter:image" content="https://heroes3se.vitonic.ru/og-image.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Heroes III SaveEditor",
+        "alternateName": [
+          "Heroes 3 Save Editor",
+          "HoMM3 Save Editor",
+          "HoMM 3 SE",
+          "Hmm3se",
+          "Редактор сохранений Героев 3"
+        ],
+        "url": "https://heroes3se.vitonic.ru/",
+        "image": "https://heroes3se.vitonic.ru/og-image.png",
+        "description": "Save game editor for Heroes of Might and Magic III that runs in the browser. Web successor of Heroes III SaveEditor 2.05 (Windows, 2001–2005).",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Any (web browser)",
+        "browserRequirements": "Requires JavaScript",
+        "inLanguage": ["en", "ru"],
+        "softwareVersion": "3.0",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "author": {
+          "@type": "Person",
+          "name": "Ztalker",
+          "memberOf": { "@type": "Organization", "name": "VItonIC Group" }
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "VItonIC Group",
+          "url": "https://vitonic.ru/"
+        },
+        "license": "https://opensource.org/licenses/MIT",
+        "codeRepository": "https://github.com/ztalktu/homm3se.web",
+        "featureList": [
+          "Hero primary skills, level and experience",
+          "Secondary skills",
+          "Army slots",
+          "Backpack artifacts",
+          "Spell book",
+          "Mana and movement points",
+          "Player resources"
+        ],
+        "about": {
+          "@type": "VideoGame",
+          "name": "Heroes of Might and Magic III",
+          "alternateName": ["Heroes 3", "HoMM3", "Герои Меча и Магии 3"]
+        }
+      }
+    </script>
     <script>
       // Paint the right theme before the app loads, so a dark system never flashes light.
       try {
@@ -22,7 +106,39 @@
     </script>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <!-- Static description for search engines and no-JS visitors; the app replaces it on start. -->
+      <main style="max-width: 46rem; margin: 2rem auto; padding: 0 1rem; font-family: serif">
+        <h1>Heroes III SaveEditor — Heroes 3 save game editor online</h1>
+        <p>
+          A free save editor for <strong>Heroes of Might and Magic III</strong> (HoMM3) that runs
+          entirely in the browser. Open a <code>.GM1</code>–<code>.GM8</code> or
+          <code>.CGM</code> save, change it and write it back. The file never leaves your computer.
+        </p>
+        <ul>
+          <li>Heroes: primary skills, level and experience, mana and movement points</li>
+          <li>Secondary skills, army slots, backpack artifacts and spells</li>
+          <li>Player resources: gold, wood, ore, mercury, sulfur, crystals and gems</li>
+          <li>
+            Restoration of Erathia, Armageddon's Blade, Shadow of Death (Complete), Heroes
+            Chronicles, HD Edition and In the Wake of Gods saves
+          </li>
+        </ul>
+        <p>
+          Web successor of Heroes III SaveEditor 2.05 (hmm3se.exe) by VItonIC Group, the Windows
+          editor from 2001–2005.
+        </p>
+        <h2 lang="ru">Редактор сохранений «Героев Меча и Магии 3» онлайн</h2>
+        <p lang="ru">
+          Бесплатный редактор сейвов Heroes 3 прямо в браузере: первичные и вторичные навыки героя,
+          уровень и опыт, армия, артефакты, заклинания, ресурсы. Новая веб-версия Heroes III
+          SaveEditor 2.05 от VItonIC Group. Сохранение никуда не загружается.
+        </p>
+        <noscript
+          ><p>Please enable JavaScript to use the editor. / Включите JavaScript.</p></noscript
+        >
+      </main>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

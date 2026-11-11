@@ -70,6 +70,21 @@ describe('gzip', () => {
     const repacked = await decompressGzip(await save.pack());
     expect(repacked[10]).toBe(42);
   });
+
+  it('keeps the bytes as opened, also after writing the file', async () => {
+    const original = buildSave(4000, [GELU]);
+    const save = await SaveGame.open('dol.gm1', await compressGzip(original));
+    const before = original[10]!;
+    save.edit((buffer) => buffer.writeU8(10, 42));
+    expect(save.originalBuffer.bytes[10]).toBe(before);
+
+    const editCount = save.editCount;
+    await save.pack();
+    save.markSaved(editCount);
+    expect(save.hasUnsavedChanges).toBe(false);
+    expect(save.originalBuffer.bytes[10]).toBe(before);
+    expect(save.buffer.bytes[10]).toBe(42);
+  });
 });
 
 describe('save file names', () => {

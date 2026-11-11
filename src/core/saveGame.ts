@@ -36,12 +36,15 @@ export class SaveGame {
   /** Edits so far, and how many of them the last written file contained. */
   private edits = 0;
   private savedEdits = 0;
+  /** Unpacked bytes as opened; writing to disk does not change them. */
+  private readonly originalBytes: Uint8Array;
 
   private constructor(fileName: string, unpacked: Uint8Array) {
     this.fileName = fileName;
     this.gameType = gameTypeFromFileName(fileName);
     this.buffer = new SaveBuffer(unpacked);
     this.format = detectSaveFormat(this.buffer);
+    this.originalBytes = unpacked.slice();
   }
 
   /** Unpacks the file contents; throws NotASaveError if it is not gzip. */
@@ -76,6 +79,11 @@ export class SaveGame {
   edit(change: (buffer: SaveBuffer) => void): void {
     change(this.buffer);
     this.edits += 1;
+  }
+
+  /** The save as opened, before any edit, to show what the user changed; read only. */
+  get originalBuffer(): SaveBuffer {
+    return new SaveBuffer(this.originalBytes);
   }
 
   /** Packs a snapshot of the current bytes into a gzip file the game can load. */

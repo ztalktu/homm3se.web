@@ -196,6 +196,18 @@ function heroLayout(save: SaveGame, match: HeroMatch): HeroLayout {
 
 /** The found hero read with the current edition, or null. Reactive through `revision`. */
 export function currentHero(): Hero | null {
+  return readFoundHero('current');
+}
+
+/**
+ * The found hero as in the file when it was opened, so the editor can show what changed,
+ * even after "Apply" and after writing the file. Null when there is no hero.
+ */
+export function originalHero(): Hero | null {
+  return readFoundHero('original');
+}
+
+function readFoundHero(from: 'current' | 'original'): Hero | null {
   void session.revision;
   const { save, heroMatch } = session;
   if (!save || !heroMatch) {
@@ -203,7 +215,7 @@ export function currentHero(): Hero | null {
   }
   try {
     return readHero(
-      save.buffer,
+      from === 'current' ? save.buffer : save.originalBuffer,
       heroMatch.position,
       heroLayout(save, heroMatch),
       heroMatch.codePage,

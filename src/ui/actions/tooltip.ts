@@ -13,13 +13,20 @@ const VIEWPORT_MARGIN_PX = 8;
 let tooltipElement: HTMLDivElement | null = null;
 let owner: HTMLElement | null = null;
 
-function getTooltipElement(): HTMLDivElement {
+/**
+ * The tooltip lives inside the open modal <dialog> when its target is in one: a modal dialog
+ * sits in the browser's top layer and would cover a tooltip attached to <body>.
+ */
+function getTooltipElement(target: HTMLElement): HTMLDivElement {
   if (!tooltipElement) {
     tooltipElement = document.createElement('div');
     tooltipElement.className = 'app-tooltip';
     tooltipElement.setAttribute('aria-hidden', 'true');
     tooltipElement.hidden = true;
-    document.body.append(tooltipElement);
+  }
+  const host = target.closest('dialog[open]') ?? document.body;
+  if (tooltipElement.parentElement !== host) {
+    host.append(tooltipElement);
   }
   return tooltipElement;
 }
@@ -53,7 +60,7 @@ export function tooltip(node: HTMLElement, text: string | undefined) {
     if (!currentText) {
       return;
     }
-    const tip = getTooltipElement();
+    const tip = getTooltipElement(node);
     owner = node;
     tip.textContent = currentText;
     tip.hidden = false;

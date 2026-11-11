@@ -69,13 +69,13 @@
     border-color: var(--color-frame);
   }
 
-  input:checked + .box {
+  input:checked ~ .box {
     background: var(--color-primary);
     border-color: var(--color-primary);
   }
 
   /* Check mark */
-  input:checked + .box::after {
+  input:checked ~ .box::after {
     content: '';
     position: absolute;
     left: 5px;
@@ -87,7 +87,7 @@
     transform: rotate(45deg);
   }
 
-  input:focus-visible + .box {
+  input:focus-visible ~ .box {
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }

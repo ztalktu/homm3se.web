@@ -1,6 +1,6 @@
 <script lang="ts">
   import { currentHero, searchHero, session } from '../../app/session.svelte';
-  import { HERO_NAMES } from '../../data/heroNames';
+  import { KNOWN_HERO_NAMES } from '../../data/heroNames';
   import { creatureName, heroClassName } from '../../i18n/game.svelte';
   import { t } from '../../i18n/index.svelte';
   import Button from '../components/Button.svelte';
@@ -11,13 +11,20 @@
   import { filePercent, formatNumber } from '../format';
   import HeroDialog from './HeroDialog.svelte';
 
-  let selectedName: string | null = $state(null);
   let dialogOpen = $state(false);
 
-  /** Names from both game languages: the save may come from either installation. */
-  const nameItems: ComboboxItem<string>[] = [
-    ...new Set([...HERO_NAMES.english, ...HERO_NAMES.russian]),
-  ].map((name) => ({ value: name, label: name }));
+  /** Only the names the open save has heroes for; other names can still be typed in. */
+  const nameItems: ComboboxItem<string>[] = $derived(
+    KNOWN_HERO_NAMES.filter((name) => session.heroNamesInSave?.has(name)).map((name) => ({
+      value: name,
+      label: name,
+    })),
+  );
+
+  /** The list item for the typed name; picking an item sets the text, so nothing to store. */
+  const selectedName = $derived(
+    session.heroNamesInSave?.has(session.heroName) ? session.heroName : null,
+  );
 
   const hero = $derived(currentHero());
   const percent = $derived(
@@ -34,18 +41,18 @@
     <SearchForm
       legend={t('hero.searchTitle')}
       findLabel={t('hero.find')}
-      findNextLabel={t('hero.findNext')}
       {percent}
       positionText={t('hero.position', { percent: percent ?? 0 })}
       onfind={searchHero}
     >
-      <!-- Enter in the name field searches when no list option is highlighted. -->
+      <!-- Picking a name from the list searches at once; Enter on typed text submits the form. -->
       <Combobox
         label={t('hero.name')}
         items={nameItems}
-        bind:value={selectedName}
+        value={selectedName}
         bind:text={session.heroName}
         allowCustom
+        onpick={searchHero}
         placeholder={t('hero.namePlaceholder')}
         hint={t('hero.nameHint')}
       />

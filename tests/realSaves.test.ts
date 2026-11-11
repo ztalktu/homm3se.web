@@ -7,14 +7,14 @@ import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { requiredEdition } from '../src/core/editionDetection';
 import { readHero, writeHero } from '../src/core/hero';
-import { findHero, findNextHero } from '../src/core/heroSearch';
+import { findHero, findHeroNames, findNextHero } from '../src/core/heroSearch';
 import { decompressGzip } from '../src/core/gzip';
 import { SaveBuffer } from '../src/core/saveBuffer';
 import { SaveGame } from '../src/core/saveGame';
 import { isEditingTested } from '../src/core/saveFormat';
 import { layoutFor } from '../src/core/layouts';
 import { EDITIONS, type Edition } from '../src/data/editions';
-import { HERO_NAMES } from '../src/data/heroNames';
+import { KNOWN_HERO_NAMES } from '../src/data/heroNames';
 import { SPELLS } from '../src/data/spells';
 
 const SAVES_DIR = join(__dirname, '..', 'saves');
@@ -30,7 +30,7 @@ function saveFiles(dir: string): string[] {
 }
 
 const files = existsSync(SAVES_DIR) ? saveFiles(SAVES_DIR) : [];
-const names = [...new Set([...HERO_NAMES.english, ...HERO_NAMES.russian])];
+const names = KNOWN_HERO_NAMES;
 
 describe.skipIf(files.length === 0)('real saves', () => {
   it.each(files.map((file) => [relative(SAVES_DIR, file), file]))(
@@ -58,6 +58,7 @@ describe.skipIf(files.length === 0)('real saves', () => {
       // Every known hero name that the search accepts as a hero record.
       const buffer = save.buffer;
       const found: string[] = [];
+      const foundNames = new Set<string>();
       let edition: Edition = 'shadowOfDeath';
       for (const name of names) {
         let match = findHero(buffer, name);
@@ -73,6 +74,7 @@ describe.skipIf(files.length === 0)('real saves', () => {
           if (needed) {
             edition = needed;
           }
+          foundNames.add(name);
           found.push(
             `${name}@${match.position}: lvl ${hero.level} exp ${hero.experience} ` +
               `${hero.attack}/${hero.defense}/${hero.spellPower}/${hero.knowledge} ` +
@@ -83,6 +85,9 @@ describe.skipIf(files.length === 0)('real saves', () => {
           guard += 1;
         }
       }
+
+      // The one-pass name list agrees with searching every name on its own (the loop above).
+      expect([...findHeroNames(buffer, names)].sort()).toEqual([...foundNames].sort());
 
       // Other/ holds service files (for example the list of completed campaigns) without heroes.
       if (!file.includes(`${SAVES_DIR}/Other/`)) {

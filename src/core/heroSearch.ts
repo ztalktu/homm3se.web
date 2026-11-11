@@ -67,6 +67,66 @@ export function findHero(buffer: SaveBuffer, name: string, from = 0): HeroMatch 
   return best && { position: recordStart(buffer, best.nameStart), codePage: best.codePage };
 }
 
+/**
+ * Which of `names` the save holds a hero record for, in one pass over the file.
+ * Same rules as `findHero` (whole name, zero byte after it, spell flags of a hero), but
+ * calling `findHero` for every name scans the file hundreds of times and takes seconds.
+ *
+ * Every name is encoded with its terminating zero, so each pattern is at least two bytes long;
+ * the first two bytes pick the candidates. Saves are mostly zeros, so few positions get past
+ * the table check.
+ */
+export function findHeroNames(buffer: SaveBuffer, names: Iterable<string>): Set<string> {
+  const byPrefix = new Map<number, { name: string; pattern: Uint8Array }[]>();
+  for (const name of names) {
+    for (const codePage of codePagesFor(name)) {
+      const bytes = encodeText(name, codePage);
+      if (!bytes || bytes.length === 0) {
+        continue;
+      }
+      const pattern = new Uint8Array(bytes.length + 1);
+      pattern.set(bytes);
+      const prefix = (pattern[0] ?? 0) | ((pattern[1] ?? 0) << 8);
+      const candidates = byPrefix.get(prefix);
+      if (candidates) {
+        candidates.push({ name, pattern });
+      } else {
+        byPrefix.set(prefix, [{ name, pattern }]);
+      }
+    }
+  }
+  const hasPrefix = new Uint8Array(0x10000);
+  for (const prefix of byPrefix.keys()) {
+    hasPrefix[prefix] = 1;
+  }
+
+  const found = new Set<string>();
+  const bytes = buffer.bytes;
+  for (let offset = 0; offset + 1 < bytes.length; offset += 1) {
+    const prefix = (bytes[offset] ?? 0) | ((bytes[offset + 1] ?? 0) << 8);
+    const candidates = hasPrefix[prefix] ? byPrefix.get(prefix) : undefined;
+    if (!candidates) {
+      continue;
+    }
+    for (const { name, pattern } of candidates) {
+      if (found.has(name) || offset + pattern.length > bytes.length) {
+        continue;
+      }
+      let matches = true;
+      for (let index = 2; index < pattern.length; index += 1) {
+        if (bytes[offset + index] !== pattern[index]) {
+          matches = false;
+          break;
+        }
+      }
+      if (matches && looksLikeHero(buffer, offset)) {
+        found.add(name);
+      }
+    }
+  }
+  return found;
+}
+
 /** Continues a search after a previous hit. */
 export function findNextHero(
   buffer: SaveBuffer,

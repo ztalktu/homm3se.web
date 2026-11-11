@@ -4,9 +4,10 @@
  */
 
 import { EDITIONS, isAvailableIn, type Edition } from '../data/editions';
+import { KNOWN_HERO_NAMES } from '../data/heroNames';
 import { requiredEdition } from '../core/editionDetection';
 import { readHero, writeHero, type Hero } from '../core/hero';
-import { findHero, findNextHero, type HeroMatch } from '../core/heroSearch';
+import { findHero, findHeroNames, findNextHero, type HeroMatch } from '../core/heroSearch';
 import { heroLayoutAt, RESOURCES, type HeroLayout, type Resource } from '../core/layouts';
 import {
   findResources,
@@ -62,6 +63,10 @@ interface Session {
   savedAs: { fileName: string; at: number } | null;
   heroName: string;
   heroMatch: HeroMatch | null;
+  /** Name `heroMatch` was found by: "Find hero" continues only while the name stays the same. */
+  heroMatchName: string | null;
+  /** Known hero names that have a hero record in the open save; null when no save is open. */
+  heroNamesInSave: ReadonlySet<string> | null;
   goldQuery: number;
   /** Other resources ticked to narrow the search, with their current amounts. */
   resourceFilters: Record<OtherResource, { enabled: boolean; amount: number }>;
@@ -87,6 +92,8 @@ export const session: Session = $state({
   savedAs: null,
   heroName: stored.heroName,
   heroMatch: null,
+  heroMatchName: null,
+  heroNamesInSave: null,
   goldQuery: 0,
   resourceFilters: emptyFilters(),
   goldPosition: null,
@@ -112,6 +119,14 @@ export async function openSaveFile(file: File): Promise<void> {
     session.save = save;
     session.savedAs = null;
     session.heroMatch = null;
+    session.heroMatchName = null;
+    session.heroNamesInSave = findHeroNames(save.buffer, KNOWN_HERO_NAMES);
+    // A listed name with no hero in this save (another language, another map) would only
+    // fail the search. Names typed in by hand stay: the list cannot tell about them.
+    const name = session.heroName.trim();
+    if (KNOWN_HERO_NAMES.includes(name) && !session.heroNamesInSave.has(name)) {
+      session.heroName = '';
+    }
     session.goldPosition = null;
     applyEditionFromFormat(save);
     session.revision += 1;
@@ -252,7 +267,11 @@ function detectEdition(save: SaveGame, match: HeroMatch): void {
   }
 }
 
-export function searchHero(next: boolean): void {
+/**
+ * "Find hero": each call finds the next hero with the typed name and starts over from the top
+ * after the last one. A new name starts from the top of the file.
+ */
+export function searchHero(): void {
   const save = session.save;
   const name = session.heroName.trim();
   if (!save) {
@@ -263,19 +282,17 @@ export function searchHero(next: boolean): void {
     return;
   }
   remember();
-  const previous = session.heroMatch;
+  const previous = session.heroMatchName === name ? session.heroMatch : null;
   const match =
-    next && previous ? findNextHero(save.buffer, name, previous) : findHero(save.buffer, name);
+    (previous && findNextHero(save.buffer, name, previous)) ?? findHero(save.buffer, name);
   if (!match) {
-    if (next && previous) {
-      showToast(t('message.heroDone'));
-    } else {
-      session.heroMatch = null;
-      showToast(t('message.heroNotFound'));
-    }
+    session.heroMatch = null;
+    session.heroMatchName = null;
+    showToast(t('message.heroNotFound'));
     return;
   }
   session.heroMatch = match;
+  session.heroMatchName = name;
   detectEdition(save, match);
   session.revision += 1;
   if (!currentHero()) {
@@ -292,6 +309,9 @@ export function applyHero(hero: Hero): void {
     writeHero(buffer, heroMatch.position, heroLayout(save, heroMatch), heroMatch.codePage, hero),
   );
   session.heroName = hero.name;
+  session.heroMatchName = hero.name.trim();
+  // A rename adds the new name and may remove the old one.
+  session.heroNamesInSave = findHeroNames(save.buffer, KNOWN_HERO_NAMES);
   remember();
   session.revision += 1;
   showToast(t('message.heroChanged'), { kind: 'success' });

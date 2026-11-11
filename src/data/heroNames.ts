@@ -320,3 +320,8 @@ export const HERO_NAMES: Record<GameLanguage, readonly string[]> = {
     'Эрдамон',
   ],
 };
+
+/** Names from both game languages: the save may come from either installation. */
+export const KNOWN_HERO_NAMES: readonly string[] = [
+  ...new Set([...HERO_NAMES.english, ...HERO_NAMES.russian]),
+];

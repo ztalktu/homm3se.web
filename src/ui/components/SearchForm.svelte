@@ -1,8 +1,8 @@
 <script lang="ts">
   /**
-   * The search block shared by the hero and resource editors: fields, "Find" and "Find next",
-   * and where the last hit sits in the file. Enter in a field submits the form, so it runs
-   * "Find" once; the buttons do not add a second search on top of it.
+   * The search block shared by the hero and resource editors: fields, "Find" and, unless
+   * `findNextLabel` is left out, "Find next", and where the last hit sits in the file. Enter in
+   * a field submits the form, so it runs "Find" once; the buttons do not add a second search.
    */
   import type { Snippet } from 'svelte';
   import Button from './Button.svelte';
@@ -11,7 +11,8 @@
   interface Props {
     legend: string;
     findLabel: string;
-    findNextLabel: string;
+    /** Leave out for a single button that continues the search by itself. */
+    findNextLabel?: string | undefined;
     /** Percent of the file before the last hit, or null when nothing has been found yet. */
     percent: number | null;
     positionText: string;
@@ -33,9 +34,11 @@
     {@render children()}
     <div class="buttons">
       <Button type="submit" variant="primary" icon="search">{findLabel}</Button>
-      <Button icon="search" disabled={percent === null} onclick={() => onfind(true)}>
-        {findNextLabel}
-      </Button>
+      {#if findNextLabel}
+        <Button icon="search" disabled={percent === null} onclick={() => onfind(true)}>
+          {findNextLabel}
+        </Button>
+      {/if}
     </div>
     {#if percent !== null}
       <div class="progress" aria-hidden="true"><span style:width={`${percent}%`}></span></div>

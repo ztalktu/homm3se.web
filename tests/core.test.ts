@@ -3,7 +3,7 @@ import { requiredEdition } from '../src/core/editionDetection';
 import { experienceForLevel, levelForExperience } from '../src/core/experience';
 import { compressGzip, decompressGzip, isGzip } from '../src/core/gzip';
 import { InvalidHeroNameError, readHero, writeHero, type Hero } from '../src/core/hero';
-import { findHero, findNextHero } from '../src/core/heroSearch';
+import { findHero, findHeroNames, findNextHero } from '../src/core/heroSearch';
 import { findResources, readResources, writeResources } from '../src/core/resources';
 import { artifactAllowed, creatureProblem, validateHero } from '../src/core/rules';
 import { SaveBuffer } from '../src/core/saveBuffer';
@@ -136,6 +136,17 @@ describe('hero search', () => {
     const name = [...(encodeText('Джелу', 'windows-1251') ?? [])];
     const buffer = new SaveBuffer(buildSave(4000, [{ ...GELU, name }]));
     expect(findHero(buffer, 'Джелу')).toEqual({ position: 1000, codePage: 'windows-1251' });
+  });
+
+  it('lists the names that have hero records, in one pass', () => {
+    const bytes = buildSave(6000, [
+      GELU,
+      { ...GELU, position: 3000, name: [...(encodeText('Джелу', 'windows-1251') ?? [])] },
+    ]);
+    bytes.set(ascii('Adela'), 200); // fake hit: impossible spell flag next to it
+    bytes[200 + 73] = 7;
+    const names = findHeroNames(new SaveBuffer(bytes), ['Gelu', 'Gel', 'Джелу', 'Adela', 'Ash']);
+    expect([...names].sort()).toEqual(['Gelu', 'Джелу']);
   });
 });
 

@@ -22,6 +22,8 @@
     disabled?: boolean | undefined;
     hideLabel?: boolean | undefined;
     onchange?: ((value: Value | null) => void) | undefined;
+    /** An option picked from the list (click or Enter), even the one already selected. */
+    onpick?: ((item: ComboboxItem<Value>) => void) | undefined;
     /** A click on a greyed-out option: lets the screen explain why it is not available. */
     ondisabledpick?: ((item: ComboboxItem<Value>) => void) | undefined;
   }
@@ -37,6 +39,7 @@
     disabled = false,
     hideLabel = false,
     onchange,
+    onpick,
     ondisabledpick,
   }: Props = $props();
 
@@ -158,6 +161,7 @@
       value = item.value;
       onchange?.(item.value);
     }
+    onpick?.(item);
   }
 
   /** With free text: keep the text and select the item only when it matches exactly. */

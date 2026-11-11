@@ -14,7 +14,7 @@
       },
       {
         "kind": "changed",
-        "text": "Dark and light themes, both in the spirit of good old Heroes 3."
+        "text": "Dark and light themes, both in the spirit of good old Heroes 3. The default theme is \"System\"."
       },
       {
         "kind": "changed",
@@ -38,7 +38,7 @@
       },
       {
         "kind": "added",
-        "text": "The editor figures out what wrote the save: The Shadow of Death, HD Edition or Horn of the Abyss. For HotA it warns that editing is risky."
+        "text": "The editor figures out what wrote the save: Armageddon's Blade (GOG version included), The Shadow of Death, Heroes Chronicles, HD Edition or Horn of the Abyss. For HotA it warns that editing is risky."
       },
       {
         "kind": "added",
@@ -50,11 +50,31 @@
       },
       {
         "kind": "added",
-        "text": "Creature, artifact and spell lists you can search by the first letters."
+        "text": "Creature and artifact lists you can search by the first letters."
       },
       {
         "kind": "added",
         "text": "Level and experience are linked: change the level and the experience follows."
+      },
+      {
+        "kind": "added",
+        "text": "Spells are laid out like a spell book: levels 1-5 down, Air, Fire, Water and Earth across. Magic Arrow and Visions show up in every school with a four-element badge."
+      },
+      {
+        "kind": "added",
+        "text": "Every spell has a purpose badge: damage, buff, protection, weakening, control, healing, battlefield, special, summoning, adventure. The same badges filter the list."
+      },
+      {
+        "kind": "added",
+        "text": "Hover over a spell and a hint tells its school, level and what it does."
+      },
+      {
+        "kind": "added",
+        "text": "Movement points left today and movement per day: both are editable."
+      },
+      {
+        "kind": "added",
+        "text": "When the editor changes the edition by itself, the edition list in the header winks so you can see what changed."
       },
       {
         "kind": "fixed",
@@ -71,6 +91,10 @@
       {
         "kind": "fixed",
         "text": "Half-learned spells in a save no longer get lost when a hero is written back."
+      },
+      {
+        "kind": "fixed",
+        "text": "Movement points are read and written in full (4 bytes), not as one byte like 2.05 did."
       },
       {
         "kind": "removed",

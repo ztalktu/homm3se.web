@@ -32,6 +32,9 @@ export const skillName = (id: number): string => lookup(`skill.${id}`);
 export const skillLevelName = (level: SkillLevel): string => lookup(`skillLevel.${level}`);
 export const spellName = (id: number): string => lookup(`spell.${id}`);
 
+/** Short description of what a spell does, shown as a hint in the spell list. */
+export const spellEffect = (id: number): string => lookup(`spellEffect.${id}`);
+
 /** Effect of an artifact, or undefined for the "not recommended" ones that have none. */
 export function artifactEffect(id: number): string | undefined {
   const texts: Record<string, string> = gameDictionaries[preferences.locale];

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import { tooltip } from '../actions/tooltip';
 
   interface Props {
@@ -7,9 +8,11 @@
     hint?: string | undefined;
     disabled?: boolean | undefined;
     onchange?: ((checked: boolean) => void) | undefined;
+    /** Optional picture between the box and the label. */
+    icon?: Snippet | undefined;
   }
 
-  let { label, checked = $bindable(), hint, disabled = false, onchange }: Props = $props();
+  let { label, checked = $bindable(), hint, disabled = false, onchange, icon }: Props = $props();
 
   const hintId = $props.id();
 </script>
@@ -25,6 +28,7 @@
   />
   {#if hint}<span id={hintId} class="visually-hidden">{hint}</span>{/if}
   <span class="box" aria-hidden="true"></span>
+  {@render icon?.()}
   <span class="text">{label}</span>
 </label>
 

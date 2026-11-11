@@ -19,6 +19,23 @@
   --space-6: 32px;
   --control-height: 34px;
   --transition-fast: 120ms ease-out;
+
+  /* Spell list: purpose badges and changes against the save. Same in both themes. */
+  --color-spell-damage: #b8321f;
+  --color-spell-buff: #c9930f;
+  --color-spell-protection: #2b67ad;
+  --color-spell-weakening: #3f3a44;
+  --color-spell-control: #7a3a9e;
+  --color-spell-healing: #3d8a2c;
+  --color-spell-battlefield: #5b6770;
+  --color-spell-special: #23877c;
+  --color-spell-summoning: #c2621a;
+  --color-spell-adventure: #7a5228;
+  --color-spell-on-color: #ffffff;
+  --color-spell-added: #2f6fd0;
+  --color-spell-removed: #e07a1f;
+  --color-spell-removed-soft: rgb(224 122 31 / 25%);
+  --color-scene-shade: rgb(20 10 4 / 70%);
 }
 
 :root,

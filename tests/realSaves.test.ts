@@ -15,6 +15,7 @@ import { isEditingTested } from '../src/core/saveFormat';
 import { layoutFor } from '../src/core/layouts';
 import { EDITIONS, type Edition } from '../src/data/editions';
 import { HERO_NAMES } from '../src/data/heroNames';
+import { SPELLS } from '../src/data/spells';
 
 const SAVES_DIR = join(__dirname, '..', 'saves');
 
@@ -104,22 +105,42 @@ describe.skipIf(files.length === 0)('real saves', () => {
         const changed = copy.bytes.findIndex((byte, index) => byte !== buffer.bytes[index]);
         expect(changed, 'first changed byte after rewriting every hero unchanged').toBe(-1);
 
-        // A real edit survives packing and reopening, and touches only the edited bytes.
+        // Real edits, applied twice like two "Apply" clicks, survive packing and reopening and
+        // touch only the edited bytes. The bytes as opened stay as they were throughout.
         const hero = readHero(buffer, first.position, layout, first.codePage);
-        const edited = {
+        const firstEdit = {
           ...hero,
           attack: hero.attack === 99 ? 98 : 99,
           experience: hero.experience + 1000,
         };
+        save.edit((target) => writeHero(target, first.position, layout, first.codePage, firstEdit));
+        // Second edit: learn one spell the hero lacks and forget one it knows.
+        const missing = SPELLS.find((spell) => !hero.spells.includes(spell.id))!.id;
+        const forgotten = hero.spells[0];
+        const edited = {
+          ...firstEdit,
+          spells: [...firstEdit.spells.filter((id) => id !== forgotten), missing].sort(
+            (a, b) => a - b,
+          ),
+        };
         save.edit((target) => writeHero(target, first.position, layout, first.codePage, edited));
+        expect(readHero(save.originalBuffer, first.position, layout, first.codePage)).toEqual(hero);
+
+        const editCount = save.editCount;
         const reopened = await SaveGame.open(file, await save.pack());
+        save.markSaved(editCount);
+        expect(save.hasUnsavedChanges).toBe(false);
+        expect(save.originalBuffer.bytes).toEqual(unpacked);
+
         const reread = readHero(reopened.buffer, first.position, layout, first.codePage);
         expect(reread).toEqual(edited);
         const differences = reopened.buffer.bytes.filter(
           (byte, index) => byte !== unpacked[index],
         ).length;
         expect(reopened.buffer.length).toBe(unpacked.length);
-        expect(differences).toBeLessThanOrEqual(1 + 4);
+        // attack (1) + experience (up to 4) + two flags for each changed spell
+        const spellFlags = 2 * (forgotten === undefined ? 1 : 2);
+        expect(differences).toBeLessThanOrEqual(1 + 4 + spellFlags);
       }
 
       if (process.env['SHOW_SAVES']) {

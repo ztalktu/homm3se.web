@@ -7,7 +7,7 @@ import { LEVEL_EXPERIENCE, MAX_LEVEL } from '../src/data/experience';
 import { HERO_CLASSES } from '../src/data/heroClasses';
 import { HERO_NAMES, type GameLanguage } from '../src/data/heroNames';
 import { SECONDARY_SKILL_COUNT, SKILL_LEVELS } from '../src/data/skills';
-import { SPELLS } from '../src/data/spells';
+import { SPELL_SCHOOLS, SPELLS, isInSchool } from '../src/data/spells';
 import {
   artifactEffect,
   creatureDescription,
@@ -102,6 +102,29 @@ describe('reference data', () => {
   });
 });
 
+describe('spells', () => {
+  it('lists every spell once, in save order', () => {
+    expect(SPELLS.map((spell) => spell.id)).toEqual(Array.from({ length: 70 }, (_, id) => id));
+  });
+
+  it('puts only Magic Arrow and Visions in all four schools', () => {
+    expect(SPELLS.filter((spell) => spell.school === 'all').map((spell) => spell.id)).toEqual([
+      2, 15,
+    ]);
+    for (const school of SPELL_SCHOOLS) {
+      expect(isInSchool(SPELLS[15]!, school)).toBe(true);
+    }
+  });
+
+  it('matches the game for a few well-known spells', () => {
+    const fact = (id: number) => [SPELLS[id]!.school, SPELLS[id]!.level, SPELLS[id]!.purpose];
+    expect(fact(21)).toEqual(['fire', 3, 'damage']); // Fireball
+    expect(fact(9)).toEqual(['earth', 4, 'adventure']); // Town Portal
+    expect(fact(48)).toEqual(['water', 4, 'buff']); // Prayer
+    expect(fact(69)).toEqual(['air', 5, 'summoning']); // Summon Air Elemental
+  });
+});
+
 describe('game dictionaries', () => {
   afterEach(() => setLocale('en'));
 
@@ -116,6 +139,7 @@ describe('game dictionaries', () => {
     const texts: Record<string, string> = gameDictionaries[locale];
     for (const creature of CREATURES) expect(texts[`creature.${creature.id}`]).toBeTruthy();
     for (const spell of SPELLS) expect(texts[`spell.${spell.id}`]).toBeTruthy();
+    for (const spell of SPELLS) expect(texts[`spellEffect.${spell.id}`]).toBeTruthy();
     for (const heroClass of HERO_CLASSES) expect(texts[`heroClass.${heroClass.id}`]).toBeTruthy();
     for (const skill of range(SECONDARY_SKILL_COUNT)) expect(texts[`skill.${skill}`]).toBeTruthy();
     for (const level of SKILL_LEVELS) expect(texts[`skillLevel.${level}`]).toBeTruthy();

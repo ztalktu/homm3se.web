@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { applyHero, session } from '../../app/session.svelte';
+  import { applyHero, originalHero, session } from '../../app/session.svelte';
   import { encodeHeroName, type Hero } from '../../core/hero';
   import { validateHero, type HeroProblem } from '../../core/rules';
   import { artifactName, spellName } from '../../i18n/game.svelte';
@@ -28,6 +28,8 @@
   let hero: Hero = $state(structuredClone($state.snapshot(original)));
   let activeTab: TabId = $state('attributes');
   let problems: string[] = $state([]);
+  /** Spells as in the file when it was opened, before any "Apply": the Spells tab marks changes. */
+  const openedSpells = $derived(originalHero()?.spells ?? original.spells);
 
   const tabs = $derived([
     { id: 'attributes' as const, label: t('heroDialog.tab.attributes') },
@@ -104,7 +106,7 @@
       {:else if activeTab === 'artifacts'}
         <HeroBackpackTab bind:hero />
       {:else}
-        <HeroSpellsTab bind:hero />
+        <HeroSpellsTab bind:hero opened={openedSpells} />
       {/if}
     </div>
   </div>

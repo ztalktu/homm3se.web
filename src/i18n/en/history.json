@@ -78,6 +78,10 @@
       },
       {
         "kind": "added",
+        "text": "Every secondary skill has its own badge, in the list and next to the field. The level shows as stripes: one for basic, two for advanced, three for expert. Skills can now be found by their first letters."
+      },
+      {
+        "kind": "added",
         "text": "Movement points left today and movement per day: both are editable."
       },
       {

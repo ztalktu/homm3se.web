@@ -8,7 +8,10 @@
   } from '../../../data/skills';
   import { skillLevelName, skillName } from '../../../i18n/game.svelte';
   import { t } from '../../../i18n/index.svelte';
-  import SelectField from '../../components/SelectField.svelte';
+  import Combobox from '../../components/Combobox.svelte';
+  import type { ComboboxItem } from '../../components/combobox';
+  import SkillIcon from './SkillIcon.svelte';
+  import SkillLevelIcon from './SkillLevelIcon.svelte';
 
   interface Props {
     hero: Hero;
@@ -16,7 +19,8 @@
 
   let { hero = $bindable() }: Props = $props();
 
-  const NONE = 'none';
+  /** The "(nothing)" option that clears a slot. */
+  const NONE = -1;
   const skillIds = Array.from({ length: SECONDARY_SKILL_COUNT }, (_, id) => id);
 
   /** Filled rows plus one empty row to add a skill, up to eight. */
@@ -27,31 +31,30 @@
     ),
   );
 
-  const levelOptions = $derived(
-    SKILL_LEVELS.map((level) => ({ value: String(level), label: skillLevelName(level) })),
+  const levelOptions: ComboboxItem<SkillLevel>[] = $derived(
+    SKILL_LEVELS.map((level) => ({ value: level, label: skillLevelName(level) })),
   );
 
-  function skillOptions(row: number): { value: string; label: string; disabled?: boolean }[] {
+  function skillOptions(row: number): ComboboxItem<number>[] {
     const takenElsewhere = new Set(
       hero.secondarySkills.filter((_, index) => index !== row).map((skill) => skill.skillId),
     );
     return [
       { value: NONE, label: t('heroDialog.noSkill') },
       ...skillIds.map((id) => ({
-        value: String(id),
+        value: id,
         label: skillName(id),
         disabled: takenElsewhere.has(id),
       })),
     ];
   }
 
-  function setSkill(row: number, value: string): void {
-    if (value === NONE) {
+  function setSkill(row: number, skillId: number): void {
+    if (skillId === NONE) {
       // Clearing a skill moves the ones below it up, so the slots stay filled from the top.
       hero.secondarySkills.splice(row, 1);
       return;
     }
-    const skillId = Number(value);
     const existing = hero.secondarySkills[row];
     if (existing) {
       existing.skillId = skillId;
@@ -60,44 +63,67 @@
     }
   }
 
-  function setLevel(row: number, value: string): void {
+  function setLevel(row: number, level: SkillLevel): void {
     const skill = hero.secondarySkills[row];
     if (skill) {
-      skill.level = Number(value) as SkillLevel;
+      skill.level = level;
     }
   }
 </script>
 
-<p class="note">{t('heroDialog.skillsHint')}</p>
 <div class="table">
   {#each rows as row (row)}
     {@const skill = hero.secondarySkills[row]}
-    <SelectField
+    <Combobox
       label={t('heroDialog.skillSlot', { slot: row + 1 })}
-      options={skillOptions(row)}
-      value={skill ? String(skill.skillId) : NONE}
-      onchange={(value) => setSkill(row, value)}
-    />
-    <SelectField
+      inlineLabel
+      items={skillOptions(row)}
+      value={skill?.skillId ?? NONE}
+      onchange={(skillId) => skillId !== null && setSkill(row, skillId)}
+    >
+      {#snippet before()}
+        <SkillIcon skillId={skill?.skillId ?? null} />
+      {/snippet}
+      {#snippet optionIcon(item)}
+        <SkillIcon skillId={item.value === NONE ? null : item.value} />
+      {/snippet}
+    </Combobox>
+    <Combobox
       label={t('heroDialog.skillLevel')}
-      options={levelOptions}
-      value={String(skill?.level ?? 1)}
+      inlineLabel
+      items={levelOptions}
+      value={skill?.level ?? 1}
       disabled={!skill}
-      onchange={(value) => setLevel(row, value)}
-    />
+      onchange={(level) => level !== null && setLevel(row, level)}
+    >
+      {#snippet before()}
+        <SkillLevelIcon level={skill?.level ?? null} />
+      {/snippet}
+      {#snippet optionIcon(item)}
+        <SkillLevelIcon level={item.value} />
+      {/snippet}
+    </Combobox>
   {/each}
 </div>
+<p class="note">{t('heroDialog.skillsHint')}</p>
 
 <style>
   .note {
-    margin: 0 0 var(--space-3);
+    margin: var(--space-3) 0 0;
     font-size: 13px;
     color: var(--color-text-muted);
   }
 
   .table {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(120px, 1fr);
+    grid-template-columns: auto minmax(0, 2fr) auto minmax(120px, 1fr);
     gap: var(--space-2) var(--space-3);
+  }
+
+  /* On a phone the level goes under its skill. */
+  @media (max-width: 520px) {
+    .table {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
   }
 </style>

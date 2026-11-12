@@ -25,6 +25,10 @@
     hintDelayMs?: number | undefined;
     disabled?: boolean | undefined;
     hideLabel?: boolean | undefined;
+    /** Label and field become two cells of the parent grid, so a column of fields lines up. */
+    inlineLabel?: boolean | undefined;
+    /** Drawn between the label and the field, e.g. a badge for the chosen value. */
+    before?: Snippet | undefined;
     onchange?: ((value: Value | null) => void) | undefined;
     /** An option picked from the list (click or Enter), even the one already selected. */
     onpick?: ((item: ComboboxItem<Value>) => void) | undefined;
@@ -57,6 +61,8 @@
     hintDelayMs,
     disabled = false,
     hideLabel = false,
+    inlineLabel = false,
+    before,
     onchange,
     onpick,
     ondisabledpick,
@@ -280,9 +286,10 @@
   }
 </script>
 
-<div class="combobox">
+<div class="combobox" class:inline={inlineLabel}>
   <label class="field-label" class:visually-hidden={hideLabel} for={id}>{label}</label>
-  <div class="control">
+  <div class="control" class:with-before={before !== undefined}>
+    {@render before?.()}
     <input
       bind:this={input}
       {id}
@@ -387,6 +394,26 @@
 
   .control {
     position: relative;
+  }
+
+  .inline {
+    display: contents;
+  }
+
+  .inline .field-label {
+    align-self: center;
+    margin-bottom: 0;
+    white-space: nowrap;
+  }
+
+  .inline .control {
+    min-width: 0;
+  }
+
+  .control.with-before {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
   }
 
   input {

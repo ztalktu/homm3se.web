@@ -8,9 +8,11 @@
   interface Props {
     category: ArtifactCategory;
     size?: number | undefined;
+    /** The glyph in another colour, e.g. for a secondary skill. */
+    color?: string | undefined;
   }
 
-  let { category, size = 22 }: Props = $props();
+  let { category, size = 22, color: colorOverride }: Props = $props();
 
   /** Categories that mean the same as a spell purpose get the very same badge. */
   const SAME_AS_SPELL: Partial<Record<ArtifactCategory, SpellPurpose>> = {
@@ -22,12 +24,13 @@
   const purpose = $derived(SAME_AS_SPELL[category]);
   /** spellPower → --color-artifact-spell-power */
   const color = $derived(
-    `var(--color-artifact-${category.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)})`,
+    colorOverride ??
+      `var(--color-artifact-${category.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)})`,
   );
 </script>
 
 {#if purpose}
-  <SpellPurposeIcon {purpose} {size} />
+  <SpellPurposeIcon {purpose} {size} color={colorOverride} />
 {:else}
   <Badge {color} {size}>
     {#if category === 'spellPower'}

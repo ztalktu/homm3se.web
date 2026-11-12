@@ -6,12 +6,14 @@
   interface Props {
     purpose: SpellPurpose;
     size?: number | undefined;
+    /** The glyph in another colour, e.g. for a secondary skill. */
+    color?: string | undefined;
   }
 
-  let { purpose, size = 22 }: Props = $props();
+  let { purpose, size = 22, color }: Props = $props();
 </script>
 
-<Badge color="var(--color-spell-{purpose})" {size}>
+<Badge color={color ?? `var(--color-spell-${purpose})`} {size}>
   {#if purpose === 'damage'}
     <path
       d="M4 20L18 6"

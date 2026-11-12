@@ -37,6 +37,15 @@
   --color-spell-removed-soft: rgb(224 122 31 / 25%);
   --color-scene-shade: rgb(20 10 4 / 70%);
 
+  /* Skill level stripes. Same in both themes. */
+  --color-skill-level: #2b67ad;
+
+  /* Magic schools: the "all schools" badge and the school skill badges. Same in both themes. */
+  --color-school-air: #3f7fbf;
+  --color-school-fire: #c8402a;
+  --color-school-earth: #7a5a26;
+  --color-school-water: #23827d;
+
   /* Backpack: artifact category badges. Same in both themes. Attack, defense, adventure and
      special reuse the spell purpose badges. */
   --color-artifact-spell-power: #7a3a9e;

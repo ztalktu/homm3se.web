@@ -6,7 +6,7 @@
 import { EDITIONS, isAvailableIn, type Edition } from '../data/editions';
 import { KNOWN_HERO_NAMES } from '../data/heroNames';
 import { requiredEdition } from '../core/editionDetection';
-import { readHero, writeHero, type Hero } from '../core/hero';
+import { readHero, readHeroOwner, writeHero, type Hero, type HeroOwner } from '../core/hero';
 import { findHero, findHeroNames, findNextHero, type HeroMatch } from '../core/heroSearch';
 import { heroLayoutAt, RESOURCES, type HeroLayout, type Resource } from '../core/layouts';
 import {
@@ -16,7 +16,12 @@ import {
   type ResourceAmounts,
 } from '../core/resources';
 import { NotASaveError, SaveGame, editedFileName } from '../core/saveGame';
-import { editionFromHeader, isEditingTested, minimumEditionFor } from '../core/saveFormat';
+import {
+  editionFromHeader,
+  isEditingTested,
+  isSameFormat,
+  minimumEditionFor,
+} from '../core/saveFormat';
 import { editionName } from '../i18n/game.svelte';
 import { formatName } from '../ui/format';
 import { t } from '../i18n/index.svelte';
@@ -29,7 +34,6 @@ type OtherResource = Exclude<Resource, 'gold'>;
 interface StoredSession {
   version: 1;
   edition: Edition;
-  heroName: string;
 }
 
 const STORAGE_KEY = 'session';
@@ -39,16 +43,12 @@ function isStoredSession(value: unknown): value is StoredSession {
     return false;
   }
   const candidate = value as Record<string, unknown>;
-  return (
-    candidate['version'] === 1 &&
-    EDITIONS.includes(candidate['edition'] as Edition) &&
-    typeof candidate['heroName'] === 'string'
-  );
+  return candidate['version'] === 1 && EDITIONS.includes(candidate['edition'] as Edition);
 }
 
 const stored = readJson<StoredSession>(
   STORAGE_KEY,
-  { version: 1, edition: 'restorationOfErathia', heroName: '' },
+  { version: 1, edition: 'restorationOfErathia' },
   isStoredSession,
 );
 
@@ -65,8 +65,16 @@ interface Session {
   heroMatch: HeroMatch | null;
   /** Name `heroMatch` was found by: "Find hero" continues only while the name stays the same. */
   heroMatchName: string | null;
-  /** Known hero names that have a hero record in the open save; null when no save is open. */
-  heroNamesInSave: ReadonlySet<string> | null;
+  /**
+   * Known hero names that have a hero record in the open save, with the owners of those
+   * records; null when no save is open.
+   */
+  heroNamesInSave: ReadonlyMap<string, readonly HeroOwner[]> | null;
+  /**
+   * The only owner the player filter shows in the name list (null: free heroes), or undefined
+   * when the filter is off. The search itself finds heroes of any owner.
+   */
+  ownerFilter: HeroOwner | undefined;
   goldQuery: number;
   /** Other resources ticked to narrow the search, with their current amounts. */
   resourceFilters: Record<OtherResource, { enabled: boolean; amount: number }>;
@@ -90,10 +98,11 @@ export const session: Session = $state({
   edition: stored.edition,
   editionAutoChanges: 0,
   savedAs: null,
-  heroName: stored.heroName,
+  heroName: '',
   heroMatch: null,
   heroMatchName: null,
   heroNamesInSave: null,
+  ownerFilter: undefined,
   goldQuery: 0,
   resourceFilters: emptyFilters(),
   goldPosition: null,
@@ -103,7 +112,6 @@ function remember(): void {
   writeJson(STORAGE_KEY, {
     version: 1,
     edition: session.edition,
-    heroName: session.heroName,
   } satisfies StoredSession);
 }
 
@@ -116,15 +124,17 @@ function errorReason(error: unknown): string {
 export async function openSaveFile(file: File): Promise<void> {
   try {
     const save = await SaveGame.open(file.name, new Uint8Array(await file.arrayBuffer()));
+    const sameVersion = session.save !== null && isSameFormat(session.save.format, save.format);
     session.save = save;
     session.savedAs = null;
     session.heroMatch = null;
     session.heroMatchName = null;
     session.heroNamesInSave = findHeroNames(save.buffer, KNOWN_HERO_NAMES);
-    // A listed name with no hero in this save (another language, another map) would only
-    // fail the search. Names typed in by hand stay: the list cannot tell about them.
+    // A save of another game version starts with an empty name field. With the same version
+    // the last search stays, unless it is a listed name this save has no hero for.
     const name = session.heroName.trim();
-    if (KNOWN_HERO_NAMES.includes(name) && !session.heroNamesInSave.has(name)) {
+    const missing = KNOWN_HERO_NAMES.includes(name) && !session.heroNamesInSave.has(name);
+    if (!sameVersion || missing) {
       session.heroName = '';
     }
     session.goldPosition = null;
@@ -222,6 +232,13 @@ export function originalHero(): Hero | null {
   return readFoundHero('original');
 }
 
+/** Color of the player who owns the found hero; null when nobody does or nothing is found. */
+export function currentHeroOwner(): HeroOwner {
+  void session.revision;
+  const { save, heroMatch } = session;
+  return save && heroMatch ? readHeroOwner(save.buffer, heroMatch.position) : null;
+}
+
 function readFoundHero(from: 'current' | 'original'): Hero | null {
   void session.revision;
   const { save, heroMatch } = session;
@@ -281,7 +298,6 @@ export function searchHero(): void {
     showToast(t('message.heroNameRequired'), { kind: 'error' });
     return;
   }
-  remember();
   const previous = session.heroMatchName === name ? session.heroMatch : null;
   const match =
     (previous && findNextHero(save.buffer, name, previous)) ?? findHero(save.buffer, name);
@@ -312,7 +328,6 @@ export function applyHero(hero: Hero): void {
   session.heroMatchName = hero.name.trim();
   // A rename adds the new name and may remove the old one.
   session.heroNamesInSave = findHeroNames(save.buffer, KNOWN_HERO_NAMES);
-  remember();
   session.revision += 1;
   showToast(t('message.heroChanged'), { kind: 'success' });
 }

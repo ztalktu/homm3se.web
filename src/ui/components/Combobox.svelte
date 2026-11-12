@@ -19,6 +19,8 @@
     allowCustom?: boolean | undefined;
     placeholder?: string | undefined;
     hint?: string | undefined;
+    /** Wait this long before showing the hint, when the usual delay is too eager. */
+    hintDelayMs?: number | undefined;
     disabled?: boolean | undefined;
     hideLabel?: boolean | undefined;
     onchange?: ((value: Value | null) => void) | undefined;
@@ -36,6 +38,7 @@
     allowCustom = false,
     placeholder,
     hint,
+    hintDelayMs,
     disabled = false,
     hideLabel = false,
     onchange,
@@ -266,7 +269,7 @@
       oninput={onInput}
       onkeydown={onKeydown}
       onclick={() => !open && openList()}
-      use:tooltip={hint}
+      use:tooltip={hintDelayMs === undefined ? hint : { text: hint, delayMs: hintDelayMs }}
     />
     <button
       type="button"
@@ -299,7 +302,16 @@
               onmousemove={() => !item.disabled && (activeIndex = index)}
               onclick={() => choose(item)}
             >
-              <span class="option-label">{item.label}</span>
+              <span class="option-label">
+                {item.label}
+                {#if item.marks?.length}
+                  <span class="marks" aria-hidden="true">
+                    {#each item.marks as mark, markIndex (markIndex)}
+                      <span class="mark" style:background={mark}></span>
+                    {/each}
+                  </span>
+                {/if}
+              </span>
               {#if item.description}
                 <span class="option-description">{item.description}</span>
               {/if}
@@ -381,7 +393,23 @@
   }
 
   .option-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
     font-size: 14px;
+  }
+
+  .marks {
+    display: flex;
+    gap: var(--space-1);
+  }
+
+  .mark {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid var(--color-mark-outline);
   }
 
   .option-description {

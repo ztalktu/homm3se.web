@@ -42,8 +42,20 @@ function place(target: HTMLElement, tip: HTMLDivElement): void {
   tip.style.left = `${Math.min(Math.max(VIEWPORT_MARGIN_PX, centered), maxLeft)}px`;
 }
 
-export function tooltip(node: HTMLElement, text: string | undefined) {
-  let currentText = text;
+/** Hint text, or the text with its own delay before it shows (in place of the usual one). */
+export type TooltipOptions = string | { text: string | undefined; delayMs: number } | undefined;
+
+function textOf(options: TooltipOptions): string | undefined {
+  return typeof options === 'object' ? options.text : options;
+}
+
+function delayOf(options: TooltipOptions): number {
+  return typeof options === 'object' ? options.delayMs : SHOW_DELAY_MS;
+}
+
+export function tooltip(node: HTMLElement, options: TooltipOptions) {
+  let currentText = textOf(options);
+  let showDelay = delayOf(options);
   let showTimer: ReturnType<typeof setTimeout> | undefined;
   let hideTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -78,7 +90,7 @@ export function tooltip(node: HTMLElement, text: string | undefined) {
 
   function showLater(): void {
     clearTimeout(showTimer);
-    showTimer = setTimeout(show, SHOW_DELAY_MS);
+    showTimer = setTimeout(show, showDelay);
   }
 
   function onFocus(): void {
@@ -119,8 +131,9 @@ export function tooltip(node: HTMLElement, text: string | undefined) {
   node.addEventListener('touchcancel', onTouchEnd);
 
   return {
-    update(nextText: string | undefined): void {
-      currentText = nextText;
+    update(nextOptions: TooltipOptions): void {
+      currentText = textOf(nextOptions);
+      showDelay = delayOf(nextOptions);
       applyDescription();
       if (owner === node && tooltipElement) {
         if (currentText) {

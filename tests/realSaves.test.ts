@@ -87,7 +87,7 @@ describe.skipIf(files.length === 0)('real saves', () => {
       }
 
       // The one-pass name list agrees with searching every name on its own (the loop above).
-      expect([...findHeroNames(buffer, names)].sort()).toEqual([...foundNames].sort());
+      expect([...findHeroNames(buffer, names).keys()].sort()).toEqual([...foundNames].sort());
 
       // Other/ holds service files (for example the list of completed campaigns) without heroes.
       if (!file.includes(`${SAVES_DIR}/Other/`)) {

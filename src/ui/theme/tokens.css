@@ -36,6 +36,17 @@
   --color-spell-removed: #e07a1f;
   --color-spell-removed-soft: rgb(224 122 31 / 25%);
   --color-scene-shade: rgb(20 10 4 / 70%);
+
+  /* Player flags, close to the game's own colors. Same in both themes. */
+  --color-player-red: #d22b2b;
+  --color-player-blue: #2f5fd0;
+  --color-player-tan: #a0784f;
+  --color-player-green: #3c9a3c;
+  --color-player-orange: #e07a1f;
+  --color-player-purple: #8a3fb0;
+  --color-player-teal: #1f9a9a;
+  --color-player-pink: #d86aa8;
+  --color-mark-outline: rgb(0 0 0 / 35%);
 }
 
 :root,

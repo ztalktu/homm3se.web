@@ -96,7 +96,10 @@ describe('reference data', () => {
 
   it.each(Object.keys(HERO_NAMES) as GameLanguage[])('has unique %s hero names', (language) => {
     const names = HERO_NAMES[language];
-    expect(names).toHaveLength(153);
+    // 153 of the 2.05 editor, plus names found in real saves (Ryland and Drakon from SoD,
+    // the HD Edition translation in Russian), Buka's Russian spellings and the Horn of the Abyss
+    // heroes.
+    expect(names).toHaveLength({ english: 215, russian: 273 }[language]);
     expect(new Set(names).size).toBe(names.length);
     expect(names.every((name) => name.trim() === name && name !== '')).toBe(true);
   });

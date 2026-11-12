@@ -1,5 +1,6 @@
 /** Reading and writing one hero record around a known position in the save. */
 
+import { PLAYER_COLORS, type PlayerColor } from '../data/players';
 import { MAX_SECONDARY_SKILLS, type SkillLevel } from '../data/skills';
 import { SPELLS } from '../data/spells';
 import { COMMON_HERO_FIELDS, type HeroLayout } from './layouts';
@@ -154,6 +155,18 @@ export function readHero(
     hasSpellBook: u32(buffer, position + layout.spellBookSlot) === 0,
     backpack,
   };
+}
+
+/** Who owns a hero: a player color, or null for a free hero (for hire, in a tavern). */
+export type HeroOwner = PlayerColor | null;
+
+/**
+ * Owner of the hero at `position`; the owner byte sits at the same place in every layout.
+ * Read only: the editor does not change owners.
+ */
+export function readHeroOwner(buffer: SaveBuffer, position: number): HeroOwner {
+  const byte = buffer.readU8(position + COMMON_HERO_FIELDS.owner);
+  return byte === undefined ? null : (PLAYER_COLORS[byte] ?? null);
 }
 
 /** Thrown when the new name cannot be stored: too long or has characters outside the code page. */

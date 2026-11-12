@@ -12,6 +12,8 @@ export const COMMON_HERO_FIELDS = {
   /** Name, NUL-terminated. The 2.05 editor wrote 14 bytes here. */
   name: 0,
   nameLength: 13,
+  /** u8, player color 0–7 (see PLAYER_COLORS), 0xFF when nobody owns the hero */
+  owner: -169,
   /** u8 */
   heroClass: -158,
   /** u32 */

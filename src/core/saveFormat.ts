@@ -15,6 +15,14 @@ export type SaveFormat =
   | { kind: 'heroesChronicles'; major: number; minor: number }
   | { kind: 'unknown' };
 
+/** Same game and the same version in the header. */
+export function isSameFormat(a: SaveFormat, b: SaveFormat): boolean {
+  if (a.kind === 'unknown' || b.kind === 'unknown') {
+    return a.kind === b.kind;
+  }
+  return a.kind === b.kind && a.major === b.major && a.minor === b.minor;
+}
+
 const SIGNATURES = ['H3SVG', 'H3SVC'];
 const CHRONICLES_SIGNATURE = 'HCHRONSVG';
 /** In a Heroes Chronicles header the version numbers come one byte later. */

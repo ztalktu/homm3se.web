@@ -3,6 +3,7 @@
  * the spell flags around the hit are all 0 or 1, which random text almost never is.
  */
 
+import { readHeroOwner, type HeroOwner } from './hero';
 import { COMMON_HERO_FIELDS, SEARCH_CHECKED_SPELLS } from './layouts';
 import type { SaveBuffer } from './saveBuffer';
 import { codePagesFor, encodeText, type CodePage } from './textEncoding';
@@ -68,15 +69,19 @@ export function findHero(buffer: SaveBuffer, name: string, from = 0): HeroMatch 
 }
 
 /**
- * Which of `names` the save holds a hero record for, in one pass over the file.
- * Same rules as `findHero` (whole name, zero byte after it, spell flags of a hero), but
- * calling `findHero` for every name scans the file hundreds of times and takes seconds.
+ * Which of `names` the save holds a hero record for, with the owners of those records,
+ * in one pass over the file. Same rules as `findHero` (whole name, zero byte after it, spell
+ * flags of a hero), but calling `findHero` for every name scans the file hundreds of times
+ * and takes seconds.
  *
  * Every name is encoded with its terminating zero, so each pattern is at least two bytes long;
  * the first two bytes pick the candidates. Saves are mostly zeros, so few positions get past
  * the table check.
  */
-export function findHeroNames(buffer: SaveBuffer, names: Iterable<string>): Set<string> {
+export function findHeroNames(
+  buffer: SaveBuffer,
+  names: Iterable<string>,
+): Map<string, HeroOwner[]> {
   const byPrefix = new Map<number, { name: string; pattern: Uint8Array }[]>();
   for (const name of names) {
     for (const codePage of codePagesFor(name)) {
@@ -100,7 +105,7 @@ export function findHeroNames(buffer: SaveBuffer, names: Iterable<string>): Set<
     hasPrefix[prefix] = 1;
   }
 
-  const found = new Set<string>();
+  const found = new Map<string, HeroOwner[]>();
   const bytes = buffer.bytes;
   for (let offset = 0; offset + 1 < bytes.length; offset += 1) {
     const prefix = (bytes[offset] ?? 0) | ((bytes[offset + 1] ?? 0) << 8);
@@ -109,7 +114,7 @@ export function findHeroNames(buffer: SaveBuffer, names: Iterable<string>): Set<
       continue;
     }
     for (const { name, pattern } of candidates) {
-      if (found.has(name) || offset + pattern.length > bytes.length) {
+      if (offset + pattern.length > bytes.length) {
         continue;
       }
       let matches = true;
@@ -119,8 +124,19 @@ export function findHeroNames(buffer: SaveBuffer, names: Iterable<string>): Set<
           break;
         }
       }
-      if (matches && looksLikeHero(buffer, offset)) {
-        found.add(name);
+      if (!matches) {
+        continue;
+      }
+      // The owner byte is cheap; the hero check is not, so it runs only for a new owner.
+      const owner = readHeroOwner(buffer, recordStart(buffer, offset));
+      const owners = found.get(name);
+      if (owners?.includes(owner) || !looksLikeHero(buffer, offset)) {
+        continue;
+      }
+      if (owners) {
+        owners.push(owner);
+      } else {
+        found.set(name, [owner]);
       }
     }
   }

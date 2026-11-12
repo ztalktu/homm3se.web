@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { requiredEdition } from '../src/core/editionDetection';
 import { experienceForLevel, levelForExperience } from '../src/core/experience';
 import { compressGzip, decompressGzip, isGzip } from '../src/core/gzip';
-import { InvalidHeroNameError, readHero, writeHero, type Hero } from '../src/core/hero';
+import {
+  InvalidHeroNameError,
+  readHero,
+  readHeroOwner,
+  writeHero,
+  type Hero,
+} from '../src/core/hero';
 import { findHero, findHeroNames, findNextHero } from '../src/core/heroSearch';
 import { findResources, readResources, writeResources } from '../src/core/resources';
 import { artifactAllowed, creatureProblem, validateHero } from '../src/core/rules';
@@ -18,6 +24,7 @@ import {
   detectSaveFormat,
   editionFromHeader,
   isEditingTested,
+  isSameFormat,
   minimumEditionFor,
 } from '../src/core/saveFormat';
 import { heroLayoutAt, LAYOUTS, layoutFor } from '../src/core/layouts';
@@ -138,15 +145,19 @@ describe('hero search', () => {
     expect(findHero(buffer, 'Джелу')).toEqual({ position: 1000, codePage: 'windows-1251' });
   });
 
-  it('lists the names that have hero records, in one pass', () => {
-    const bytes = buildSave(6000, [
+  it('lists the names that have hero records with their owners, in one pass', () => {
+    const bytes = buildSave(8000, [
       GELU,
       { ...GELU, position: 3000, name: [...(encodeText('Джелу', 'windows-1251') ?? [])] },
+      { ...GELU, position: 5000 },
     ]);
+    bytes[1000 - 169] = 1; // Gelu of the blue player
+    bytes[3000 - 169] = 0xff; // free Джелу
+    bytes[5000 - 169] = 0xff; // and a free Gelu
     bytes.set(ascii('Adela'), 200); // fake hit: impossible spell flag next to it
     bytes[200 + 73] = 7;
     const names = findHeroNames(new SaveBuffer(bytes), ['Gelu', 'Gel', 'Джелу', 'Adela', 'Ash']);
-    expect([...names].sort()).toEqual(['Gelu', 'Джелу']);
+    expect(Object.fromEntries(names)).toEqual({ Gelu: ['blue', null], Джелу: [null] });
   });
 });
 
@@ -184,6 +195,14 @@ describe('hero record', () => {
   it('reads every field, skills in slot order', () => {
     const buffer = new SaveBuffer(buildSave(4000, [GELU]));
     expect(readHero(buffer, 1000, SOD, 'windows-1252')).toEqual(expected);
+  });
+
+  it('reads the owner as a player color, 0xFF as nobody', () => {
+    const bytes = buildSave(4000, [GELU]);
+    bytes[1000 - 169] = 3;
+    expect(readHeroOwner(new SaveBuffer(bytes), 1000)).toBe('green');
+    bytes[1000 - 169] = 0xff;
+    expect(readHeroOwner(new SaveBuffer(bytes), 1000)).toBeNull();
   });
 
   it('uses the older backpack position for Erathia and Armageddon saves', () => {
@@ -379,6 +398,15 @@ describe('rules', () => {
 });
 
 describe('save format', () => {
+  it('tells the same game version apart from another one', () => {
+    const sod = { kind: 'classic', major: 0x1c, minor: 0 } as const;
+    expect(isSameFormat(sod, { ...sod })).toBe(true);
+    expect(isSameFormat(sod, { ...sod, minor: 1 })).toBe(false);
+    expect(isSameFormat(sod, { kind: 'hornOfTheAbyss', major: 0x1c, minor: 0 })).toBe(false);
+    expect(isSameFormat({ kind: 'unknown' }, { kind: 'unknown' })).toBe(true);
+    expect(isSameFormat(sod, { kind: 'unknown' })).toBe(false);
+  });
+
   it('keeps a half-set spell flag when the spell itself is not changed', () => {
     const bytes = buildSave(4000, [GELU]);
     bytes[1000 + 143 + 54] = 1; // only the second flag of Slow, as found in a real save

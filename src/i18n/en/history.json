@@ -54,7 +54,7 @@
       },
       {
         "kind": "added",
-        "text": "Level and experience are linked: change the level and the experience follows."
+        "text": "Level and experience are linked: change the level and the experience follows; with \"Level follows the experience\" checked it is the other way round."
       },
       {
         "kind": "added",

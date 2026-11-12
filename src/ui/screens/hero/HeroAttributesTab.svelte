@@ -20,9 +20,9 @@
 
   let { hero = $bindable(), nameError }: Props = $props();
 
-  // The two boxes exclude each other, like in 2.05.
-  let autoExperience = $state(false);
-  let autoLevel = $state(false);
+  // By default the level is edited and the experience follows it;
+  // with the box checked it is the other way round.
+  let levelFromExperience = $state(false);
 
   const classOptions = $derived(
     HERO_CLASSES.map((heroClass) => ({
@@ -33,13 +33,13 @@
   );
 
   function onLevelChange(level: number): void {
-    if (autoExperience) {
+    if (!levelFromExperience) {
       hero.experience = experienceForLevel(level);
     }
   }
 
   function onExperienceChange(experience: number): void {
-    if (autoLevel) {
+    if (levelFromExperience) {
       hero.level = levelForExperience(experience);
     }
   }
@@ -65,7 +65,7 @@
         bind:value={hero.level}
         min={1}
         max={HERO_LIMITS.level}
-        disabled={autoLevel}
+        disabled={levelFromExperience}
         onchange={onLevelChange}
       />
       <NumberField
@@ -73,27 +73,15 @@
         bind:value={hero.experience}
         max={HERO_LIMITS.experience}
         bigStep={1000}
-        disabled={autoExperience}
+        disabled={!levelFromExperience}
         onchange={onExperienceChange}
       />
       <Checkbox
-        label={t('heroDialog.autoExperience')}
-        hint={t('heroDialog.autoExperienceHint')}
-        bind:checked={autoExperience}
+        label={t('heroDialog.levelFromExperience')}
+        hint={t('heroDialog.levelFromExperienceHint')}
+        bind:checked={levelFromExperience}
         onchange={(checked) => {
           if (checked) {
-            autoLevel = false;
-            onLevelChange(hero.level);
-          }
-        }}
-      />
-      <Checkbox
-        label={t('heroDialog.autoLevel')}
-        hint={t('heroDialog.autoLevelHint')}
-        bind:checked={autoLevel}
-        onchange={(checked) => {
-          if (checked) {
-            autoExperience = false;
             onExperienceChange(hero.experience);
           }
         }}
@@ -126,23 +114,25 @@
     </div>
   </Fieldset>
 
-  <Fieldset legend={t('heroDialog.manaAndMovement')}>
-    <div class="pairs">
-      <NumberField label={t('hero.mana')} bind:value={hero.mana} max={HERO_LIMITS.mana} />
-      <NumberField
-        label={t('hero.movementPoints')}
-        bind:value={hero.movementPoints}
-        max={HERO_LIMITS.movementPoints}
-        bigStep={100}
-      />
-      <NumberField
-        label={t('hero.maxMovementPoints')}
-        bind:value={hero.maxMovementPoints}
-        max={HERO_LIMITS.movementPoints}
-        bigStep={100}
-      />
-    </div>
-  </Fieldset>
+  <div class="wide">
+    <Fieldset legend={t('heroDialog.manaAndMovement')}>
+      <div class="row">
+        <NumberField label={t('hero.mana')} bind:value={hero.mana} max={HERO_LIMITS.mana} />
+        <NumberField
+          label={t('hero.movementPoints')}
+          bind:value={hero.movementPoints}
+          max={HERO_LIMITS.movementPoints}
+          bigStep={100}
+        />
+        <NumberField
+          label={t('hero.maxMovementPoints')}
+          bind:value={hero.maxMovementPoints}
+          max={HERO_LIMITS.movementPoints}
+          bigStep={100}
+        />
+      </div>
+    </Fieldset>
+  </div>
 </div>
 
 <style>
@@ -160,6 +150,16 @@
   .pairs {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .wide {
+    grid-column: 1 / -1;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: var(--space-3);
   }
 </style>

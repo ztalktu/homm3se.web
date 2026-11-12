@@ -22,6 +22,7 @@
   import { tooltip } from '../../actions/tooltip';
   import Button from '../../components/Button.svelte';
   import Checkbox from '../../components/Checkbox.svelte';
+  import FilterRow from '../../components/FilterRow.svelte';
   import AllSchoolsBadge from './AllSchoolsBadge.svelte';
   import SchoolScene from './SchoolScene.svelte';
   import SpellBookIcon from './SpellBookIcon.svelte';
@@ -131,21 +132,17 @@
     </div>
   </div>
 
-  <!-- Click shows only this purpose, clicking it again shows everything, another one switches. -->
-  <div class="filter" role="group" aria-label={t('heroDialog.spellFilter')}>
-    {#each SPELL_PURPOSES as purpose (purpose)}
-      <button
-        type="button"
-        class="purpose"
-        aria-pressed={filter === purpose}
-        class:dim={filter !== null && filter !== purpose}
-        onclick={() => (filter = filter === purpose ? null : purpose)}
-      >
-        <SpellPurposeIcon {purpose} size={20} />
-        {t(`spellPurpose.${purpose}`)}
-      </button>
-    {/each}
-  </div>
+  <FilterRow
+    label={t('heroDialog.spellFilter')}
+    options={SPELL_PURPOSES}
+    bind:value={filter}
+    columns={5}
+  >
+    {#snippet chip(purpose)}
+      <SpellPurposeIcon {purpose} size={20} />
+      {t(`spellPurpose.${purpose}`)}
+    {/snippet}
+  </FilterRow>
 
   <!-- Horizontal scroll only: overflow-x alone turns overflow-y to auto, and a 1px rounding
        gap then shows a vertical bar. -->
@@ -259,45 +256,6 @@
   }
 
   /* Five equal columns sized by the widest label, centred as a block. */
-  .filter {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    width: max-content;
-    max-width: 100%;
-    margin-inline: auto;
-    gap: var(--space-1) var(--space-2);
-  }
-
-  .purpose {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-height: 28px;
-    padding: 0 var(--space-2) 0 3px;
-    border: 1px solid var(--color-secondary-border);
-    border-radius: var(--radius-small);
-    background: transparent;
-    color: var(--color-text);
-    font-size: 13px;
-    cursor: pointer;
-    transition: background var(--transition-fast);
-  }
-
-  .purpose:hover {
-    background: var(--color-secondary-hover);
-    border-color: var(--color-frame);
-  }
-
-  .purpose[aria-pressed='true'] {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: var(--color-primary-text);
-  }
-
-  .purpose.dim {
-    opacity: 0.5;
-  }
-
   .grid-scroll {
     overflow-x: auto;
     overflow-y: hidden;
@@ -517,11 +475,5 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-  }
-
-  @media (max-width: 640px) {
-    .filter {
-      grid-template-columns: repeat(2, 1fr);
-    }
   }
 </style>

@@ -21,13 +21,12 @@
   import { EDITIONS, isAvailableIn, type Edition } from '../../data/editions';
   import { HERO_NAMES, type GameLanguage } from '../../data/heroNames';
   import {
-    artifactEffect,
+    artifactDescription,
     artifactName,
     creatureDescription,
     creatureName,
     editionName,
   } from '../../i18n/game.svelte';
-  import { t } from '../../i18n/index.svelte';
 
   const iconNames = Object.keys(ICONS) as IconName[];
 
@@ -70,7 +69,7 @@
     ARTIFACTS.map((item) => ({
       value: item.id,
       label: artifactName(item.id),
-      description: item.notRecommended ? t('artifact.notRecommended') : artifactEffect(item.id),
+      description: artifactDescription(item.id),
       disabled: !isAvailableIn(item.introducedIn, edition),
     })),
   );

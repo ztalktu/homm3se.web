@@ -6,6 +6,8 @@ export interface ComboboxItem<Value> {
   /** Extra words that should also match the search, e.g. town names. */
   keywords?: string | undefined;
   disabled?: boolean | undefined;
+  /** On a light gold background, e.g. an artifact the hero already carries. */
+  highlighted?: boolean | undefined;
   /** CSS colors of small round marks at the right end of the option, e.g. player colors. */
   marks?: readonly string[] | undefined;
 }

@@ -37,6 +37,18 @@
   --color-spell-removed-soft: rgb(224 122 31 / 25%);
   --color-scene-shade: rgb(20 10 4 / 70%);
 
+  /* Backpack: artifact category badges. Same in both themes. Attack, defense, adventure and
+     special reuse the spell purpose badges. */
+  --color-artifact-spell-power: #7a3a9e;
+  --color-artifact-knowledge: #6b7d2a;
+  --color-artifact-primary: #c9930f;
+  --color-artifact-luck-morale: #3d8a2c;
+  --color-artifact-skills: #a8476b;
+  --color-artifact-magic: #4b4fb0;
+  --color-artifact-immunity: #5b6770;
+  --color-artifact-troops: #c2621a;
+  --color-artifact-resources: #8c6d1f;
+
   /* Player flags, close to the game's own colors. Same in both themes. */
   --color-player-red: #d22b2b;
   --color-player-blue: #2f5fd0;
@@ -91,6 +103,9 @@
 
   --color-option-hover: #f3e6c2;
   --color-option-selected: #d8bf7e;
+  /* Light gold, between hover and selected: a carried item, not a dark selection. */
+  --color-option-highlighted: #e8d293;
+  --color-option-highlighted-hover: #dcc27a;
 
   --color-popover: #f1e4bf;
   --color-popover-text: #3a2210;
@@ -149,6 +164,8 @@
 
   --color-option-hover: #f6efdd;
   --color-option-selected: #e6d6ad;
+  --color-option-highlighted: #fbecc0;
+  --color-option-highlighted-hover: #f4dc9a;
 
   --color-popover: #ffffff;
   --color-popover-text: #2e2617;

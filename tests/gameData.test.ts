@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { LOCALES, setLocale } from '../src/app/preferences.svelte';
-import { ARTIFACTS } from '../src/data/artifacts';
+import { ARTIFACTS, ARTIFACT_CATEGORIES } from '../src/data/artifacts';
 import { CREATURES, TOWNS } from '../src/data/creatures';
 import { EDITIONS, EDITION_RULES, isAvailableIn } from '../src/data/editions';
 import { LEVEL_EXPERIENCE, MAX_LEVEL } from '../src/data/experience';
@@ -80,10 +80,17 @@ describe('reference data', () => {
     ).toEqual([16, 17]);
   });
 
-  it('flags the spell book, the spell scroll and the catapult as not recommended', () => {
-    expect(ARTIFACTS.filter((artifact) => artifact.notRecommended).map((a) => a.id)).toEqual([
-      0, 1, 3,
-    ]);
+  it('marks the spell book, the spell scroll and the catapult as unused', () => {
+    expect(ARTIFACTS.filter((artifact) => artifact.unused).map((a) => a.id)).toEqual([0, 1, 3]);
+  });
+
+  it('puts every artifact but the unused ones into a category, and every category is used', () => {
+    for (const artifact of ARTIFACTS) {
+      expect(artifact.category === undefined).toBe(Boolean(artifact.unused));
+    }
+    for (const category of ARTIFACT_CATEGORIES) {
+      expect(ARTIFACTS.some((artifact) => artifact.category === category)).toBe(true);
+    }
   });
 
   it('has an increasing experience table for levels 1–75', () => {
@@ -149,7 +156,7 @@ describe('game dictionaries', () => {
     for (const edition of EDITIONS) expect(texts[`edition.${edition}`]).toBeTruthy();
     for (const artifact of ARTIFACTS) {
       expect(texts[`artifact.${artifact.id}`]).toBeTruthy();
-      expect(artifactEffect(artifact.id) === undefined).toBe(Boolean(artifact.notRecommended));
+      expect(artifactEffect(artifact.id) === undefined).toBe(Boolean(artifact.unused));
     }
   });
 

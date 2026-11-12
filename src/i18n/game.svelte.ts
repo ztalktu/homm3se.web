@@ -3,6 +3,7 @@
  * in the interface language. Reactive inside Svelte templates, like `t()`.
  */
 import { preferences, type Locale } from '../app/preferences.svelte';
+import { ARTIFACTS } from '../data/artifacts';
 import type { Creature } from '../data/creatures';
 import type { Edition } from '../data/editions';
 import type { PlayerColor } from '../data/players';
@@ -37,10 +38,15 @@ export const spellName = (id: number): string => lookup(`spell.${id}`);
 /** Short description of what a spell does, shown as a hint in the spell list. */
 export const spellEffect = (id: number): string => lookup(`spellEffect.${id}`);
 
-/** Effect of an artifact, or undefined for the "not recommended" ones that have none. */
+/** Effect of an artifact, or undefined for the unused ones that have none. */
 export function artifactEffect(id: number): string | undefined {
   const texts: Record<string, string> = gameDictionaries[preferences.locale];
   return texts[`artifactEffect.${id}`];
+}
+
+/** Second line for an artifact in lists: its effect, or a warning for the unused ones. */
+export function artifactDescription(id: number): string | undefined {
+  return ARTIFACTS[id]?.unused ? t('joke.notRecommended') : artifactEffect(id);
 }
 
 /** Second line for a creature in lists: town, level and whether it is upgraded. */

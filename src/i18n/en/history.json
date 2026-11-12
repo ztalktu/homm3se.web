@@ -70,6 +70,14 @@
       },
       {
         "kind": "added",
+        "text": "Every artifact in the backpack list has a category badge: attack, defense, power, knowledge, combined, luck and morale, skills, magic, immunity, troops, adventure, resources, special. The same badges filter the list, and a \"+\" button right in the list puts an artifact into the backpack without closing the list. What the hero already carries is highlighted."
+      },
+      {
+        "kind": "added",
+        "text": "The artifact list shows only what the save's edition knows. The spell book, the spell scroll and the catapult are gone from it altogether: the game glitches with them in the backpack."
+      },
+      {
+        "kind": "added",
         "text": "Movement points left today and movement per day: both are editable."
       },
       {

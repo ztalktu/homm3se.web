@@ -9,6 +9,8 @@
   import { t } from '../../i18n/index.svelte';
   import { filterOptions, normalizeSearchText } from '../logic/filterOptions';
   import Icon from './Icon.svelte';
+  import type { IconName } from './icons';
+  import type { Snippet } from 'svelte';
   import type { ComboboxItem } from './combobox';
 
   interface Props {
@@ -28,6 +30,20 @@
     onpick?: ((item: ComboboxItem<Value>) => void) | undefined;
     /** A click on a greyed-out option: lets the screen explain why it is not available. */
     ondisabledpick?: ((item: ComboboxItem<Value>) => void) | undefined;
+    /** Drawn at the left of each option, e.g. a category badge. */
+    optionIcon?: Snippet<[ComboboxItem<Value>]> | undefined;
+    /**
+     * A button at the right of each option that acts on it at once (adds it somewhere, say)
+     * without picking it and without closing the list, so several can be handled in a row.
+     */
+    optionAction?: OptionAction<Value> | undefined;
+  }
+
+  interface OptionAction<Item> {
+    icon: IconName;
+    label: string;
+    disabled?: boolean | undefined;
+    run: (item: ComboboxItem<Item>) => void;
   }
 
   let {
@@ -44,6 +60,8 @@
     onchange,
     onpick,
     ondisabledpick,
+    optionIcon,
+    optionAction,
   }: Props = $props();
 
   const POPUP_MAX_HEIGHT_PX = 300;
@@ -141,9 +159,25 @@
     };
     window.addEventListener('scroll', onScroll, true);
     window.addEventListener('resize', placePopup);
+    // An option action may move the field without any scroll (the dialog grows and re-centres
+    // while the list stays open): then keep the list under it. Other lists close on pick.
+    let frame = 0;
+    let lastTop = input?.getBoundingClientRect().top;
+    const follow = (): void => {
+      const top = input?.getBoundingClientRect().top;
+      if (top !== lastTop) {
+        lastTop = top;
+        placePopup();
+      }
+      frame = requestAnimationFrame(follow);
+    };
+    if (optionAction) {
+      frame = requestAnimationFrame(follow);
+    }
     return () => {
       window.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('resize', placePopup);
+      cancelAnimationFrame(frame);
     };
   });
 
@@ -298,22 +332,45 @@
               class:active={index === activeIndex}
               aria-selected={item.value === value}
               aria-disabled={item.disabled ? 'true' : undefined}
+              class:highlighted={item.highlighted}
               onmousedown={(event) => event.preventDefault()}
               onmousemove={() => !item.disabled && (activeIndex = index)}
+              class:with-extras={optionIcon !== undefined || optionAction !== undefined}
               onclick={() => choose(item)}
             >
-              <span class="option-label">
-                {item.label}
-                {#if item.marks?.length}
-                  <span class="marks" aria-hidden="true">
-                    {#each item.marks as mark, markIndex (markIndex)}
-                      <span class="mark" style:background={mark}></span>
-                    {/each}
-                  </span>
+              {#if optionIcon}
+                {@render optionIcon(item)}
+              {/if}
+              <span class="option-text">
+                <span class="option-label">
+                  {item.label}
+                  {#if item.marks?.length}
+                    <span class="marks" aria-hidden="true">
+                      {#each item.marks as mark, markIndex (markIndex)}
+                        <span class="mark" style:background={mark}></span>
+                      {/each}
+                    </span>
+                  {/if}
+                </span>
+                {#if item.description}
+                  <span class="option-description">{item.description}</span>
                 {/if}
               </span>
-              {#if item.description}
-                <span class="option-description">{item.description}</span>
+              {#if optionAction && !item.disabled}
+                <button
+                  type="button"
+                  class="option-action"
+                  tabindex="-1"
+                  aria-label={`${optionAction.label}: ${item.label}`}
+                  disabled={optionAction.disabled}
+                  onclick={(event) => {
+                    event.stopPropagation();
+                    optionAction.run(item);
+                  }}
+                  use:tooltip={optionAction.label}
+                >
+                  <Icon name={optionAction.icon} size={16} />
+                </button>
               {/if}
             </li>
           {/each}
@@ -379,8 +436,51 @@
     cursor: pointer;
   }
 
+  li.with-extras {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .option-action {
+    flex: none;
+    display: flex;
+    padding: var(--space-1);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-small);
+    background: transparent;
+    color: var(--color-popover-text);
+    cursor: pointer;
+  }
+
+  .option-action:hover:not(:disabled) {
+    background: var(--color-option-selected);
+    border-color: var(--color-frame);
+  }
+
+  .option-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  .option-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+  }
+
   li.active {
     background: var(--color-option-hover);
+  }
+
+  li.highlighted {
+    background: var(--color-option-highlighted);
+  }
+
+  /* Under the pointer it stays gold, only a shade deeper. */
+  li.highlighted.active {
+    background: var(--color-option-highlighted-hover);
   }
 
   li[aria-selected='true'] {

@@ -1,18 +1,18 @@
 <script lang="ts">
   import { session } from '../../../app/session.svelte';
-  import { showToast } from '../../../app/toasts.svelte';
   import type { Hero } from '../../../core/hero';
   import { COMMON_HERO_FIELDS } from '../../../core/layouts';
-  import { BLOCKED_ARTIFACT_IDS, artifactAllowed } from '../../../core/rules';
-  import { ARTIFACTS } from '../../../data/artifacts';
+  import { artifactAllowed } from '../../../core/rules';
+  import { ARTIFACTS, ARTIFACT_CATEGORIES, type ArtifactCategory } from '../../../data/artifacts';
   import { isAvailableIn } from '../../../data/editions';
-  import { artifactEffect, artifactName } from '../../../i18n/game.svelte';
+  import { artifactDescription, artifactName } from '../../../i18n/game.svelte';
   import { t } from '../../../i18n/index.svelte';
   import { tooltip } from '../../actions/tooltip';
-  import Button from '../../components/Button.svelte';
   import Combobox from '../../components/Combobox.svelte';
+  import FilterRow from '../../components/FilterRow.svelte';
   import Icon from '../../components/Icon.svelte';
   import type { ComboboxItem } from '../../components/combobox';
+  import ArtifactCategoryIcon from './ArtifactCategoryIcon.svelte';
 
   interface Props {
     hero: Hero;
@@ -21,36 +21,39 @@
   let { hero = $bindable() }: Props = $props();
 
   let toAdd: number | null = $state(null);
+  let search = $state('');
+  let filter: ArtifactCategory | null = $state(null);
   const max = COMMON_HERO_FIELDS.backpackSlots;
   const full = $derived(hero.backpack.length >= max);
 
-  function describe(id: number): string | undefined {
-    return ARTIFACTS[id]?.notRecommended ? t('joke.notRecommended') : artifactEffect(id);
-  }
+  const carried = $derived(new Set(hero.backpack));
 
   const items: ComboboxItem<number>[] = $derived(
-    ARTIFACTS.map((artifact) => ({
+    // Unused artifacts and those the save's edition does not know are left out altogether.
+    ARTIFACTS.filter(
+      (artifact) =>
+        !artifact.unused &&
+        isAvailableIn(artifact.introducedIn, session.edition) &&
+        (filter === null || artifact.category === filter),
+    ).map((artifact) => ({
       value: artifact.id,
       label: artifactName(artifact.id),
-      description: describe(artifact.id),
-      // The spell scroll stays visible: picking it gets the old telling-off instead.
-      disabled:
-        !BLOCKED_ARTIFACT_IDS.includes(artifact.id) &&
-        !isAvailableIn(artifact.introducedIn, session.edition),
+      description: artifactDescription(artifact.id),
+      highlighted: carried.has(artifact.id),
     })),
   );
 
-  function onPick(id: number | null): void {
-    if (id !== null && BLOCKED_ARTIFACT_IDS.includes(id)) {
-      showToast(t('joke.spellScroll'), { kind: 'warning' });
-      toAdd = null;
+  function put(id: number): void {
+    if (!full && artifactAllowed(id, session.edition)) {
+      hero.backpack.push(id);
     }
   }
 
-  function add(): void {
-    if (toAdd !== null && !full && artifactAllowed(toAdd, session.edition)) {
-      hero.backpack.push(toAdd);
-    }
+  /** Clicking or Enter on an option puts it in at once; the field stays empty for the next one. */
+  function onPick(item: ComboboxItem<number>): void {
+    put(item.value);
+    toAdd = null;
+    search = '';
   }
 
   function remove(index: number): void {
@@ -65,11 +68,41 @@
   }
 </script>
 
+<FilterRow
+  label={t('heroDialog.artifactFilter')}
+  options={ARTIFACT_CATEGORIES}
+  bind:value={filter}
+  columns={7}
+  even={false}
+  hint={(category) => t(`artifactCategoryHint.${category}`)}
+>
+  {#snippet chip(category)}
+    <ArtifactCategoryIcon {category} size={20} />
+    {t(`artifactCategory.${category}`)}
+  {/snippet}
+</FilterRow>
+
 <div class="add">
-  <Combobox label={t('heroDialog.artifactToAdd')} {items} bind:value={toAdd} onchange={onPick} />
-  <Button icon="plus" disabled={toAdd === null || full} onclick={add}>
-    {t('heroDialog.addArtifact')}
-  </Button>
+  <Combobox
+    label={t('heroDialog.artifactToAdd')}
+    {items}
+    bind:value={toAdd}
+    bind:text={search}
+    onpick={onPick}
+    optionAction={{
+      icon: 'plus',
+      label: t('heroDialog.addArtifact'),
+      disabled: full,
+      run: (item) => put(item.value),
+    }}
+  >
+    {#snippet optionIcon(item)}
+      {@const category = ARTIFACTS[item.value]?.category}
+      {#if category}
+        <ArtifactCategoryIcon {category} />
+      {/if}
+    {/snippet}
+  </Combobox>
 </div>
 
 <h3>{t('heroDialog.backpack', { count: hero.backpack.length, max })}</h3>
@@ -78,9 +111,13 @@
 {:else}
   <ul>
     {#each hero.backpack as artifactId, index (index)}
+      {@const category = ARTIFACTS[artifactId]?.category}
       <li>
+        {#if category}
+          <span class="icon"><ArtifactCategoryIcon {category} /></span>
+        {/if}
         <span class="name">{artifactName(artifactId)}</span>
-        <span class="effect">{describe(artifactId)}</span>
+        <span class="effect">{artifactDescription(artifactId)}</span>
         <button
           type="button"
           class="remove"
@@ -99,9 +136,7 @@
 <style>
   .add {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--space-2);
-    align-items: end;
+    margin-top: var(--space-3);
   }
 
   h3 {
@@ -121,7 +156,7 @@
 
   li {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: 22px minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
     column-gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
@@ -132,18 +167,25 @@
     border-bottom: 0;
   }
 
-  .name {
+  .icon {
     grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: center;
+    display: flex;
+  }
+
+  .name {
+    grid-column: 2;
   }
 
   .effect {
-    grid-column: 1;
+    grid-column: 2;
     font-size: 12px;
     color: var(--color-text-muted);
   }
 
   .remove {
-    grid-column: 2;
+    grid-column: 3;
     grid-row: 1 / span 2;
     align-self: center;
     display: flex;

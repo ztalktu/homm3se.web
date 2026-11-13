@@ -4,7 +4,7 @@
  */
 import { preferences, type Locale } from '../app/preferences.svelte';
 import { ARTIFACTS } from '../data/artifacts';
-import type { Creature } from '../data/creatures';
+import type { Creature, Town } from '../data/creatures';
 import type { Edition } from '../data/editions';
 import type { PlayerColor } from '../data/players';
 import type { SkillLevel } from '../data/skills';
@@ -29,6 +29,7 @@ function lookup(key: string): string {
 export const editionName = (edition: Edition): string => lookup(`edition.${edition}`);
 export const playerColorName = (color: PlayerColor): string => lookup(`playerColor.${color}`);
 export const heroClassName = (id: number): string => lookup(`heroClass.${id}`);
+export const townName = (town: Town): string => lookup(`town.${town}`);
 export const creatureName = (id: number): string => lookup(`creature.${id}`);
 export const artifactName = (id: number): string => lookup(`artifact.${id}`);
 export const skillName = (id: number): string => lookup(`skill.${id}`);
@@ -62,7 +63,7 @@ export function creatureDescription(creature: Creature): string {
       const level = creature.upgraded
         ? t('creature.levelUpgraded', { level: creature.level ?? 0 })
         : t('creature.level', { level: creature.level ?? 0 });
-      return creature.town ? `${lookup(`town.${creature.town}`)} · ${level}` : level;
+      return creature.town ? `${townName(creature.town)} · ${level}` : level;
     }
   }
 }

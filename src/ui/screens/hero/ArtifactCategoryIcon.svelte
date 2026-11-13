@@ -104,13 +104,3 @@
     {/if}
   </Badge>
 {/if}
-
-<style>
-  .cut {
-    fill: var(--badge);
-  }
-
-  .cut-stroke {
-    stroke: var(--badge);
-  }
-</style>

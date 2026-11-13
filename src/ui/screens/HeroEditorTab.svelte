@@ -1,10 +1,12 @@
 <script lang="ts">
   import { currentHero, currentHeroOwner, searchHero, session } from '../../app/session.svelte';
+  import { creatureGroup } from '../../data/creatures';
+  import { classTown } from '../../data/heroClasses';
   import { KNOWN_HERO_NAMES } from '../../data/heroNames';
   import { PLAYER_COLORS } from '../../data/players';
   import type { HeroOwner } from '../../core/hero';
   import { tooltip } from '../actions/tooltip';
-  import { creatureName, heroClassName, playerColorName } from '../../i18n/game.svelte';
+  import { creatureName, heroClassName, playerColorName, townName } from '../../i18n/game.svelte';
   import { t } from '../../i18n/index.svelte';
   import Button from '../components/Button.svelte';
   import Combobox from '../components/Combobox.svelte';
@@ -13,6 +15,7 @@
   import type { ComboboxItem } from '../components/combobox';
   import { filePercent, formatNumber } from '../format';
   import HeroDialog from './HeroDialog.svelte';
+  import TownIcon from './hero/TownIcon.svelte';
 
   let dialogOpen = $state(false);
 
@@ -62,6 +65,7 @@
 
   const hero = $derived(currentHero());
   const owner = $derived(currentHeroOwner());
+  const heroTown = $derived(hero ? classTown(hero.classId) : undefined);
   const percent = $derived(
     session.save && session.heroMatch
       ? filePercent(session.heroMatch.position, session.save.buffer.length)
@@ -125,7 +129,11 @@
               {ownerLabel(owner)}
             </dd>
             <dt>{t('hero.class')}</dt>
-            <dd>{heroClassName(hero.classId)}</dd>
+            <dd class="hero-class">
+              {#if heroTown}<TownIcon group={heroTown} size={18} />{/if}
+              {heroClassName(hero.classId)}
+              {#if heroTown}<span class="muted">· {townName(heroTown)}</span>{/if}
+            </dd>
             <dt>{t('hero.level')}</dt>
             <dd>{hero.level}</dd>
             <dt>{t('hero.experience')}</dt>
@@ -145,7 +153,10 @@
               {#each hero.troops as troop, slot (slot)}
                 <li>
                   {#if troop}
-                    <span>{creatureName(troop.creatureId)}</span>
+                    <span class="troop">
+                      <TownIcon group={creatureGroup(troop.creatureId)} size={18} />
+                      {creatureName(troop.creatureId)}
+                    </span>
                     <span class="count">{formatNumber(troop.count)}</span>
                   {:else}
                     <span class="muted">{t('hero.emptySlot')}</span>
@@ -239,6 +250,13 @@
     margin-right: var(--space-2);
   }
 
+  .troop {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    vertical-align: middle;
+  }
+
   .count {
     color: var(--color-label);
     font-variant-numeric: tabular-nums;
@@ -248,7 +266,8 @@
     color: var(--color-text-muted);
   }
 
-  .player {
+  .player,
+  .hero-class {
     display: flex;
     align-items: center;
     gap: var(--space-2);

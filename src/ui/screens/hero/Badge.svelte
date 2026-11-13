@@ -49,4 +49,13 @@
     width: 70%;
     height: 70%;
   }
+
+  /* Cut-outs in a glyph (eyes, nostrils, gaps) take the badge colour. */
+  svg :global(.cut) {
+    fill: var(--badge);
+  }
+
+  svg :global(.cut-stroke) {
+    stroke: var(--badge);
+  }
 </style>

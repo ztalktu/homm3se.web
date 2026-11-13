@@ -32,8 +32,6 @@
     onchange?: ((value: Value | null) => void) | undefined;
     /** An option picked from the list (click or Enter), even the one already selected. */
     onpick?: ((item: ComboboxItem<Value>) => void) | undefined;
-    /** A click on a greyed-out option: lets the screen explain why it is not available. */
-    ondisabledpick?: ((item: ComboboxItem<Value>) => void) | undefined;
     /** Drawn at the left of each option, e.g. a category badge. */
     optionIcon?: Snippet<[ComboboxItem<Value>]> | undefined;
     /**
@@ -65,7 +63,6 @@
     before,
     onchange,
     onpick,
-    ondisabledpick,
     optionIcon,
     optionAction,
   }: Props = $props();
@@ -195,7 +192,6 @@
 
   function choose(item: ComboboxItem<Value>): void {
     if (item.disabled) {
-      ondisabledpick?.(item);
       return;
     }
     text = item.label;

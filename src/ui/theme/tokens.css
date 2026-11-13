@@ -37,6 +37,19 @@
   --color-spell-removed-soft: rgb(224 122 31 / 25%);
   --color-scene-shade: rgb(20 10 4 / 70%);
 
+  /* Army: town badges, the colour that rules each town's screen in the game. Same in both themes. */
+  --color-town-castle: #3567a8;
+  --color-town-rampart: #3e7d2f;
+  --color-town-tower: #5d7c9b;
+  --color-town-inferno: #a83220;
+  --color-town-necropolis: #4b5446;
+  --color-town-dungeon: #4b2d66;
+  --color-town-stronghold: #a3622a;
+  --color-town-fortress: #55643a;
+  --color-town-conflux: #6a55a5;
+  --color-town-neutral: #7a7468;
+  --color-creature-war-machine: #c2621a;
+
   /* Skill level stripes. Same in both themes. */
   --color-skill-level: #2b67ad;
 

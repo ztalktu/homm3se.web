@@ -93,6 +93,15 @@ describe('reference data', () => {
     }
   });
 
+  it('gives every town two hero classes, might then magic', () => {
+    expect(HERO_CLASSES[0]!.town).toBe('castle');
+    expect(HERO_CLASSES[9]!.town).toBe('necropolis');
+    expect(HERO_CLASSES[17]!.town).toBe('conflux');
+    for (const town of TOWNS.filter((town) => town !== 'neutral')) {
+      expect(HERO_CLASSES.filter((heroClass) => heroClass.town === town)).toHaveLength(2);
+    }
+  });
+
   it('has an increasing experience table for levels 1–75', () => {
     expect(MAX_LEVEL).toBe(75);
     expect(LEVEL_EXPERIENCE[0]).toBe(0);

@@ -13,7 +13,7 @@ export const TOWNS = [
   'conflux',
   'neutral',
 ] as const;
-type Town = (typeof TOWNS)[number];
+export type Town = (typeof TOWNS)[number];
 
 /**
  * - regular: a town or neutral creature with a level;
@@ -1197,3 +1197,14 @@ export const CREATURES: readonly Creature[] = [
   { id: 171, introducedIn: 'inTheWakeOfGods', kind: 'special' },
   { id: 172, introducedIn: 'inTheWakeOfGods', kind: 'special' },
 ];
+
+/** What a creature's badge shows: its town, or its kind when it has none. */
+export type CreatureGroup = Town | 'warMachine' | 'special';
+
+export function creatureGroup(creatureId: number | undefined): CreatureGroup | undefined {
+  const creature = creatureId === undefined ? undefined : CREATURES[creatureId];
+  if (creature?.kind === 'warMachine' || creature?.kind === 'special') {
+    return creature.kind;
+  }
+  return creature?.town;
+}

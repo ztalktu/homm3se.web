@@ -82,6 +82,14 @@
       },
       {
         "kind": "added",
+        "text": "In the army every creature has its town's badge, in the list and next to the field, on the town's colour. The list holds only the creatures the save's edition knows; the hero's own town comes first, level 1 to 7."
+      },
+      {
+        "kind": "added",
+        "text": "The found hero shows the town of their class, and each creature in their army shows its town."
+      },
+      {
+        "kind": "added",
         "text": "Movement points left today and movement per day: both are editable."
       },
       {

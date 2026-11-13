@@ -50,7 +50,7 @@
     />
   {:else if purpose === 'control'}
     <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" fill="currentColor" />
-    <circle cx="12" cy="12" r="3.4" class="pupil" />
+    <circle cx="12" cy="12" r="3.4" class="cut" />
   {:else if purpose === 'healing'}
     <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="currentColor" />
   {:else if purpose === 'battlefield'}
@@ -78,9 +78,3 @@
     <path d="M12 4l2.5 8L12 20l-2.5-8z" fill="currentColor" />
   {/if}
 </Badge>
-
-<style>
-  .pupil {
-    fill: var(--badge);
-  }
-</style>

@@ -9,6 +9,7 @@
   import ArtifactCategoryIcon from './ArtifactCategoryIcon.svelte';
   import Badge from './Badge.svelte';
   import { SCHOOL_GLYPHS, fillBadge } from './schoolGlyphs';
+  import { cannon, skull } from './SharedGlyphs.svelte';
   import SpellPurposeIcon from './SpellPurposeIcon.svelte';
 
   type OwnGlyph =
@@ -33,7 +34,7 @@
   const ADVENTURE = 'var(--color-spell-adventure)';
   const COMBAT = 'var(--color-spell-damage)';
   const DEFENSE = 'var(--color-spell-protection)';
-  const MACHINES = 'var(--color-artifact-troops)';
+  const MACHINES = 'var(--color-creature-war-machine)';
   const SPIRIT = 'var(--color-spell-healing)';
   const MAGIC = 'var(--color-artifact-magic)';
 
@@ -161,12 +162,7 @@
         <circle cx="6" cy="20.5" r="1.9" fill="currentColor" />
         <circle cx="18" cy="20.5" r="1.9" fill="currentColor" />
       {:else if glyph.own === 'cannon'}
-        <path
-          d="M2.5 14.5 17 6.2l2.6 4.6L5.1 19.1zM17 6.2l2.3-1.3 2.6 4.6-2.3 1.3z"
-          fill="currentColor"
-        />
-        <circle cx="10" cy="17" r="4.6" fill="currentColor" />
-        <circle cx="10" cy="17" r="1.5" class="cut" />
+        {@render cannon()}
       {:else if glyph.own === 'eagle'}
         <path
           d="M3.5 21c0-7.5 4.2-13.6 11.4-14.8 3-.5 5.6.9 6.6 3.1l-3.6 1.6c-.3 1.6-1.5 2.6-3.1 2.6 0 3.2-2.2 6.3-5.3 7.5z"
@@ -174,14 +170,7 @@
         />
         <circle cx="15.6" cy="8.8" r="1.2" class="cut" />
       {:else if glyph.own === 'skull'}
-        <path
-          d="M12 2.5c-5 0-8.5 3.4-8.5 8 0 2.6 1.2 4.6 3 5.7V20.5h11v-4.3c1.8-1.1 3-3.1 3-5.7 0-4.6-3.5-8-8.5-8z"
-          fill="currentColor"
-        />
-        <circle cx="8.6" cy="11" r="2.1" class="cut" />
-        <circle cx="15.4" cy="11" r="2.1" class="cut" />
-        <path d="M12 13.6l-1.2 2.2h2.4z" class="cut" />
-        <path d="M10 18.2v2.3M12 18.2v2.3M14 18.2v2.3" stroke-width="1.1" class="cut-stroke" />
+        {@render skull()}
       {:else if glyph.own === 'coins'}
         <ellipse cx="12" cy="5.5" rx="7" ry="2.6" fill="currentColor" />
         <path
@@ -223,13 +212,3 @@
 {:else}
   <Badge {size} />
 {/if}
-
-<style>
-  .cut {
-    fill: var(--badge);
-  }
-
-  .cut-stroke {
-    stroke: var(--badge);
-  }
-</style>

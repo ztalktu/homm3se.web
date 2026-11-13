@@ -5,11 +5,20 @@
 
 import { EDITIONS, isAvailableIn, type Edition } from '../data/editions';
 import { KNOWN_HERO_NAMES } from '../data/heroNames';
+import { PLAYER_COLORS, type PlayerColor } from '../data/players';
 import { requiredEdition } from '../core/editionDetection';
 import { readHero, readHeroOwner, writeHero, type Hero, type HeroOwner } from '../core/hero';
 import { findHero, findHeroNames, findNextHero, type HeroMatch } from '../core/heroSearch';
-import { heroLayoutAt, RESOURCES, type HeroLayout, type Resource } from '../core/layouts';
 import {
+  heroLayoutAt,
+  OTHER_RESOURCES,
+  playerBlockFor,
+  RESOURCES,
+  type HeroLayout,
+  type OtherResource,
+} from '../core/layouts';
+import {
+  findPlayerTreasuries,
   findResources,
   readResources,
   writeResources,
@@ -28,8 +37,6 @@ import { t } from '../i18n/index.svelte';
 import { readJson, writeJson } from '../storage/localStore';
 import { SaveCancelledError, saveBytes } from './fileAccess';
 import { showToast } from './toasts.svelte';
-
-type OtherResource = Exclude<Resource, 'gold'>;
 
 interface StoredSession {
   version: 1;
@@ -75,6 +82,16 @@ interface Session {
    * when the filter is off. The search itself finds heroes of any owner.
    */
   ownerFilter: HeroOwner | undefined;
+  /**
+   * Gold positions of the eight players' treasuries in color order, or null when the save's
+   * game has no known player block or the block was not found.
+   */
+  playerTreasuries: readonly number[] | null;
+  /**
+   * True: the treasury is searched by the amounts of resources. False: it is picked by the
+   * player's color from `playerTreasuries`. Starts false whenever the save has the block.
+   */
+  resourceSearchByAmount: boolean;
   goldQuery: number;
   /** Other resources ticked to narrow the search, with their current amounts. */
   resourceFilters: Record<OtherResource, { enabled: boolean; amount: number }>;
@@ -103,6 +120,8 @@ export const session: Session = $state({
   heroMatchName: null,
   heroNamesInSave: null,
   ownerFilter: undefined,
+  playerTreasuries: null,
+  resourceSearchByAmount: true,
   goldQuery: 0,
   resourceFilters: emptyFilters(),
   goldPosition: null,
@@ -138,6 +157,9 @@ export async function openSaveFile(file: File): Promise<void> {
       session.heroName = '';
     }
     session.goldPosition = null;
+    const playerBlock = playerBlockFor(save.format);
+    session.playerTreasuries = playerBlock && findPlayerTreasuries(save.buffer, playerBlock);
+    session.resourceSearchByAmount = session.playerTreasuries === null;
     applyEditionFromFormat(save);
     session.revision += 1;
     if (!isEditingTested(save.format)) {
@@ -230,6 +252,11 @@ export function currentHero(): Hero | null {
  */
 export function originalHero(): Hero | null {
   return readFoundHero('original');
+}
+
+/** Owners of the known heroes in the open save (null: free heroes), each at least once. */
+export function heroOwnersInSave(): HeroOwner[] {
+  return [...(session.heroNamesInSave?.values() ?? [])].flat();
 }
 
 /** Color of the player who owns the found hero; null when nobody does or nothing is found. */
@@ -350,8 +377,8 @@ export function searchResources(next: boolean): void {
     return;
   }
   const also: Partial<Record<OtherResource, number>> = {};
-  for (const resource of RESOURCES) {
-    if (resource !== 'gold' && session.resourceFilters[resource].enabled) {
+  for (const resource of OTHER_RESOURCES) {
+    if (session.resourceFilters[resource].enabled) {
       also[resource] = session.resourceFilters[resource].amount;
     }
   }
@@ -369,6 +396,39 @@ export function searchResources(next: boolean): void {
   }
   session.goldPosition = position;
   session.revision += 1;
+}
+
+/** The player whose treasury is shown, when it was picked by color; null otherwise. */
+export function selectedTreasuryColor(): PlayerColor | null {
+  const { playerTreasuries, goldPosition } = session;
+  const index =
+    playerTreasuries && goldPosition !== null ? playerTreasuries.indexOf(goldPosition) : -1;
+  return PLAYER_COLORS[index] ?? null;
+}
+
+/** Like the other single-choice filters: a click shows the player's treasury, a second hides it. */
+export function selectTreasuryByColor(color: PlayerColor): void {
+  const position = session.playerTreasuries?.[PLAYER_COLORS.indexOf(color)];
+  if (position === undefined) {
+    return;
+  }
+  session.goldPosition = selectedTreasuryColor() === color ? null : position;
+  session.revision += 1;
+}
+
+/** Players worth a color button: they own heroes in the save or have resources. */
+export function playersWithTreasury(): PlayerColor[] {
+  void session.revision;
+  const { save, playerTreasuries } = session;
+  if (!save || !playerTreasuries) {
+    return [];
+  }
+  const owners = heroOwnersInSave();
+  return PLAYER_COLORS.filter((color, index) => {
+    const gold = playerTreasuries[index];
+    const amounts = gold === undefined ? null : readResources(save.buffer, gold);
+    return owners.includes(color) || RESOURCES.some((resource) => (amounts?.[resource] ?? 0) > 0);
+  });
 }
 
 export function applyResources(amounts: ResourceAmounts): void {

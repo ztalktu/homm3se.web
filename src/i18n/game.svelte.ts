@@ -6,7 +6,7 @@ import { preferences, type Locale } from '../app/preferences.svelte';
 import { ARTIFACTS } from '../data/artifacts';
 import type { Creature, Town } from '../data/creatures';
 import type { Edition } from '../data/editions';
-import type { PlayerColor } from '../data/players';
+import { PLAYER_COLORS, type PlayerColor } from '../data/players';
 import type { SkillLevel } from '../data/skills';
 import enGame from './en/game.json';
 import { t } from './index.svelte';
@@ -28,6 +28,16 @@ function lookup(key: string): string {
 
 export const editionName = (edition: Edition): string => lookup(`edition.${edition}`);
 export const playerColorName = (color: PlayerColor): string => lookup(`playerColor.${color}`);
+
+/** "Red (player 1)", or "free" for a hero nobody owns. */
+export function playerLabel(color: PlayerColor | null): string {
+  return color
+    ? t('hero.playerColor', {
+        color: playerColorName(color),
+        number: PLAYER_COLORS.indexOf(color) + 1,
+      })
+    : t('hero.noPlayer');
+}
 export const heroClassName = (id: number): string => lookup(`heroClass.${id}`);
 export const townName = (town: Town): string => lookup(`town.${town}`);
 export const creatureName = (id: number): string => lookup(`creature.${id}`);

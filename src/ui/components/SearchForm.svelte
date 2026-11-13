@@ -17,15 +17,27 @@
     percent: number | null;
     positionText: string;
     onfind: (next: boolean) => void;
+    /** Turns the buttons off, and Enter in a field no longer searches. */
+    disabled?: boolean | undefined;
     children: Snippet;
   }
 
-  let { legend, findLabel, findNextLabel, percent, positionText, onfind, children }: Props =
-    $props();
+  let {
+    legend,
+    findLabel,
+    findNextLabel,
+    percent,
+    positionText,
+    onfind,
+    disabled = false,
+    children,
+  }: Props = $props();
 
   function onsubmit(event: SubmitEvent): void {
     event.preventDefault();
-    onfind(false);
+    if (!disabled) {
+      onfind(false);
+    }
   }
 </script>
 
@@ -33,9 +45,9 @@
   <form class="search" {onsubmit}>
     {@render children()}
     <div class="buttons">
-      <Button type="submit" variant="primary" icon="search">{findLabel}</Button>
+      <Button type="submit" variant="primary" icon="search" {disabled}>{findLabel}</Button>
       {#if findNextLabel}
-        <Button icon="search" disabled={percent === null} onclick={() => onfind(true)}>
+        <Button icon="search" disabled={disabled || percent === null} onclick={() => onfind(true)}>
           {findNextLabel}
         </Button>
       {/if}

@@ -10,7 +10,12 @@ import {
   type Hero,
 } from '../src/core/hero';
 import { findHero, findHeroNames, findNextHero } from '../src/core/heroSearch';
-import { findResources, readResources, writeResources } from '../src/core/resources';
+import {
+  findPlayerTreasuries,
+  findResources,
+  readResources,
+  writeResources,
+} from '../src/core/resources';
 import { artifactAllowed, creatureProblem, validateHero } from '../src/core/rules';
 import { SaveBuffer } from '../src/core/saveBuffer';
 import {
@@ -26,8 +31,9 @@ import {
   isEditingTested,
   isSameFormat,
   minimumEditionFor,
+  type SaveFormat,
 } from '../src/core/saveFormat';
-import { heroLayoutAt, LAYOUTS, layoutFor } from '../src/core/layouts';
+import { heroLayoutAt, LAYOUTS, layoutFor, playerBlockFor } from '../src/core/layouts';
 import { ascii, buildSave } from './fixtures/syntheticSave';
 
 const SOD = LAYOUTS.shadowOfDeath.hero;
@@ -304,6 +310,42 @@ describe('resources', () => {
     expect(() => writeResources(buffer, 2000, { ...amounts, gold: 1_000_000_000 })).toThrow(
       RangeError,
     );
+  });
+
+  it('finds the block of player treasuries by color', () => {
+    const recordSize = 143;
+    const bytes = new Uint8Array(6000).fill(0xff);
+    const view = new DataView(bytes.buffer);
+    // A run of color bytes with impossible resources must not count as the block.
+    for (const start of [1000, 3000]) {
+      for (let color = 0; color < 8; color += 1) {
+        const record = start + color * recordSize;
+        bytes[record] = color;
+        for (let resource = 0; resource < 7; resource += 1) {
+          view.setUint32(
+            record + 98 + resource * 4,
+            start === 1000 ? 0xfffffff0 : color * 100,
+            true,
+          );
+        }
+      }
+    }
+    const buffer = new SaveBuffer(bytes);
+    const golds = findPlayerTreasuries(buffer, { recordSize, gold: 122 });
+    expect(golds).toEqual([0, 1, 2, 3, 4, 5, 6, 7].map((color) => 3000 + color * 143 + 122));
+    expect(readResources(buffer, golds?.[2] ?? 0)?.gold).toBe(200);
+    expect(findPlayerTreasuries(buffer, { recordSize: 145, gold: 122 })).toBeNull();
+  });
+
+  it('knows the player block only for the games whose saves have shown it', () => {
+    const recordSize = (format: SaveFormat) => playerBlockFor(format)?.recordSize ?? null;
+    expect(recordSize({ kind: 'classic', major: 16, minor: 0 })).toBe(143);
+    expect(recordSize({ kind: 'hdEdition', major: 18, minor: 0 })).toBe(143);
+    expect(recordSize({ kind: 'classic', major: 42, minor: 2 })).toBe(145);
+    expect(recordSize({ kind: 'hornOfTheAbyss', major: 44, minor: 11 })).toBe(149);
+    expect(recordSize({ kind: 'classic', major: 42, minor: 1 })).toBeNull();
+    expect(recordSize({ kind: 'heroesChronicles', major: 42, minor: 0 })).toBeNull();
+    expect(recordSize({ kind: 'unknown' })).toBeNull();
   });
 
   it('needs at least one gold to search', () => {

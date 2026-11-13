@@ -9,10 +9,11 @@ import { requiredEdition } from '../src/core/editionDetection';
 import { readHero, writeHero } from '../src/core/hero';
 import { findHero, findHeroNames, findNextHero } from '../src/core/heroSearch';
 import { decompressGzip } from '../src/core/gzip';
+import { findPlayerTreasuries, readResources } from '../src/core/resources';
 import { SaveBuffer } from '../src/core/saveBuffer';
 import { SaveGame } from '../src/core/saveGame';
 import { isEditingTested } from '../src/core/saveFormat';
-import { layoutFor } from '../src/core/layouts';
+import { layoutFor, playerBlockFor } from '../src/core/layouts';
 import { EDITIONS, type Edition } from '../src/data/editions';
 import { KNOWN_HERO_NAMES } from '../src/data/heroNames';
 import { SPELLS } from '../src/data/spells';
@@ -147,6 +148,13 @@ describe.skipIf(files.length === 0)('real saves', () => {
         const spellFlags = 2 * (forgotten === undefined ? 1 : 2);
         expect(differences).toBeLessThanOrEqual(1 + 4 + spellFlags);
       }
+
+      // Every save of a game with a known player record has the block of eight treasuries.
+      const playerBlock = playerBlockFor(save.format);
+      expect(playerBlock, 'player block layout').not.toBeNull();
+      const treasuries = findPlayerTreasuries(buffer, playerBlock!);
+      expect(treasuries, 'player treasuries').not.toBeNull();
+      expect(treasuries!.some((gold) => readResources(buffer, gold)!.gold > 0)).toBe(true);
 
       if (process.env['SHOW_SAVES']) {
         console.log(

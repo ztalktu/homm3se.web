@@ -21,6 +21,7 @@ import { SHADOW_OF_DEATH_LAYOUT } from './shadowOfDeath';
 import type { HeroLayout, LayoutId, SaveLayout } from './types';
 
 export * from './common';
+export * from './players';
 export type { HeroLayout, LayoutId, SaveLayout } from './types';
 export { armageddonsBladeLayoutAt } from './armageddonsBlade';
 

@@ -1,9 +1,17 @@
 /**
- * Finding a player's treasury by the amount of gold, optionally narrowed by other resources,
- * and reading or writing the seven resource values around it.
+ * Finding a player's treasury, either in the block of player records by color or by the amount
+ * of gold (optionally narrowed by other resources), and reading or writing the seven resource
+ * values around it.
  */
 
-import { MAX_RESOURCE_AMOUNT, RESOURCE_OFFSETS, RESOURCES, type Resource } from './layouts';
+import { PLAYER_COLORS } from '../data/players';
+import {
+  MAX_RESOURCE_AMOUNT,
+  RESOURCE_OFFSETS,
+  RESOURCES,
+  type PlayerBlockLayout,
+  type Resource,
+} from './layouts';
 import { u32LittleEndian, type SaveBuffer } from './saveBuffer';
 
 export type ResourceAmounts = Record<Resource, number>;
@@ -27,9 +35,17 @@ export function readResources(buffer: SaveBuffer, goldPosition: number): Resourc
   return amounts as ResourceAmounts;
 }
 
-function matches(buffer: SaveBuffer, goldPosition: number, query: ResourceQuery): boolean {
+/** The resources at a gold position if they could be a real treasury, otherwise null. */
+function readTreasury(buffer: SaveBuffer, goldPosition: number): ResourceAmounts | null {
   const amounts = readResources(buffer, goldPosition);
-  if (!amounts || RESOURCES.some((resource) => amounts[resource] > MAX_RESOURCE_AMOUNT)) {
+  return amounts && RESOURCES.every((resource) => amounts[resource] <= MAX_RESOURCE_AMOUNT)
+    ? amounts
+    : null;
+}
+
+function matches(buffer: SaveBuffer, goldPosition: number, query: ResourceQuery): boolean {
+  const amounts = readTreasury(buffer, goldPosition);
+  if (!amounts) {
     return false;
   }
   return Object.entries(query.also ?? {}).every(
@@ -67,4 +83,32 @@ export function writeResources(
   for (const resource of RESOURCES) {
     buffer.writeU32(goldPosition + RESOURCE_OFFSETS[resource], amounts[resource]);
   }
+}
+
+/**
+ * Gold positions of the eight players' treasuries, in color order, or null when the save has no
+ * such block. The block is eight records `recordSize` bytes apart whose first bytes are the
+ * colors 0–7 and whose resources are all possible amounts; the resource check rules out the
+ * odd run of color bytes elsewhere in the file.
+ */
+export function findPlayerTreasuries(
+  buffer: SaveBuffer,
+  { recordSize, gold }: PlayerBlockLayout,
+): number[] | null {
+  const bytes = buffer.bytes;
+  const last = bytes.length - PLAYER_COLORS.length * recordSize;
+  for (let start = 0; start <= last; start += 1) {
+    let color = 0;
+    while (color < PLAYER_COLORS.length && bytes[start + color * recordSize] === color) {
+      color += 1;
+    }
+    if (color < PLAYER_COLORS.length) {
+      continue;
+    }
+    const golds = PLAYER_COLORS.map((_, index) => start + index * recordSize + gold);
+    if (golds.every((position) => readTreasury(buffer, position))) {
+      return golds;
+    }
+  }
+  return null;
 }

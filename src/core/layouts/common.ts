@@ -76,5 +76,11 @@ export const RESOURCE_OFFSETS = {
 export type Resource = keyof typeof RESOURCE_OFFSETS;
 export const RESOURCES = Object.keys(RESOURCE_OFFSETS) as Resource[];
 
+/** The resources besides gold, which narrow a search by amounts. */
+export type OtherResource = Exclude<Resource, 'gold'>;
+export const OTHER_RESOURCES = RESOURCES.filter(
+  (resource): resource is OtherResource => resource !== 'gold',
+);
+
 /** Values above this are not real resources, so the search skips such hits. */
 export const MAX_RESOURCE_AMOUNT = 999_999_999;

@@ -54,7 +54,6 @@
     <SearchForm
       legend={t('resources.searchTitle')}
       findLabel={t('resources.find')}
-      findNextLabel={t('resources.findNext')}
       {percent}
       positionText={t('resources.position', { percent: percent ?? 0 })}
       onfind={searchResources}

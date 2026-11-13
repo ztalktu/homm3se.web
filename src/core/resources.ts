@@ -16,7 +16,7 @@ import { u32LittleEndian, type SaveBuffer } from './saveBuffer';
 
 export type ResourceAmounts = Record<Resource, number>;
 
-interface ResourceQuery {
+export interface ResourceQuery {
   gold: number;
   /** Other resources that must match exactly, to narrow down the hits. */
   also?: Partial<Omit<ResourceAmounts, 'gold'>>;

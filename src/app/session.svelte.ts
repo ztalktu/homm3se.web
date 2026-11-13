@@ -23,6 +23,7 @@ import {
   readResources,
   writeResources,
   type ResourceAmounts,
+  type ResourceQuery,
 } from '../core/resources';
 import { NotASaveError, SaveGame, editedFileName } from '../core/saveGame';
 import {
@@ -96,6 +97,11 @@ interface Session {
   /** Other resources ticked to narrow the search, with their current amounts. */
   resourceFilters: Record<OtherResource, { enabled: boolean; amount: number }>;
   goldPosition: number | null;
+  /**
+   * The search `goldPosition` was found by, as a key: "Find resources" continues only while the
+   * search stays the same. Null when the treasury was picked by color or nothing is found.
+   */
+  goldMatchQuery: string | null;
 }
 
 function emptyFilters(): Session['resourceFilters'] {
@@ -125,6 +131,7 @@ export const session: Session = $state({
   goldQuery: 0,
   resourceFilters: emptyFilters(),
   goldPosition: null,
+  goldMatchQuery: null,
 });
 
 function remember(): void {
@@ -157,6 +164,7 @@ export async function openSaveFile(file: File): Promise<void> {
       session.heroName = '';
     }
     session.goldPosition = null;
+    session.goldMatchQuery = null;
     const playerBlock = playerBlockFor(save.format);
     session.playerTreasuries = playerBlock && findPlayerTreasuries(save.buffer, playerBlock);
     session.resourceSearchByAmount = session.playerTreasuries === null;
@@ -367,7 +375,24 @@ export function currentResources(): ResourceAmounts | null {
   return save && goldPosition !== null ? readResources(save.buffer, goldPosition) : null;
 }
 
-export function searchResources(next: boolean): void {
+/** The typed search: gold and the ticked other resources. */
+function resourceQuery(): ResourceQuery {
+  const also: Partial<Record<OtherResource, number>> = {};
+  for (const resource of OTHER_RESOURCES) {
+    if (session.resourceFilters[resource].enabled) {
+      also[resource] = session.resourceFilters[resource].amount;
+    }
+  }
+  return { gold: session.goldQuery, also };
+}
+
+const queryKey = (query: ResourceQuery): string => JSON.stringify(query);
+
+/**
+ * "Find resources", like "Find hero": each call finds the next treasury that matches and starts
+ * over from the top after the last one. A changed search starts from the top of the file.
+ */
+export function searchResources(): void {
   const save = session.save;
   if (!save) {
     return;
@@ -376,25 +401,20 @@ export function searchResources(next: boolean): void {
     showToast(t('message.goldRequired'), { kind: 'error' });
     return;
   }
-  const also: Partial<Record<OtherResource, number>> = {};
-  for (const resource of OTHER_RESOURCES) {
-    if (session.resourceFilters[resource].enabled) {
-      also[resource] = session.resourceFilters[resource].amount;
-    }
-  }
-  const previous = session.goldPosition;
-  const from = next && previous !== null ? previous + 1 : 0;
-  const position = findResources(save.buffer, { gold: session.goldQuery, also }, from);
+  const query = resourceQuery();
+  const key = queryKey(query);
+  const previous = session.goldMatchQuery === key ? session.goldPosition : null;
+  const position =
+    (previous === null ? null : findResources(save.buffer, query, previous + 1)) ??
+    findResources(save.buffer, query);
   if (position === null) {
-    if (next && previous !== null) {
-      showToast(t('message.resourcesDone'));
-    } else {
-      session.goldPosition = null;
-      showToast(t('message.resourcesNotFound'));
-    }
+    session.goldPosition = null;
+    session.goldMatchQuery = null;
+    showToast(t('message.resourcesNotFound'));
     return;
   }
   session.goldPosition = position;
+  session.goldMatchQuery = key;
   session.revision += 1;
 }
 
@@ -413,6 +433,7 @@ export function selectTreasuryByColor(color: PlayerColor): void {
     return;
   }
   session.goldPosition = selectedTreasuryColor() === color ? null : position;
+  session.goldMatchQuery = null;
   session.revision += 1;
 }
 
@@ -437,8 +458,12 @@ export function applyResources(amounts: ResourceAmounts): void {
     return;
   }
   save.edit((buffer) => writeResources(buffer, goldPosition, amounts));
-  // The treasury now holds the new gold: search for that amount next time.
+  // The treasury now holds the new gold: search for that amount next time. A search that found
+  // this treasury goes on from it, as if it had been made with the new gold.
   session.goldQuery = amounts.gold;
+  if (session.goldMatchQuery !== null) {
+    session.goldMatchQuery = queryKey(resourceQuery());
+  }
   session.revision += 1;
   showToast(t('message.resourcesChanged'), { kind: 'success' });
 }

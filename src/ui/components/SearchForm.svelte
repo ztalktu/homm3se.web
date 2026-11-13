@@ -1,8 +1,8 @@
 <script lang="ts">
   /**
-   * The search block shared by the hero and resource editors: fields, "Find" and, unless
-   * `findNextLabel` is left out, "Find next", and where the last hit sits in the file. Enter in
-   * a field submits the form, so it runs "Find" once; the buttons do not add a second search.
+   * The search block shared by the hero and resource editors: fields, one "Find" button that
+   * goes on to the next hit with every press, and where the last hit sits in the file. Enter in
+   * a field submits the form, so it runs "Find" once; the button does not add a second search.
    */
   import type { Snippet } from 'svelte';
   import Button from './Button.svelte';
@@ -11,12 +11,10 @@
   interface Props {
     legend: string;
     findLabel: string;
-    /** Leave out for a single button that continues the search by itself. */
-    findNextLabel?: string | undefined;
     /** Percent of the file before the last hit, or null when nothing has been found yet. */
     percent: number | null;
     positionText: string;
-    onfind: (next: boolean) => void;
+    onfind: () => void;
     /** Turns the buttons off, and Enter in a field no longer searches. */
     disabled?: boolean | undefined;
     children: Snippet;
@@ -25,7 +23,6 @@
   let {
     legend,
     findLabel,
-    findNextLabel,
     percent,
     positionText,
     onfind,
@@ -36,7 +33,7 @@
   function onsubmit(event: SubmitEvent): void {
     event.preventDefault();
     if (!disabled) {
-      onfind(false);
+      onfind();
     }
   }
 </script>
@@ -46,11 +43,6 @@
     {@render children()}
     <div class="buttons">
       <Button type="submit" variant="primary" icon="search" {disabled}>{findLabel}</Button>
-      {#if findNextLabel}
-        <Button icon="search" disabled={disabled || percent === null} onclick={() => onfind(true)}>
-          {findNextLabel}
-        </Button>
-      {/if}
     </div>
     {#if percent !== null}
       <div class="progress" aria-hidden="true"><span style:width={`${percent}%`}></span></div>

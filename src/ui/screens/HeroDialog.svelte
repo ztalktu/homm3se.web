@@ -12,6 +12,7 @@
   import HeroSkillsTab from './hero/HeroSkillsTab.svelte';
   import HeroSpellsTab from './hero/HeroSpellsTab.svelte';
   import HeroTroopsTab from './hero/HeroTroopsTab.svelte';
+  import UnsavedDialog from './UnsavedDialog.svelte';
 
   interface Props {
     open: boolean;
@@ -28,6 +29,20 @@
   let hero: Hero = $state(structuredClone($state.snapshot(original)));
   let activeTab: TabId = $state('attributes');
   let problems: string[] = $state([]);
+  let askToApply = $state(false);
+
+  // svelte-ignore state_referenced_locally
+  const startedAs = JSON.stringify($state.snapshot(original));
+  const changed = $derived(JSON.stringify($state.snapshot(hero)) !== startedAs);
+
+  /** Escape, the backdrop or the close button with changes made: ask before losing them. */
+  function canClose(): boolean {
+    if (changed) {
+      askToApply = true;
+      return false;
+    }
+    return true;
+  }
   /** Spells as in the file when it was opened, before any "Apply": the Spells tab marks changes. */
   const openedSpells = $derived(originalHero()?.spells ?? original.spells);
 
@@ -80,6 +95,17 @@
     applyHero($state.snapshot(hero));
     open = false;
   }
+
+  function applyFromQuestion(): void {
+    askToApply = false;
+    // A problem keeps the window open and lists it, as with the Apply button.
+    apply();
+  }
+
+  function discard(): void {
+    askToApply = false;
+    open = false;
+  }
 </script>
 
 <Dialog
@@ -87,6 +113,7 @@
   title={t('heroDialog.title', { name: original.name })}
   size="large"
   scrollable={false}
+  {canClose}
 >
   <div class="body">
     <Tabs items={tabs} bind:active={activeTab} label={t('heroDialog.tabs')} />
@@ -126,6 +153,15 @@
     <Button variant="primary" icon="check" onclick={apply}>{t('heroDialog.ok')}</Button>
   {/snippet}
 </Dialog>
+
+<UnsavedDialog
+  bind:open={askToApply}
+  text={t('heroDialog.unsavedText')}
+  saveLabel={t('heroDialog.ok')}
+  discardLabel={t('heroDialog.unsavedDiscard')}
+  onsave={applyFromQuestion}
+  ondiscard={discard}
+/>
 
 <style>
   .body {

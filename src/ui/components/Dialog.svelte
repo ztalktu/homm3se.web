@@ -20,6 +20,11 @@
      * the available height, so the caller can scroll a part of it (a tab panel, say).
      */
     scrollable?: boolean | undefined;
+    /**
+     * Asked before the user closes it with Escape, the backdrop or the close button:
+     * false keeps it open (to ask about unsaved changes first, say).
+     */
+    canClose?: (() => boolean) | undefined;
     onclose?: (() => void) | undefined;
     children: Snippet;
     footer?: Snippet | undefined;
@@ -32,6 +37,7 @@
     dismissible = true,
     contentElement = $bindable(),
     scrollable = true,
+    canClose,
     onclose,
     children,
     footer,
@@ -53,7 +59,8 @@
 
   function handleClose(): void {
     // Browsers let a repeated Escape close a dialog even when "cancel" is prevented.
-    if (!dismissible && open) {
+    // `open` still being true means the browser closed it, not the caller.
+    if (open && (!dismissible || canClose?.() === false)) {
       dialog?.showModal();
       return;
     }
@@ -62,8 +69,15 @@
   }
 
   function onCancel(event: Event): void {
-    if (!dismissible) {
+    if (!dismissible || canClose?.() === false) {
       event.preventDefault();
+    }
+  }
+
+  /** Closing by the user, not by an action of the caller. */
+  function dismiss(): void {
+    if (canClose?.() !== false) {
+      open = false;
     }
   }
 
@@ -73,7 +87,7 @@
 
   function onBackdropClick(event: MouseEvent): void {
     if (dismissible && pressedOnBackdrop && event.target === dialog) {
-      open = false;
+      dismiss();
     }
   }
 </script>
@@ -90,12 +104,7 @@
   <header>
     <h2 id={titleId}>{title}</h2>
     {#if dismissible}
-      <button
-        type="button"
-        class="close"
-        aria-label={t('common.close')}
-        onclick={() => (open = false)}
-      >
+      <button type="button" class="close" aria-label={t('common.close')} onclick={dismiss}>
         <Icon name="close" size={18} />
       </button>
     {/if}

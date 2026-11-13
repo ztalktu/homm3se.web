@@ -180,6 +180,8 @@
   "spellPurpose.adventure": "Походные",
   "heroDialog.ok": "Применить",
   "heroDialog.cancel": "Отмена",
+  "heroDialog.unsavedText": "Параметры героя изменены, но не применены. Применить?",
+  "heroDialog.unsavedDiscard": "Не применять",
   "problem.nameEmpty": "Герою нужно имя.",
   "problem.nameInvalid": "Такое имя не влезет: не больше 12 символов и только буквы, которые умеет записать твоя игра.",
   "problem.classNotInEdition": "Такого класса нет в выбранном издании.",

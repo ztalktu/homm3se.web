@@ -180,6 +180,8 @@
   "spellPurpose.adventure": "Adventure",
   "heroDialog.ok": "Apply",
   "heroDialog.cancel": "Cancel",
+  "heroDialog.unsavedText": "The hero's parameters have changed but are not applied. Apply them?",
+  "heroDialog.unsavedDiscard": "Don't apply",
   "problem.nameEmpty": "The hero needs a name.",
   "problem.nameInvalid": "This name does not fit: at most 12 characters, and only letters your game can write.",
   "problem.classNotInEdition": "This class does not exist in the selected edition.",

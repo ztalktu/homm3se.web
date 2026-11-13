@@ -5,6 +5,10 @@ import {
   parseNumberText,
   sanitizeNumberText,
   stepNumber,
+  HOLD,
+  holdInterval,
+  holdStep,
+  roundStep,
 } from '../src/ui/logic/numberInput';
 
 describe('number input', () => {
@@ -64,5 +68,31 @@ describe('option search', () => {
     expect(filterOptions(creatures, 'черный').map((option) => option.label)).toEqual([
       'Чёрный дракон',
     ]);
+  });
+});
+
+describe('holding a stepper', () => {
+  it('repeats faster and faster down to the top speed', () => {
+    expect(holdInterval(0)).toBe(HOLD.firstIntervalMs);
+    expect(holdInterval(3)).toBeLessThan(holdInterval(2));
+    expect(holdInterval(100)).toBe(HOLD.minIntervalMs);
+  });
+
+  it('grows the step tenfold every so many repeats, but not past a twentieth of the range', () => {
+    const tenfold = HOLD.repeatsPerTenfold;
+    expect(holdStep(0, 1, 0, 1_000_000)).toBe(1);
+    expect(holdStep(tenfold, 1, 0, 1_000_000)).toBe(10);
+    expect(holdStep(tenfold * 3, 1, 0, 1_000_000)).toBe(1000);
+    expect(holdStep(tenfold * 10, 1, 0, 1_000_000)).toBe(10_000);
+    expect(holdStep(tenfold * 10, 1, 0, 99)).toBe(1);
+  });
+
+  it('lands on round numbers and stays in the range', () => {
+    expect(roundStep(13, 10, 1, 0, 100)).toBe(20);
+    expect(roundStep(13, 10, -1, 0, 100)).toBe(10);
+    expect(roundStep(20, 10, -1, 0, 100)).toBe(10);
+    expect(roundStep(5, 1, 1, 0, 100)).toBe(6);
+    expect(roundStep(95, 10, 1, 0, 99)).toBe(99);
+    expect(roundStep(3, 10, -1, 1, 99)).toBe(1);
   });
 });

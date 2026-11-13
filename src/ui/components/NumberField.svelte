@@ -3,10 +3,20 @@
    * Integer input with steppers, like the old edit + UpDown pair.
    * Accepts digits only, steps with the arrow buttons, ArrowUp/Down (±step),
    * PageUp/Down (±bigStep), Home/End (min/max), and clamps the value on blur.
+   * A click on a stepper moves by one step; holding it repeats, faster and faster.
    */
   import { tooltip } from '../actions/tooltip';
   import { t } from '../../i18n/index.svelte';
-  import { clamp, parseNumberText, sanitizeNumberText, stepNumber } from '../logic/numberInput';
+  import {
+    HOLD,
+    clamp,
+    holdInterval,
+    holdStep,
+    parseNumberText,
+    roundStep,
+    sanitizeNumberText,
+    stepNumber,
+  } from '../logic/numberInput';
   import Icon from './Icon.svelte';
 
   interface Props {
@@ -53,6 +63,49 @@
       onchange?.(clamped);
     }
     text = String(clamped);
+  }
+
+  // Holding a stepper: one step at once, then repeats after a pause, ever faster.
+  let holdTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function stopHold(): void {
+    clearTimeout(holdTimer);
+    holdTimer = undefined;
+    window.removeEventListener('pointerup', stopHold);
+    window.removeEventListener('pointercancel', stopHold);
+    window.removeEventListener('blur', stopHold);
+  }
+
+  function startHold(event: PointerEvent, direction: 1 | -1): void {
+    if (event.button !== 0) {
+      return;
+    }
+    stopHold();
+    commit(stepNumber(value, direction * step, min, max));
+    window.addEventListener('pointerup', stopHold);
+    window.addEventListener('pointercancel', stopHold);
+    window.addEventListener('blur', stopHold);
+    let repeat = 0;
+    const tick = (): void => {
+      const size = holdStep(repeat, step, min, max);
+      commit(roundStep(value, size, direction, min, max));
+      if (value <= min || value >= max) {
+        stopHold();
+        return;
+      }
+      holdTimer = setTimeout(tick, holdInterval(repeat));
+      repeat += 1;
+    };
+    holdTimer = setTimeout(tick, HOLD.delayMs);
+  }
+
+  $effect(() => stopHold);
+
+  /** Keyboard or assistive tech pressing the button: a plain click with no pointer. */
+  function onStepperClick(event: MouseEvent, direction: 1 | -1): void {
+    if (event.detail === 0) {
+      commit(stepNumber(value, direction * step, min, max));
+    }
   }
 
   function onInput(event: Event): void {
@@ -120,13 +173,20 @@
     />
     <!-- Quick repeated clicks are a double or triple click: without preventDefault they
          select the text around the field. -->
-    <div class="steppers" onmousedown={(event) => event.preventDefault()} role="presentation">
+    <!-- A long press on a touch screen would otherwise open the context menu. -->
+    <div
+      class="steppers"
+      onmousedown={(event) => event.preventDefault()}
+      oncontextmenu={(event) => event.preventDefault()}
+      role="presentation"
+    >
       <button
         type="button"
         tabindex="-1"
         aria-label={t('common.increase')}
         disabled={disabled || value >= max}
-        onclick={() => commit(stepNumber(value, step, min, max))}
+        onpointerdown={(event) => startHold(event, 1)}
+        onclick={(event) => onStepperClick(event, 1)}
       >
         <Icon name="chevronUp" size={14} />
       </button>
@@ -135,7 +195,8 @@
         tabindex="-1"
         aria-label={t('common.decrease')}
         disabled={disabled || value <= min}
-        onclick={() => commit(stepNumber(value, -step, min, max))}
+        onpointerdown={(event) => startHold(event, -1)}
+        onclick={(event) => onStepperClick(event, -1)}
       >
         <Icon name="chevronDown" size={14} />
       </button>
@@ -167,6 +228,8 @@
     width: 24px;
     user-select: none;
     border-left: 1px solid var(--color-field-border);
+    touch-action: none;
+    -webkit-touch-callout: none;
   }
 
   .steppers button {

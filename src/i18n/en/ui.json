@@ -57,6 +57,7 @@
   "info.edition": "Edition",
   "info.size": "Unpacked size",
   "info.notSavedYet": "Not saved yet",
+  "info.today": "today {time}",
   "info.changesTitle": "Changed",
   "info.noChanges": "Nothing changed yet.",
   "info.changedResources": "Resources",

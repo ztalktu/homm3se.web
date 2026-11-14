@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { formatDateTime } from '../src/ui/format';
 import { filterOptions, normalizeSearchText } from '../src/ui/logic/filterOptions';
 import {
   clamp,
@@ -94,5 +95,17 @@ describe('holding a stepper', () => {
     expect(roundStep(5, 1, 1, 0, 100)).toBe(6);
     expect(roundStep(95, 10, 1, 0, 99)).toBe(99);
     expect(roundStep(3, 10, -1, 1, 99)).toBe(1);
+  });
+});
+
+describe('formatDateTime', () => {
+  const saved = new Date(2026, 10, 14, 20, 5).getTime();
+
+  it('writes another day as year.month.day and the time', () => {
+    expect(formatDateTime(saved, new Date(2026, 10, 15, 9, 0).getTime())).toBe('2026.11.14 20:05');
+  });
+
+  it('says today instead of the date', () => {
+    expect(formatDateTime(saved, new Date(2026, 10, 14, 23, 59).getTime())).toBe('today 20:05');
   });
 });

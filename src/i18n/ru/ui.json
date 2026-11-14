@@ -57,6 +57,7 @@
   "info.edition": "Издание",
   "info.size": "Размер после распаковки",
   "info.notSavedYet": "Пока не сохранено",
+  "info.today": "сегодня {time}",
   "info.changesTitle": "Изменено",
   "info.noChanges": "Пока ничего не менялось.",
   "info.changedResources": "Ресурсы",

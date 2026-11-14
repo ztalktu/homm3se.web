@@ -1,6 +1,7 @@
 /**
  * Writing the edited save back to disk. Chromium browsers can save straight to a file the user
- * picks (File System Access API); other browsers get a regular download.
+ * picks (File System Access API); other browsers, and those that refuse to write to the picked
+ * file, get a regular download.
  */
 
 interface SaveFilePickerOptions {
@@ -84,7 +85,17 @@ export async function saveBytes(
     }
     throw error;
   }
-  const writable = await handle.createWritable();
+  let writable: WritableFileStream;
+  try {
+    writable = await handle.createWritable();
+  } catch (error) {
+    // Some embedded browsers show the picker but refuse to write to the picked file.
+    if (error instanceof DOMException && error.name === 'NotAllowedError') {
+      download(bytes, handle.name);
+      return handle.name;
+    }
+    throw error;
+  }
   await writable.write(bytes as BlobPart);
   await writable.close();
   return handle.name;

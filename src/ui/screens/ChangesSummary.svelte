@@ -53,7 +53,7 @@
 
   const troopText = (troop: Troop | null): string =>
     troop
-      ? `${creatureName(troop.creatureId)} × ${formatNumber(troop.count)}`
+      ? `${creatureName(troop.creatureId, session.edition)} × ${formatNumber(troop.count)}`
       : t('hero.emptySlot');
 
   const skillText = (level: SkillLevel | null): string =>
@@ -171,7 +171,7 @@
                   <li class:unsaved={marked && !change.saved}>
                     {@render mark(change.saved)}{t('heroDialog.slot', { slot: change.slot + 1 })}:
                     {#if before && after && before.creatureId === after.creatureId}
-                      {creatureName(after.creatureId)}: {formatNumber(
+                      {creatureName(after.creatureId, session.edition)}: {formatNumber(
                         before.count,
                       )}{@render arrow()}{formatNumber(after.count)}
                       ({@render delta(before.count, after.count)})
@@ -197,7 +197,9 @@
 
             {#if changes.artifacts.length > 0}
               {@render group('chest', t('heroDialog.tab.artifacts'))}
-              <div class="chips">{@render chips(changes.artifacts, artifactName)}</div>
+              <div class="chips">
+                {@render chips(changes.artifacts, (id) => artifactName(id, session.edition))}
+              </div>
             {/if}
 
             {#if changes.spellBook || changes.spells.length > 0}

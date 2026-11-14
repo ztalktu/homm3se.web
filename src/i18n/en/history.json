@@ -6,7 +6,13 @@
     "changes": [
       {
         "kind": "major",
-        "text": "The editor moved from a Windows .exe to the browser. No install, no gzip.exe, nothing to unpack: open a save, edit, save. Your saves never leave your machine."
+        "title": "Heroes 3 SaveEditor Web version.",
+        "text": "A new life for Heroes III SaveEditor 2.05 (hmm3se.exe) by the VItonIC Group creative team, author Ztalker. The editor moved from a Windows .exe to the browser. No install, no gzip.exe, nothing to unpack: open a save, edit, save. Your saves never leave your machine."
+      },
+      {
+        "kind": "major",
+        "title": "Horn of the Abyss!",
+        "text": "With the project back to life, the editor now supports the latest popular expansion."
       },
       {
         "kind": "changed",
@@ -19,6 +25,10 @@
       {
         "kind": "changed",
         "text": "The jokes and wisecracks of the old version moved in too."
+      },
+      {
+        "kind": "added",
+        "text": "What the editor does in Horn of the Abyss: it edits heroes of the new towns - Cove, Factory and Bulwark, each with its own badge. Their classes and creatures are in, along with the HotA artifacts and the Interference and Runes skills. The hero search knows 16 HotA campaign heroes. HotA saves older than 1.8 have no Factory, Bulwark or Runes, and the editor does not offer them there. The level cap in HotA is 74."
       },
       {
         "kind": "added",
@@ -38,15 +48,15 @@
       },
       {
         "kind": "added",
-        "text": "The editor figures out what wrote the save: Armageddon's Blade (GOG version included), The Shadow of Death, Heroes Chronicles, HD Edition or Horn of the Abyss. For HotA it warns that editing is risky."
+        "text": "The editor figures out what wrote the save: Armageddon's Blade (GOG version included), The Shadow of Death, Heroes Chronicles, HD Edition or Horn of the Abyss."
       },
       {
         "kind": "added",
-        "text": "HD Edition joins the edition list, still on a test drive."
+        "text": "HD Edition support is officially on."
       },
       {
         "kind": "added",
-        "text": "The edition is picked from the file header, not just from the heroes."
+        "text": "The editor tells the edition by the save header, not just by the heroes. When the header leaves no doubt (HD Edition, Heroes Chronicles, Armageddon's Blade, Horn of the Abyss), the edition in the header bar cannot be changed."
       },
       {
         "kind": "added",
@@ -70,7 +80,7 @@
       },
       {
         "kind": "added",
-        "text": "Every artifact in the backpack list has a category badge: attack, defense, power, knowledge, combined, luck and morale, skills, magic, immunity, troops, adventure, resources, special. The same badges filter the list, and a \"+\" button right in the list puts an artifact into the backpack without closing the list. What the hero already carries is highlighted."
+        "text": "Every artifact in the backpack list has a category badge: attack, defense, power, knowledge, combined, luck and morale, skills, magic, immunity, troops, adventure, resources, weakening, special. The same badges filter the list, and a \"+\" button right in the list puts an artifact into the backpack without closing the list. What the hero already carries is highlighted."
       },
       {
         "kind": "added",

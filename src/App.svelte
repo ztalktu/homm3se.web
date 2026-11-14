@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { REPOSITORY_URL, VITONIC_URL } from './app/links';
   import { MediaQuery } from 'svelte/reactivity';
   import { SAVE_FILE_EXTENSIONS } from './app/fileAccess';
   import {
@@ -13,6 +14,7 @@
     openSaveFile,
     saveCurrent,
     session,
+    editionFixedBySave,
     setEdition,
   } from './app/session.svelte';
   import { APP_VERSION } from './app/version';
@@ -35,8 +37,6 @@
 
   type TabId = 'info' | 'heroEditor' | 'resourceEditor';
 
-  const REPOSITORY_URL = 'https://github.com/ztalktu/homm3se.web';
-  const VITONIC_URL = 'https://vitonic.ru/';
   const CURRENT_YEAR = new Date().getFullYear();
 
   const systemDark = new MediaQuery('(prefers-color-scheme: dark)');
@@ -63,6 +63,7 @@
     { id: 'resourceEditor' as const, label: t('tabs.resourceEditor') },
   ]);
 
+  const editionFixed = $derived(editionFixedBySave());
   const editionOptions = $derived(
     EDITIONS.map((edition) => ({ value: edition, label: editionName(edition) })),
   );
@@ -238,11 +239,12 @@
       </button>
       <HeaderSelect
         label={t('toolbar.edition')}
-        hint={t('toolbar.editionHint')}
+        hint={editionFixed ? t('toolbar.editionFixedHint') : t('toolbar.editionHint')}
         value={session.edition}
         options={editionOptions}
         onchange={setEdition}
         flash={session.editionAutoChanges}
+        disabled={editionFixed !== null}
       />
     </div>
   </header>
@@ -493,7 +495,7 @@
       white-space: nowrap;
     }
 
-    /* A native select is as wide as its longest option ("HD Edition (test drive)"). */
+    /* A native select is as wide as its longest option ("Horn of the Abyss (test drive)"). */
     .toolbar :global(select) {
       max-width: calc(100vw - 180px);
       padding-left: var(--space-2);

@@ -7,6 +7,7 @@ import { EDITIONS, isAvailableIn, type Edition } from '../data/editions';
 import { KNOWN_HERO_NAMES } from '../data/heroNames';
 import { PLAYER_COLORS, type PlayerColor } from '../data/players';
 import { requiredEdition } from '../core/editionDetection';
+import type { SaveLimits } from '../core/rules';
 import {
   hasHeroChanges,
   heroChanges,
@@ -207,8 +208,9 @@ export async function openSaveFile(file: File): Promise<void> {
 
 /**
  * The header already names the game. When only one edition writes it (HD Edition,
- * Heroes Chronicles, Armageddon's Blade) the save gets that edition outright;
- * for the others the edition is raised to what the header needs, never lowered.
+ * Heroes Chronicles, Armageddon's Blade, Horn of the Abyss) the save gets that edition outright
+ * and keeps it (see editionFixedBySave); for the others the edition is raised to what the header
+ * needs, never lowered.
  */
 function applyEditionFromFormat(save: SaveGame): void {
   const exact = editionFromHeader(save.format);
@@ -253,7 +255,18 @@ export async function saveCurrent(): Promise<boolean> {
   }
 }
 
+/**
+ * The edition the header of the open save names outright, or null when the user may choose:
+ * the same header is written by several editions, or no save is open.
+ */
+export function editionFixedBySave(): Edition | null {
+  return session.save ? editionFromHeader(session.save.format) : null;
+}
+
 export function setEdition(edition: Edition): void {
+  if (editionFixedBySave()) {
+    return;
+  }
   session.edition = edition;
   remember();
 }
@@ -279,6 +292,12 @@ export function currentHero(): Hero | null {
  */
 export function originalHero(): Hero | null {
   return readFoundHero('original');
+}
+
+/** What the open save allows besides its edition: the header minor of a Horn of the Abyss save. */
+export function saveLimits(): SaveLimits {
+  const { save } = session;
+  return { minor: save?.format.kind === 'hornOfTheAbyss' ? save.format.minor : undefined };
 }
 
 /** Owners of the known heroes in the open save (null: free heroes), each at least once. */

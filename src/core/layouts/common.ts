@@ -6,7 +6,8 @@
 /**
  * Hero fields relative to the first byte of the hero name. They match in Restoration of
  * Erathia, HD Edition, Armageddon's Blade and The Shadow of Death; a layout file adds what
- * differs (backpack, equipment, combination artifacts).
+ * differs (backpack, equipment, combination artifacts). Horn of the Abyss also replaces the
+ * secondary skill fields.
  */
 export const COMMON_HERO_FIELDS = {
   /** Name, NUL-terminated. The 2.05 editor wrote 14 bytes here. */

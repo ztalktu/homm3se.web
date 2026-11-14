@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { session } from '../../../app/session.svelte';
+  import { saveLimits, session } from '../../../app/session.svelte';
   import { experienceForLevel, levelForExperience } from '../../../core/experience';
   import type { Hero } from '../../../core/hero';
-  import { HERO_LIMITS } from '../../../core/rules';
-  import { isAvailableIn } from '../../../data/editions';
+  import { classAllowed, HERO_LIMITS, maxLevel } from '../../../core/rules';
   import { HERO_CLASSES } from '../../../data/heroClasses';
   import { heroClassName } from '../../../i18n/game.svelte';
   import { t } from '../../../i18n/index.svelte';
@@ -24,23 +23,25 @@
   // with the box checked it is the other way round.
   let levelFromExperience = $state(false);
 
+  const limits = $derived(saveLimits());
+  const levelCap = $derived(maxLevel(session.edition));
   const classOptions = $derived(
     HERO_CLASSES.map((heroClass) => ({
       value: String(heroClass.id),
       label: heroClassName(heroClass.id),
-      disabled: !isAvailableIn(heroClass.introducedIn, session.edition),
+      disabled: !classAllowed(heroClass.id, session.edition, limits),
     })),
   );
 
   function onLevelChange(level: number): void {
     if (!levelFromExperience) {
-      hero.experience = experienceForLevel(level);
+      hero.experience = experienceForLevel(level, levelCap);
     }
   }
 
   function onExperienceChange(experience: number): void {
     if (levelFromExperience) {
-      hero.level = levelForExperience(experience);
+      hero.level = levelForExperience(experience, levelCap);
     }
   }
 </script>
@@ -64,7 +65,7 @@
         label={t('hero.level')}
         bind:value={hero.level}
         min={1}
-        max={HERO_LIMITS.level}
+        max={levelCap}
         disabled={levelFromExperience}
         onchange={onLevelChange}
       />

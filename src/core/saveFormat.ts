@@ -29,6 +29,11 @@ const CHRONICLES_SIGNATURE = 'HCHRONSVG';
 const CHRONICLES_SHIFT = 1;
 const HORN_OF_THE_ABYSS_MAJOR = 0x2c;
 const HD_EDITION_MAJOR = 0x12;
+/**
+ * Horn of the Abyss header minors the layouts were checked on: 5 (before 1.7), 10 (1.8.0) and
+ * 11 (1.8.1). Saves of other versions open with the nearest layout, at the user's own risk.
+ */
+const TESTED_HORN_OF_THE_ABYSS_MINORS: readonly number[] = [5, 10, 11];
 
 export function detectSaveFormat(buffer: SaveBuffer): SaveFormat {
   const chronicles = String.fromCharCode(...buffer.bytes.subarray(0, CHRONICLES_SIGNATURE.length));
@@ -55,11 +60,14 @@ export function detectSaveFormat(buffer: SaveBuffer): SaveFormat {
 }
 
 /**
- * Every format with a layout of its own (see layouts/). Horn of the Abyss does not have one
- * yet and stays editable at the user's own risk.
+ * Every format with a layout of its own (see layouts/), for Horn of the Abyss only the versions
+ * it was checked on. Other saves stay editable at the user's own risk.
  */
 export function isEditingTested(format: SaveFormat): boolean {
-  return format.kind !== 'hornOfTheAbyss' && format.kind !== 'unknown';
+  if (format.kind === 'hornOfTheAbyss') {
+    return TESTED_HORN_OF_THE_ABYSS_MINORS.includes(format.minor);
+  }
+  return format.kind !== 'unknown';
 }
 
 /** Armageddon's Blade writes header 42/1; every other 42.x or 43.x is The Shadow of Death. */
@@ -75,7 +83,7 @@ export const SHADOW_OF_DEATH_HEADER_MAJOR = 0x20;
 
 /**
  * The edition that wrote this header when only one edition writes it: HD Edition,
- * Heroes Chronicles and Armageddon's Blade. Null for the others.
+ * Heroes Chronicles, Horn of the Abyss and Armageddon's Blade. Null for the others.
  */
 export function editionFromHeader(format: SaveFormat): Edition | null {
   if (format.kind === 'hdEdition') {
@@ -83,6 +91,9 @@ export function editionFromHeader(format: SaveFormat): Edition | null {
   }
   if (format.kind === 'heroesChronicles') {
     return 'heroesChronicles';
+  }
+  if (format.kind === 'hornOfTheAbyss') {
+    return 'hornOfTheAbyss';
   }
   return isArmageddonsBladeHeader(format) ? 'armageddonsBlade' : null;
 }

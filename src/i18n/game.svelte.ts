@@ -3,7 +3,8 @@
  * in the interface language. Reactive inside Svelte templates, like `t()`.
  */
 import { preferences, type Locale } from '../app/preferences.svelte';
-import { ARTIFACTS } from '../data/artifacts';
+import { artifactById, isHotaArtifact } from '../data/artifacts';
+import { isHotaCreature } from '../data/creatures';
 import type { Creature, Town } from '../data/creatures';
 import type { Edition } from '../data/editions';
 import { PLAYER_COLORS, type PlayerColor } from '../data/players';
@@ -40,8 +41,14 @@ export function playerLabel(color: PlayerColor | null): string {
 }
 export const heroClassName = (id: number): string => lookup(`heroClass.${id}`);
 export const townName = (town: Town): string => lookup(`town.${town}`);
-export const creatureName = (id: number): string => lookup(`creature.${id}`);
-export const artifactName = (id: number): string => lookup(`artifact.${id}`);
+/**
+ * Horn of the Abyss gives some ids its own creatures and artifacts (the same ids mean other ones
+ * in In the Wake of Gods saves): their texts live under `creature.hota.<id>` and so on.
+ */
+export const creatureName = (id: number, edition: Edition): string =>
+  lookup(isHotaCreature(id, edition) ? `creature.hota.${id}` : `creature.${id}`);
+export const artifactName = (id: number, edition: Edition): string =>
+  lookup(isHotaArtifact(id, edition) ? `artifact.hota.${id}` : `artifact.${id}`);
 export const skillName = (id: number): string => lookup(`skill.${id}`);
 export const skillLevelName = (level: SkillLevel): string => lookup(`skillLevel.${level}`);
 export const spellName = (id: number): string => lookup(`spell.${id}`);
@@ -50,14 +57,14 @@ export const spellName = (id: number): string => lookup(`spell.${id}`);
 export const spellEffect = (id: number): string => lookup(`spellEffect.${id}`);
 
 /** Effect of an artifact, or undefined for the unused ones that have none. */
-export function artifactEffect(id: number): string | undefined {
+export function artifactEffect(id: number, edition: Edition): string | undefined {
   const texts: Record<string, string> = gameDictionaries[preferences.locale];
-  return texts[`artifactEffect.${id}`];
+  return texts[isHotaArtifact(id, edition) ? `artifactEffect.hota.${id}` : `artifactEffect.${id}`];
 }
 
 /** Second line for an artifact in lists: its effect, or a warning for the unused ones. */
-export function artifactDescription(id: number): string | undefined {
-  return ARTIFACTS[id]?.unused ? t('joke.notRecommended') : artifactEffect(id);
+export function artifactDescription(id: number, edition: Edition): string | undefined {
+  return artifactById(id, edition)?.unused ? t('joke.notRecommended') : artifactEffect(id, edition);
 }
 
 /** Second line for a creature in lists: town, level and whether it is upgraded. */

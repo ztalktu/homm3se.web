@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { VITONIC_URL } from '../../app/links';
   import { session } from '../../app/session.svelte';
   import { editionName } from '../../i18n/game.svelte';
   import { tooltip } from '../actions/tooltip';
@@ -69,13 +70,28 @@
   </div>
 {:else}
   <div class="empty">
-    <h2>{t('info.emptyTitle')}</h2>
+    <p class="empty-title">{t('info.emptyTitle')}</p>
     <p>{t('info.emptyText')}</p>
     <Button variant="primary" icon="open" onclick={onopen}>{t('toolbar.open')}</Button>
   </div>
-{/if}
 
-<p class="warning">{t('info.warning')}</p>
+  <!-- Only while no save is open: the page crawlers index, and a newcomer's first look. -->
+  <section class="about">
+    <h2>{t('info.aboutTitle')}</h2>
+    <p>{t('info.aboutIntro')}</p>
+    <p>{t('info.aboutHeroes')}</p>
+    <p>{t('info.aboutResources')}</p>
+    <p>{t('info.aboutEditions')}</p>
+
+    <h2>{t('info.authorTitle')}</h2>
+    <p>{t('info.authorStory')}</p>
+    <p>{t('info.authorAppeal')}</p>
+    <p class="signature">
+      {t('info.authorSignature')},
+      <a href={VITONIC_URL} target="_blank" rel="noopener">VItonIC Group</a>
+    </p>
+  </section>
+{/if}
 
 <style>
   .blocks {
@@ -167,8 +183,12 @@
     max-width: 560px;
   }
 
-  .empty h2 {
+  /* A call to action, not a heading: the first heading of the page is the editor's description. */
+  .empty-title {
+    font-family: var(--font-heading);
+    font-weight: 500;
     font-size: 20px;
+    color: var(--color-heading);
   }
 
   .empty p {
@@ -179,10 +199,26 @@
     color: var(--color-text-muted);
   }
 
-  .warning {
-    margin: var(--space-5) 0 0;
-    font-size: 13px;
+  .about {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+  }
+
+  .about h2 {
+    font-size: 18px;
+  }
+
+  .about h2:not(:first-child) {
+    margin-top: var(--space-3);
+  }
+
+  .about p {
+    margin: 0;
+  }
+
+  .signature {
+    justify-self: end;
     font-style: italic;
-    color: var(--color-text-muted);
   }
 </style>

@@ -1,19 +1,31 @@
 # Heroes III SaveEditor 3.0
 
-A save game editor for **Heroes of Might and Magic III** that runs entirely in the
-browser. It is the web successor of Heroes III SaveEditor 2.05
-(Windows, 2001–2005).
+A free save game editor for **Heroes of Might and Magic III** (Heroes 3, HoMM3) that
+runs entirely in the browser. It is the web successor of Heroes III SaveEditor 2.05
+(hmm3se.exe, Windows, 2001–2005) by Ztalker, [VItonIC Group](https://vitonic.ru/).
 
 **Live at <https://heroes3se.vitonic.ru/>**
 
-Everything happens on your machine: the save file is read, edited and written back
-in the browser, nothing is uploaded anywhere. Settings are kept
-in the browser's local storage.
+Open a `.gm1`–`.gm8` save or a `.cgm` campaign, change it and write it back. Everything
+happens on your machine: nothing is uploaded anywhere. Settings are kept in the
+browser's local storage.
+
+## What it edits
+
+- Heroes: name and class, level and experience, attack, defense, spell power and
+  knowledge, mana and movement points.
+- Army of seven stacks, secondary skills, spells and the spell book, backpack artifacts.
+- Player resources: gold, wood, ore, mercury, sulfur, crystals and gems.
+
+## Supported editions
+
+The Restoration of Erathia, Armageddon's Blade, The Shadow of Death (and Complete),
+Heroes Chronicles, HD Edition, In the Wake of Gods (WoG) and Horn of the Abyss (HotA),
+including 1.8. The editor tells the edition from the save header; where the header is
+ambiguous, it guesses from the heroes and lets you pick.
 
 The interface is available in English (default) and Russian, with a dark and a
 light theme in the spirit of Heroes 3.
-
-> Work in progress. This is the project skeleton; the editors are coming next.
 
 ## Development
 

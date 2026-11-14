@@ -1,19 +1,23 @@
 /**
  * Version auto-detection: if a hero has a class, creature or artifact that the selected
- * edition does not know, the save must be from a newer edition. Same rules as 2.05.
+ * edition does not know, the save must be from an edition that adds it (as in the 2.05 editor).
+ * Editions are branches, not one line: the switch goes to one that keeps what the current one
+ * accepts, and never to Horn of the Abyss, which only its header tells.
  */
 
-import { ARTIFACTS } from '../data/artifacts';
-import { CREATURES } from '../data/creatures';
+import { artifactById } from '../data/artifacts';
+import { creatureById } from '../data/creatures';
 import { EDITION_RULES, EDITIONS, isAvailableIn, type Edition } from '../data/editions';
 import { HERO_CLASSES } from '../data/heroClasses';
 import type { Hero } from './hero';
 
 /** Everything in the hero that ties the save to a minimum edition. */
-function introducedIns(hero: Hero): (Edition | undefined)[] {
+function introducedIns(hero: Hero, current: Edition): (Edition | undefined)[] {
   return [
     HERO_CLASSES[hero.classId]?.introducedIn,
-    ...hero.troops.map((troop) => (troop ? CREATURES[troop.creatureId]?.introducedIn : undefined)),
+    ...hero.troops.map((troop) =>
+      troop ? creatureById(troop.creatureId, current)?.introducedIn : undefined,
+    ),
   ];
 }
 
@@ -23,22 +27,29 @@ function introducedIns(hero: Hero): (Edition | undefined)[] {
  * the hero after switching and call this again until it returns null.
  */
 export function requiredEdition(hero: Hero, current: Edition): Edition | null {
-  const tier = EDITION_RULES[current].tier;
-  let needed = tier;
-  for (const introducedIn of introducedIns(hero)) {
+  const needed = new Set<Edition>();
+  for (const introducedIn of introducedIns(hero, current)) {
     if (introducedIn) {
-      needed = Math.max(needed, EDITION_RULES[introducedIn].tier);
+      needed.add(introducedIn);
     }
   }
   for (const artifactId of hero.backpack) {
-    const artifact = ARTIFACTS[artifactId];
+    const artifact = artifactById(artifactId, current);
     // Ids beyond every edition are junk read with a wrong layout; they do not prove anything.
     if (artifact && !isAvailableIn(artifact.introducedIn, current)) {
-      needed = Math.max(needed, EDITION_RULES[artifact.introducedIn].tier);
+      needed.add(artifact.introducedIn);
     }
   }
-  if (needed === tier) {
+  const fits = (edition: Edition): boolean =>
+    [...needed].every((introducedIn) => isAvailableIn(introducedIn, edition));
+  if (fits(current)) {
     return null;
   }
-  return EDITIONS.find((edition) => EDITION_RULES[edition].tier === needed) ?? null;
+  // The first edition that keeps everything the current one accepts and adds what is missing.
+  return (
+    EDITIONS.find(
+      (edition) =>
+        !EDITION_RULES[edition].headerOnly && isAvailableIn(current, edition) && fits(edition),
+    ) ?? null
+  );
 }

@@ -3,8 +3,12 @@
   import type { Hero } from '../../../core/hero';
   import { COMMON_HERO_FIELDS } from '../../../core/layouts';
   import { artifactAllowed } from '../../../core/rules';
-  import { ARTIFACTS, ARTIFACT_CATEGORIES, type ArtifactCategory } from '../../../data/artifacts';
-  import { isAvailableIn } from '../../../data/editions';
+  import {
+    ARTIFACT_CATEGORIES,
+    artifactById,
+    artifactsOf,
+    type ArtifactCategory,
+  } from '../../../data/artifacts';
   import { artifactDescription, artifactName } from '../../../i18n/game.svelte';
   import { t } from '../../../i18n/index.svelte';
   import { tooltip } from '../../actions/tooltip';
@@ -28,19 +32,30 @@
 
   const carried = $derived(new Set(hero.backpack));
 
+  /** The edition's artifacts that may go into the backpack. */
+  const offered = $derived(
+    artifactsOf(session.edition).filter(
+      (artifact) => !artifact.unused && artifactAllowed(artifact.id, session.edition),
+    ),
+  );
+
+  /** Only the categories the edition has artifacts in ("Weakening" comes with Horn of the Abyss). */
+  const categories = $derived(
+    ARTIFACT_CATEGORIES.filter((category) =>
+      offered.some((artifact) => artifact.category === category),
+    ),
+  );
+
   const items: ComboboxItem<number>[] = $derived(
     // Unused artifacts and those the save's edition does not know are left out altogether.
-    ARTIFACTS.filter(
-      (artifact) =>
-        !artifact.unused &&
-        isAvailableIn(artifact.introducedIn, session.edition) &&
-        (filter === null || artifact.category === filter),
-    ).map((artifact) => ({
-      value: artifact.id,
-      label: artifactName(artifact.id),
-      description: artifactDescription(artifact.id),
-      highlighted: carried.has(artifact.id),
-    })),
+    offered
+      .filter((artifact) => filter === null || artifact.category === filter)
+      .map((artifact) => ({
+        value: artifact.id,
+        label: artifactName(artifact.id, session.edition),
+        description: artifactDescription(artifact.id, session.edition),
+        highlighted: carried.has(artifact.id),
+      })),
   );
 
   function put(id: number): void {
@@ -70,7 +85,7 @@
 
 <FilterRow
   label={t('heroDialog.artifactFilter')}
-  options={ARTIFACT_CATEGORIES}
+  options={categories}
   bind:value={filter}
   columns={7}
   even={false}
@@ -97,7 +112,7 @@
     }}
   >
     {#snippet optionIcon(item)}
-      {@const category = ARTIFACTS[item.value]?.category}
+      {@const category = artifactById(item.value, session.edition)?.category}
       {#if category}
         <ArtifactCategoryIcon {category} />
       {/if}
@@ -111,17 +126,17 @@
 {:else}
   <ul>
     {#each hero.backpack as artifactId, index (index)}
-      {@const category = ARTIFACTS[artifactId]?.category}
+      {@const category = artifactById(artifactId, session.edition)?.category}
       <li>
         {#if category}
           <span class="icon"><ArtifactCategoryIcon {category} /></span>
         {/if}
-        <span class="name">{artifactName(artifactId)}</span>
-        <span class="effect">{artifactDescription(artifactId)}</span>
+        <span class="name">{artifactName(artifactId, session.edition)}</span>
+        <span class="effect">{artifactDescription(artifactId, session.edition)}</span>
         <button
           type="button"
           class="remove"
-          aria-label={`${t('heroDialog.removeArtifact')}: ${artifactName(artifactId)}`}
+          aria-label={`${t('heroDialog.removeArtifact')}: ${artifactName(artifactId, session.edition)}`}
           onclick={() => remove(index)}
           onkeydown={(event) => onItemKeydown(event, index)}
           use:tooltip={t('heroDialog.removeArtifactHint')}

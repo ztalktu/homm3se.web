@@ -1,4 +1,5 @@
 // Generated from the Heroes III SaveEditor 2.05 sources. Maintained by hand from now on.
+import { editionTable } from './editionTable';
 import type { Edition } from './editions';
 
 /** What an artifact mainly does, for the badges and the filter in the backpack tab. */
@@ -15,6 +16,7 @@ export const ARTIFACT_CATEGORIES = [
   'troops',
   'movement',
   'resources',
+  'weakening',
   'special',
 ] as const;
 
@@ -181,3 +183,48 @@ export const ARTIFACTS: readonly Artifact[] = [
   { id: 142, introducedIn: 'inTheWakeOfGods', category: 'special' },
   { id: 143, introducedIn: 'inTheWakeOfGods', category: 'special' },
 ];
+
+/**
+ * Horn of the Abyss artifacts by id: 141–143 are its own combination artifacts (the same ids
+ * are In the Wake of Gods artifacts in WoG saves), 146 the Cannon, 147–165 the new ones.
+ * Ids 144 and 145 do not exist there.
+ */
+export const HOTA_ARTIFACTS: ReadonlyMap<number, Artifact> = new Map(
+  (
+    [
+      [141, 'special'], // Diplomat's Cloak: retreat and surrender anywhere
+      [142, 'immunity'], // Pendant of Reflection
+      [143, 'primary'], // Ironfist of the Ogre
+      [146, 'troops'], // Cannon, a war machine like the Ballista
+      [147, 'attack'],
+      [148, 'defense'],
+      [149, 'spellPower'],
+      [150, 'knowledge'],
+      [151, 'movement'],
+      [152, 'weakening'], // enemy Luck −1
+      [153, 'weakening'],
+      [154, 'weakening'],
+      [155, 'weakening'], // enemy Morale −1
+      [156, 'weakening'],
+      [157, 'weakening'],
+      [158, 'special'], // battle losses are permanent
+      [159, 'special'], // no spells of levels 1 and 2 in combat
+      [160, 'resources'], // Golden Goose
+      [161, 'troops'], // Horn of the Abyss: Fangarms rise from the slain
+      [162, 'weakening'], // enemy Spell Power −10%
+      [163, 'weakening'],
+      [164, 'weakening'],
+      [165, 'immunity'], // Sleepkeeper: immunity to mind spells
+    ] as const
+  ).map(([id, category]): [number, Artifact] => [
+    id,
+    { id, introducedIn: 'hornOfTheAbyss', category },
+  ]),
+);
+
+/** Up to the last Shadow of Death id Horn of the Abyss keeps the classic artifacts. */
+const ARTIFACT_TABLE = editionTable(ARTIFACTS, HOTA_ARTIFACTS, 140);
+export const artifactById = ARTIFACT_TABLE.byId;
+export const artifactsOf = ARTIFACT_TABLE.of;
+/** Its texts live under the dictionary keys `artifact.hota.<id>` and `artifactEffect.hota.<id>`. */
+export const isHotaArtifact = ARTIFACT_TABLE.isHota;

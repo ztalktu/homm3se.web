@@ -8,7 +8,9 @@ export type LayoutId =
   | 'hdEdition'
   | 'armageddonsBlade'
   | 'armageddonsBladeGog'
-  | 'shadowOfDeath';
+  | 'shadowOfDeath'
+  | 'hornOfTheAbyss'
+  | 'hornOfTheAbyssEarly';
 
 type CommonHeroFields = { readonly [Field in keyof typeof COMMON_HERO_FIELDS]: number };
 

@@ -200,7 +200,8 @@ export function writeHero(
   const backpackStart = position + layout.backpack;
   if (
     !buffer.contains(position + layout.heroClass, -layout.heroClass) ||
-    !buffer.contains(backpackStart, layout.backpackSlots * layout.backpackSlotSize)
+    !buffer.contains(backpackStart, layout.backpackSlots * layout.backpackSlotSize) ||
+    !buffer.contains(position + layout.secondarySkillSlots, layout.secondarySkillIds)
   ) {
     throw new HeroOutOfRangeError(position);
   }
@@ -223,7 +224,11 @@ export function writeHero(
     buffer.writeU32(position + layout.troopCounts + slot * 4, troop ? troop.count : 0);
   }
 
-  const skills = hero.secondarySkills.slice(0, MAX_SECONDARY_SKILLS);
+  // A skill the record has no byte for (Runes in older Horn of the Abyss saves) would land in
+  // the next field; the rules keep it out of the editor, and it is never written.
+  const skills = hero.secondarySkills
+    .filter(({ skillId }) => skillId < layout.secondarySkillIds)
+    .slice(0, MAX_SECONDARY_SKILLS);
   buffer.writeU8(position + layout.secondarySkillCount, skills.length);
   for (let skillId = 0; skillId < layout.secondarySkillIds; skillId += 1) {
     buffer.writeU8(position + layout.secondarySkillLevels + skillId, 0);

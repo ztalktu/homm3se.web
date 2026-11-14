@@ -16,6 +16,11 @@ import {
   armageddonsBladeLayoutAt,
 } from './armageddonsBlade';
 import { HD_EDITION_LAYOUT } from './hdEdition';
+import {
+  HORN_OF_THE_ABYSS_EARLY_LAYOUT,
+  HORN_OF_THE_ABYSS_LAYOUT,
+  hornOfTheAbyssLayout,
+} from './hornOfTheAbyss';
 import { RESTORATION_OF_ERATHIA_LAYOUT } from './restorationOfErathia';
 import { SHADOW_OF_DEATH_LAYOUT } from './shadowOfDeath';
 import type { HeroLayout, LayoutId, SaveLayout } from './types';
@@ -31,6 +36,8 @@ export const LAYOUTS: Record<LayoutId, SaveLayout> = {
   armageddonsBlade: ARMAGEDDONS_BLADE_LAYOUT,
   armageddonsBladeGog: ARMAGEDDONS_BLADE_GOG_LAYOUT,
   shadowOfDeath: SHADOW_OF_DEATH_LAYOUT,
+  hornOfTheAbyss: HORN_OF_THE_ABYSS_LAYOUT,
+  hornOfTheAbyssEarly: HORN_OF_THE_ABYSS_EARLY_LAYOUT,
 };
 
 /** The layout each edition writes, used when the header does not tell. */
@@ -41,13 +48,14 @@ export const EDITION_LAYOUT: Record<Edition, LayoutId> = {
   shadowOfDeath: 'shadowOfDeath',
   heroesChronicles: 'shadowOfDeath',
   inTheWakeOfGods: 'shadowOfDeath',
+  hornOfTheAbyss: 'hornOfTheAbyss',
 };
 
 /**
  * The layout of an opened save. HD Edition has its own, Armageddon's Blade (42/1) too, and
- * Heroes Chronicles uses The Shadow of Death's; for the other known headers the version picks
- * between the older Restoration of Erathia record and the newer one of The Shadow of Death.
- * Horn of the Abyss has no layout of its own yet and is read with the newer one, as before.
+ * Heroes Chronicles uses The Shadow of Death's, Horn of the Abyss has its own two (by the header
+ * minor); for the other known headers the version picks between the older Restoration of
+ * Erathia record and the newer one of The Shadow of Death.
  * Armageddon's Blade has two variants: `heroLayoutAt` picks the right one for a hero.
  */
 export function layoutFor(format: SaveFormat, edition: Edition): SaveLayout {
@@ -59,8 +67,9 @@ export function layoutFor(format: SaveFormat, edition: Edition): SaveLayout {
       return HD_EDITION_LAYOUT;
     case 'heroesChronicles':
       return SHADOW_OF_DEATH_LAYOUT;
-    case 'classic':
     case 'hornOfTheAbyss':
+      return hornOfTheAbyssLayout(format.minor);
+    case 'classic':
       return format.major < SHADOW_OF_DEATH_HEADER_MAJOR
         ? RESTORATION_OF_ERATHIA_LAYOUT
         : SHADOW_OF_DEATH_LAYOUT;

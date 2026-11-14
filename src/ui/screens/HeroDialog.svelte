@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { applyHero, originalHero, session } from '../../app/session.svelte';
+  import { applyHero, saveLimits, originalHero, session } from '../../app/session.svelte';
   import { encodeHeroName, type Hero } from '../../core/hero';
   import { validateHero, type HeroProblem } from '../../core/rules';
   import { artifactName, spellName } from '../../i18n/game.svelte';
@@ -73,7 +73,9 @@
       case 'creatureNotAllowed':
         return t('problem.creatureNotAllowed', { slot: problem.slot + 1 });
       case 'artifactNotAllowed':
-        return t('problem.artifactNotAllowed', { name: artifactName(problem.artifactId) });
+        return t('problem.artifactNotAllowed', {
+          name: artifactName(problem.artifactId, session.edition),
+        });
       case 'spellNotInEdition':
         return t('problem.spellNotInEdition', { name: spellName(problem.spellId) });
       default:
@@ -82,7 +84,7 @@
   }
 
   function apply(): void {
-    const found = validateHero(hero, session.edition)
+    const found = validateHero(hero, session.edition, saveLimits())
       .filter((problem) => problem.code !== 'nameEmpty')
       .map(describe);
     if (nameError) {

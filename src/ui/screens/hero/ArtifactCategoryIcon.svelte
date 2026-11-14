@@ -19,6 +19,7 @@
     attack: 'damage',
     defense: 'protection',
     movement: 'adventure',
+    weakening: 'weakening',
     special: 'special',
   };
   const purpose = $derived(SAME_AS_SPELL[category]);

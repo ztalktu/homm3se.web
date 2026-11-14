@@ -1,5 +1,6 @@
 // Generated from the Heroes III SaveEditor 2.05 sources. Maintained by hand from now on.
-import type { Edition } from './editions';
+import { editionTable } from './editionTable';
+import { HORN_OF_THE_ABYSS_1_8_MINOR, type Edition } from './editions';
 
 export const TOWNS = [
   'castle',
@@ -11,6 +12,9 @@ export const TOWNS = [
   'stronghold',
   'fortress',
   'conflux',
+  'cove',
+  'factory',
+  'bulwark',
   'neutral',
 ] as const;
 export type Town = (typeof TOWNS)[number];
@@ -1198,11 +1202,108 @@ export const CREATURES: readonly Creature[] = [
   { id: 172, introducedIn: 'inTheWakeOfGods', kind: 'special' },
 ];
 
+/**
+ * The first Horn of the Abyss header minor version whose saves have this town, its classes and
+ * creatures; undefined for the towns every save has.
+ */
+export function townSinceMinor(town: Town | undefined): number | undefined {
+  return town === 'factory' || town === 'bulwark' ? HORN_OF_THE_ABYSS_1_8_MINOR : undefined;
+}
+
+type HotaLine = [id: number, town: Town, level: number, upgraded: boolean];
+
+/**
+ * Town creatures line by line, base then upgrade, in the order the lists show them; the Sea Dog
+ * is the Pirate's second upgrade.
+ */
+const HOTA_LINES: readonly HotaLine[] = [
+  [153, 'cove', 1, false],
+  [154, 'cove', 1, true],
+  [155, 'cove', 2, false],
+  [156, 'cove', 2, true],
+  [157, 'cove', 3, false],
+  [158, 'cove', 3, true],
+  [151, 'cove', 3, true],
+  [159, 'cove', 4, false],
+  [160, 'cove', 4, true],
+  [161, 'cove', 5, false],
+  [162, 'cove', 5, true],
+  [163, 'cove', 6, false],
+  [164, 'cove', 6, true],
+  [165, 'cove', 7, false],
+  [166, 'cove', 7, true],
+  [167, 'neutral', 4, false],
+  [168, 'neutral', 5, false],
+  [169, 'neutral', 2, false],
+  [170, 'neutral', 4, false],
+  // The Halfling leaves the neutrals for the Factory, which has two level 7 lines.
+  [138, 'factory', 1, false],
+  [171, 'factory', 1, true],
+  [172, 'factory', 2, false],
+  [173, 'factory', 2, true],
+  [174, 'factory', 3, false],
+  [175, 'factory', 3, true],
+  [176, 'factory', 4, false],
+  [177, 'factory', 4, true],
+  [178, 'factory', 5, false],
+  [179, 'factory', 5, true],
+  [180, 'factory', 6, false],
+  [181, 'factory', 6, true],
+  [182, 'factory', 7, false],
+  [183, 'factory', 7, true],
+  [184, 'factory', 7, false],
+  [185, 'factory', 7, true],
+  [186, 'bulwark', 1, false],
+  [187, 'bulwark', 1, true],
+  [188, 'bulwark', 2, false],
+  [189, 'bulwark', 2, true],
+  [190, 'bulwark', 3, false],
+  [191, 'bulwark', 3, true],
+  [192, 'bulwark', 4, false],
+  [193, 'bulwark', 4, true],
+  [194, 'bulwark', 5, false],
+  [195, 'bulwark', 5, true],
+  [196, 'bulwark', 6, false],
+  [197, 'bulwark', 6, true],
+  [198, 'bulwark', 7, false],
+  [199, 'bulwark', 7, true],
+];
+
+/**
+ * Horn of the Abyss creatures by id: its own ids 151 and 153–199 (the same numbers mean
+ * In the Wake of Gods creatures in WoG saves) and the Halfling, which moves to the Factory.
+ * Ids 145–150 and 152 do not exist there.
+ */
+export const HOTA_CREATURES: ReadonlyMap<number, Creature> = new Map(
+  HOTA_LINES.map(([id, town, level, upgraded]): [number, Creature] => [
+    id,
+    {
+      id,
+      kind: 'regular',
+      introducedIn: id === 138 ? 'armageddonsBlade' : 'hornOfTheAbyss',
+      town,
+      level,
+      upgraded,
+    },
+  ]),
+);
+
+/** Up to the last Armageddon's Blade id Horn of the Abyss keeps the classic creatures. */
+const CREATURE_TABLE = editionTable(CREATURES, HOTA_CREATURES, 144);
+export const creatureById = CREATURE_TABLE.byId;
+/** Placeholders included. */
+export const creaturesOf = CREATURE_TABLE.of;
+/** Its name lives under the dictionary key `creature.hota.<id>`. */
+export const isHotaCreature = CREATURE_TABLE.isHota;
+
 /** What a creature's badge shows: its town, or its kind when it has none. */
 export type CreatureGroup = Town | 'warMachine' | 'special';
 
-export function creatureGroup(creatureId: number | undefined): CreatureGroup | undefined {
-  const creature = creatureId === undefined ? undefined : CREATURES[creatureId];
+export function creatureGroup(
+  creatureId: number | undefined,
+  edition: Edition,
+): CreatureGroup | undefined {
+  const creature = creatureId === undefined ? undefined : creatureById(creatureId, edition);
   if (creature?.kind === 'warMachine' || creature?.kind === 'special') {
     return creature.kind;
   }

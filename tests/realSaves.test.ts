@@ -46,12 +46,17 @@ describe.skipIf(files.length === 0)('real saves', () => {
       const view = new DataView(unpacked.buffer, unpacked.byteOffset);
       const version = [view.getUint32(8, true), view.getUint32(12, true)];
 
-      // The header picks the layout: HD Edition its own, The Shadow of Death the newer one.
+      // The header picks the layout: HD Edition its own, The Shadow of Death the newer one,
+      // Horn of the Abyss one of its two by the header minor.
       const expectedLayout = file.includes(`${SAVES_DIR}/H2HD/`)
         ? 'hdEdition'
         : file.includes(`${SAVES_DIR}/SoD/`)
           ? 'shadowOfDeath'
-          : null;
+          : file.includes(`${SAVES_DIR}/HotA/`)
+            ? version[1]! >= 10
+              ? 'hornOfTheAbyss'
+              : 'hornOfTheAbyssEarly'
+            : null;
       if (expectedLayout) {
         expect(layoutFor(save.format, 'restorationOfErathia').id).toBe(expectedLayout);
       }

@@ -83,7 +83,7 @@
             <span class="visually-hidden">{t(KIND_LABELS[change.kind])}:</span>
           </span>
           <span class="change">
-            {change.text}
+            {#if change.title}<strong class="title">{change.title}</strong>{/if}{change.text}
             {#if change.credit}
               <span class="credit">{t('history.credit', { name: change.credit })}</span>
             {/if}
@@ -174,6 +174,10 @@
 
   .change {
     white-space: pre-line;
+  }
+
+  .title {
+    margin-right: 0.3em;
   }
 
   .credit {

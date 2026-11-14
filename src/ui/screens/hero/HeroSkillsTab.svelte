@@ -1,8 +1,10 @@
 <script lang="ts">
   import type { Hero } from '../../../core/hero';
+  import { saveLimits, session } from '../../../app/session.svelte';
+  import { skillAllowed } from '../../../core/rules';
   import {
     MAX_SECONDARY_SKILLS,
-    SECONDARY_SKILL_COUNT,
+    SECONDARY_SKILLS,
     SKILL_LEVELS,
     type SkillLevel,
   } from '../../../data/skills';
@@ -21,7 +23,13 @@
 
   /** The "(nothing)" option that clears a slot. */
   const NONE = -1;
-  const skillIds = Array.from({ length: SECONDARY_SKILL_COUNT }, (_, id) => id);
+  /** Skills of the save's edition that the hero record has room for. */
+  const skillIds = $derived.by(() => {
+    const limits = saveLimits();
+    return SECONDARY_SKILLS.map(({ id }) => id).filter((id) =>
+      skillAllowed(id, session.edition, limits),
+    );
+  });
 
   /** Filled rows plus one empty row to add a skill, up to eight. */
   const rows = $derived(

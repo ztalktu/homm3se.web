@@ -16,7 +16,14 @@ import {
   readResources,
   writeResources,
 } from '../src/core/resources';
-import { artifactAllowed, creatureProblem, validateHero } from '../src/core/rules';
+import {
+  artifactAllowed,
+  classAllowed,
+  creatureProblem,
+  maxLevel,
+  skillAllowed,
+  validateHero,
+} from '../src/core/rules';
 import { SaveBuffer } from '../src/core/saveBuffer';
 import {
   NotASaveError,
@@ -34,6 +41,8 @@ import {
   type SaveFormat,
 } from '../src/core/saveFormat';
 import { heroLayoutAt, LAYOUTS, layoutFor, playerBlockFor } from '../src/core/layouts';
+import { isAvailableIn } from '../src/data/editions';
+import type { SkillLevel } from '../src/data/skills';
 import { ascii, buildSave } from './fixtures/syntheticSave';
 
 const SOD = LAYOUTS.shadowOfDeath.hero;
@@ -366,6 +375,13 @@ describe('experience', () => {
     expect(experienceForLevel(0)).toBe(0);
     expect(experienceForLevel(99)).toBe(1_808_894_836);
   });
+
+  it('stops at the highest level of the edition', () => {
+    expect(maxLevel('shadowOfDeath')).toBe(75);
+    expect(maxLevel('hornOfTheAbyss')).toBe(74);
+    expect(levelForExperience(2_000_000_000, maxLevel('hornOfTheAbyss'))).toBe(74);
+    expect(experienceForLevel(99, maxLevel('hornOfTheAbyss'))).toBe(1_507_412_731);
+  });
 });
 
 describe('edition detection', () => {
@@ -392,6 +408,128 @@ describe('edition detection', () => {
     ).toBe('inTheWakeOfGods');
     expect(requiredEdition({ ...base, backpack: [135] }, 'armageddonsBlade')).toBe('shadowOfDeath');
     expect(requiredEdition({ ...base, backpack: [135] }, 'heroesChronicles')).toBeNull();
+  });
+
+  it('keeps In the Wake of Gods and Horn of the Abyss apart', () => {
+    const wogTroops = [{ creatureId: 150, count: 1 }, null, null, null, null, null, null];
+    // A Horn of the Abyss save is told by its header; its ids above The Shadow of Death are not
+    // the In the Wake of Gods ones, so a matching id never moves it there.
+    expect(requiredEdition({ ...base, troops: wogTroops }, 'hornOfTheAbyss')).toBeNull();
+    expect(requiredEdition(base, 'hornOfTheAbyss')).toBeNull();
+    expect(isAvailableIn('shadowOfDeath', 'hornOfTheAbyss')).toBe(true);
+    expect(isAvailableIn('inTheWakeOfGods', 'hornOfTheAbyss')).toBe(false);
+    expect(isAvailableIn('hornOfTheAbyss', 'inTheWakeOfGods')).toBe(false);
+    expect(isAvailableIn('hornOfTheAbyss', 'shadowOfDeath')).toBe(false);
+  });
+});
+
+describe('Horn of the Abyss layouts', () => {
+  const HOTA = LAYOUTS.hornOfTheAbyss.hero;
+  const EARLY = LAYOUTS.hornOfTheAbyssEarly.hero;
+  const withSkills = (skills: { skillId: number; level: SkillLevel }[]) => {
+    const buffer = new SaveBuffer(buildSave(4000, [GELU]));
+    const hero = readHero(buffer, 1000, HOTA, 'windows-1252');
+    return { buffer, hero: { ...hero, secondarySkills: skills } };
+  };
+
+  it('picks the layout by the header minor', () => {
+    expect(layoutFor({ kind: 'hornOfTheAbyss', major: 44, minor: 5 }, 'shadowOfDeath').id).toBe(
+      'hornOfTheAbyssEarly',
+    );
+    expect(layoutFor({ kind: 'hornOfTheAbyss', major: 44, minor: 10 }, 'shadowOfDeath').id).toBe(
+      'hornOfTheAbyss',
+    );
+    expect(layoutFor({ kind: 'hornOfTheAbyss', major: 44, minor: 11 }, 'shadowOfDeath').id).toBe(
+      'hornOfTheAbyss',
+    );
+    expect(layoutFor({ kind: 'unknown' }, 'hornOfTheAbyss').id).toBe('hornOfTheAbyss');
+    const format = { kind: 'hornOfTheAbyss', major: 44, minor: 11 } as const;
+    expect(editionFromHeader(format)).toBe('hornOfTheAbyss');
+    expect(minimumEditionFor(format)).toBe('hornOfTheAbyss');
+    expect(isEditingTested(format)).toBe(true);
+    // Versions the layouts were not checked on still open, with the warning.
+    expect(isEditingTested({ kind: 'hornOfTheAbyss', major: 44, minor: 12 })).toBe(false);
+    expect(isEditingTested({ kind: 'hornOfTheAbyss', major: 44, minor: 4 })).toBe(false);
+  });
+
+  it('differs from The Shadow of Death only in the secondary skills and the record size', () => {
+    for (const layout of [HOTA, EARLY]) {
+      const differences = Object.keys(SOD).filter(
+        (field) => SOD[field as keyof typeof SOD] !== layout[field as keyof typeof layout],
+      );
+      expect(differences.sort()).toEqual(
+        ['recordSize', 'secondarySkillIds', 'secondarySkillSlots'].sort(),
+      );
+    }
+    expect([HOTA.secondarySkillIds, HOTA.recordSize]).toEqual([30, 1160]);
+    expect([EARLY.secondarySkillIds, EARLY.recordSize]).toEqual([29, 1147]);
+  });
+
+  it('keeps the levels of Interference and Runes at +41 and +42 and the slots at +923', () => {
+    const { buffer, hero } = withSkills([
+      { skillId: 29, level: 3 },
+      { skillId: 0, level: 1 },
+      { skillId: 28, level: 2 },
+    ]);
+    writeHero(buffer, 1000, HOTA, 'windows-1252', hero);
+    expect(buffer.readU8(1000 + 41)).toBe(2);
+    expect(buffer.readU8(1000 + 42)).toBe(3);
+    expect(buffer.readU8(1000 + 923 + 29)).toBe(1);
+    expect(buffer.readU8(1000 + 923 + 0)).toBe(2);
+    expect(buffer.readU8(1000 + 923 + 28)).toBe(3);
+    expect(readHero(buffer, 1000, HOTA, 'windows-1252').secondarySkills).toEqual(
+      hero.secondarySkills,
+    );
+  });
+
+  it('never writes past the 29 skills of an older save', () => {
+    const { buffer, hero } = withSkills([{ skillId: 28, level: 1 }]);
+    buffer.writeU8(1000 + 923 + 29, 0x0c); // the next field, not a skill slot
+    writeHero(buffer, 1000, EARLY, 'windows-1252', hero);
+    expect(buffer.readU8(1000 + 923 + 29)).toBe(0x0c);
+    expect(readHero(buffer, 1000, EARLY, 'windows-1252').secondarySkills).toEqual([
+      { skillId: 28, level: 1 },
+    ]);
+    const runes = withSkills([
+      { skillId: 29, level: 1 },
+      { skillId: 28, level: 2 },
+    ]);
+    runes.buffer.writeU8(1000 + 923 + 29, 0x0c);
+    writeHero(runes.buffer, 1000, EARLY, 'windows-1252', runes.hero);
+    expect(runes.buffer.readU8(1000 + 923 + 29)).toBe(0x0c);
+    expect(readHero(runes.buffer, 1000, EARLY, 'windows-1252').secondarySkills).toEqual([
+      { skillId: 28, level: 2 },
+    ]);
+  });
+
+  it('allows the new skills only where the save has them', () => {
+    expect(skillAllowed(27, 'restorationOfErathia')).toBe(true);
+    expect(skillAllowed(28, 'shadowOfDeath')).toBe(false);
+    expect(skillAllowed(28, 'hornOfTheAbyss', { minor: 5 })).toBe(true);
+    expect(skillAllowed(29, 'hornOfTheAbyss', { minor: 5 })).toBe(false);
+    expect(skillAllowed(29, 'hornOfTheAbyss', { minor: 10 })).toBe(true);
+    expect(skillAllowed(29, 'hornOfTheAbyss')).toBe(true);
+    expect(skillAllowed(30, 'hornOfTheAbyss', { minor: 11 })).toBe(false);
+  });
+
+  it('keeps the Factory and the Bulwark out of saves older than HotA 1.8.0', () => {
+    expect(creatureProblem(172, 'hornOfTheAbyss')).toBeNull();
+    expect(creatureProblem(172, 'hornOfTheAbyss', { minor: 11 })).toBeNull();
+    expect(creatureProblem(172, 'hornOfTheAbyss', { minor: 5 })).toBe('edition');
+    expect(creatureProblem(153, 'hornOfTheAbyss', { minor: 5 })).toBeNull();
+    // The Halfling is a neutral in saves without the Factory.
+    expect(creatureProblem(138, 'hornOfTheAbyss', { minor: 5 })).toBeNull();
+    expect(creatureProblem(152, 'hornOfTheAbyss')).toBe('edition');
+    expect(creatureProblem(150, 'hornOfTheAbyss')).toBe('edition');
+    expect(creatureProblem(172, 'inTheWakeOfGods')).toBeNull();
+    expect(classAllowed(19, 'hornOfTheAbyss', { minor: 5 })).toBe(true);
+    expect(classAllowed(20, 'hornOfTheAbyss', { minor: 5 })).toBe(false);
+    expect(classAllowed(20, 'hornOfTheAbyss', { minor: 10 })).toBe(true);
+    expect(classAllowed(18, 'inTheWakeOfGods')).toBe(false);
+    expect(artifactAllowed(165, 'hornOfTheAbyss')).toBe(true);
+    expect(artifactAllowed(141, 'hornOfTheAbyss')).toBe(true);
+    expect(artifactAllowed(144, 'hornOfTheAbyss')).toBe(false);
+    expect(artifactAllowed(150, 'inTheWakeOfGods')).toBe(false);
   });
 });
 

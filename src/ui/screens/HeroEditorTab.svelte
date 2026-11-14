@@ -139,8 +139,11 @@
                 <li>
                   {#if troop}
                     <span class="troop">
-                      <TownIcon group={creatureGroup(troop.creatureId)} size={18} />
-                      {creatureName(troop.creatureId)}
+                      <TownIcon
+                        group={creatureGroup(troop.creatureId, session.edition)}
+                        size={18}
+                      />
+                      {creatureName(troop.creatureId, session.edition)}
                     </span>
                     <span class="count">{formatNumber(troop.count)}</span>
                   {:else}

@@ -23,7 +23,9 @@
     | 'skull'
     | 'coins'
     | 'scroll'
-    | 'orb';
+    | 'orb'
+    | 'interference'
+    | 'runeStone';
 
   type Glyph =
     | { spell: SpellPurpose }
@@ -68,6 +70,8 @@
     [{ artifact: 'spellPower' }, 'var(--color-artifact-spell-power)'], // Sorcery: lightning
     [{ artifact: 'immunity' }, 'var(--color-artifact-immunity)'], // Resistance
     [{ spell: 'healing' }, SPIRIT], // First Aid: cross
+    [{ own: 'interference' }, MAGIC], // Interference: Sorcery's lightning, struck out
+    [{ own: 'runeStone' }, MAGIC], // Runes: a rune cut in a standing stone
   ];
 
   interface Props {
@@ -193,6 +197,35 @@
           fill="none"
           stroke-width="1.4"
           stroke-linecap="round"
+          class="cut-stroke"
+        />
+      {:else if glyph.own === 'interference'}
+        <path d="M14 1.5 4.5 13.5h6.2L9.5 22.5l10-12.5h-6.3z" fill="currentColor" />
+        <path
+          d="M3 3 21 21"
+          fill="none"
+          stroke-width="4.2"
+          stroke-linecap="round"
+          class="cut-stroke"
+        />
+        <path
+          d="M3.6 3.6l16.8 16.8"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      {:else if glyph.own === 'runeStone'}
+        <path
+          d="M6.8 22 5.8 9.5C5.8 5.3 8.4 2.5 12 2.5s6.2 2.8 6.2 7L17.2 22z"
+          fill="currentColor"
+        />
+        <path
+          d="M10.2 7.5v10M10.2 7.5h2.7a2.3 2.3 0 0 1 0 4.6h-2.7l4.4 5.4"
+          fill="none"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
           class="cut-stroke"
         />
       {:else}

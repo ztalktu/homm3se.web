@@ -108,6 +108,27 @@
       />
       <circle cx="19.2" cy="6" r="2.6" fill="currentColor" />
       <circle cx="19.8" cy="5.4" r=".8" class="cut" />
+    {:else if group === 'cove'}
+      <!-- Sailing ship -->
+      <path d="M11.2 2.5v13" fill="none" stroke="currentColor" stroke-width="1.6" />
+      <path
+        d="M12.6 3.2 19.5 13.5h-6.9zM9.9 5.8 4.8 13.5h5.1zM2.5 15.5h19l-3.2 5.2H5.7z"
+        fill="currentColor"
+      />
+    {:else if group === 'factory'}
+      <!-- Workshop with a smoking chimney -->
+      <path d="M2 22V12.5l5 3v-3l5 3v-3l5 3V5h4v17z" fill="currentColor" />
+      <circle cx="19" cy="2.6" r="1.6" fill="currentColor" />
+      <circle cx="21.6" cy="1.6" r="1.1" fill="currentColor" />
+      <path d="M4.5 17.5H7V20H4.5zM9.5 17.5H12V20H9.5zM14.5 17.5H17V20h-2.5z" class="cut" />
+    {:else if group === 'bulwark'}
+      <!-- Mammoth, face on: big ears, tusks, the trunk down the middle -->
+      <path
+        d="M12 2.5c-4.4 0-7 3-7 6.8 0 2.4 1 4.2 2.8 5.3L10 16v4.5a2 2 0 0 0 4 0V16l2.2-1.4c1.8-1.1 2.8-2.9 2.8-5.3 0-3.8-2.6-6.8-7-6.8zM5.4 6.4C2.8 6.4 1.4 8.4 1.7 11.4c.2 2 1.6 3.4 3.8 3.7zM18.6 6.4c2.6 0 4 2 3.7 5-.2 2-1.6 3.4-3.8 3.7zM8.6 15.2C6.7 16.7 4.9 19 5.1 21.6c1.4-1.6 2.9-2.8 4.7-3.6zM15.4 15.2c1.9 1.5 3.7 3.8 3.5 6.4-1.4-1.6-2.9-2.8-4.7-3.6z"
+        fill="currentColor"
+      />
+      <circle cx="9.2" cy="9.8" r="1" class="cut" />
+      <circle cx="14.8" cy="9.8" r="1" class="cut" />
     {:else}
       <!-- Neutral: paw print -->
       <g fill="currentColor">

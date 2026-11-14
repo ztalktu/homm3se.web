@@ -19,9 +19,11 @@
     onchange: (value: Value) => void;
     /** Each change of this number blinks the select, to show the app changed its value itself. */
     flash?: number | undefined;
+    /** Shows the value without letting it change; `hint` then says why. */
+    disabled?: boolean | undefined;
   }
 
-  let { label, hint, options, value, onchange, flash = 0 }: Props = $props();
+  let { label, hint, options, value, onchange, flash = 0, disabled = false }: Props = $props();
 
   const id = $props.id();
   let select: HTMLSelectElement | undefined = $state();
@@ -46,14 +48,16 @@
 
 <div class="header-select">
   <label for={id}>{label}</label>
-  <span class="control">
+  <!-- A disabled select gets no mouse events: its wrapper shows the hint then. -->
+  <span class="control" class:disabled use:tooltip={disabled ? hint : ''}>
     <select
       bind:this={select}
       {id}
       {value}
+      {disabled}
       onchange={handleChange}
       onanimationend={() => select && delete select.dataset['flash']}
-      use:tooltip={hint}
+      use:tooltip={disabled ? '' : hint}
     >
       {#each options as option (option.value)}
         <option value={option.value}>{option.label}</option>
@@ -121,9 +125,18 @@
     }
   }
 
-  select:hover {
+  select:hover:enabled {
     background: var(--color-header-control-hover);
     border-color: var(--color-frame);
+  }
+
+  select:disabled {
+    cursor: default;
+    padding-right: var(--space-3);
+  }
+
+  .control.disabled::after {
+    display: none;
   }
 
   option {

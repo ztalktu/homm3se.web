@@ -16,8 +16,8 @@
   import SelectField from '../components/SelectField.svelte';
   import TextField from '../components/TextField.svelte';
   import { ICONS, type IconName } from '../components/icons';
-  import { ARTIFACTS } from '../../data/artifacts';
-  import { CREATURES } from '../../data/creatures';
+  import { artifactsOf } from '../../data/artifacts';
+  import { creaturesOf } from '../../data/creatures';
   import { EDITIONS, isAvailableIn, type Edition } from '../../data/editions';
   import { HERO_NAMES, type GameLanguage } from '../../data/heroNames';
   import {
@@ -56,9 +56,9 @@
 
   // Real reference data in the interface language, limited to the selected edition.
   const creatures: ComboboxItem<number>[] = $derived(
-    CREATURES.map((item) => ({
+    creaturesOf(edition).map((item) => ({
       value: item.id,
-      label: creatureName(item.id),
+      label: creatureName(item.id, edition),
       description: creatureDescription(item),
       keywords: item.town,
       disabled: item.kind === 'placeholder' || !isAvailableIn(item.introducedIn, edition),
@@ -66,10 +66,10 @@
   );
 
   const artifacts: ComboboxItem<number>[] = $derived(
-    ARTIFACTS.map((item) => ({
+    artifactsOf(edition).map((item) => ({
       value: item.id,
-      label: artifactName(item.id),
-      description: artifactDescription(item.id),
+      label: artifactName(item.id, edition),
+      description: artifactDescription(item.id, edition),
       disabled: !isAvailableIn(item.introducedIn, edition),
     })),
   );

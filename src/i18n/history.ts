@@ -10,6 +10,8 @@ export type ChangeKind = (typeof CHANGE_KINDS)[number];
 
 interface HistoryChange {
   kind: ChangeKind;
+  /** Bold lead-in shown before the text. */
+  title?: string;
   /** May contain line breaks for nested lists. */
   text: string;
   /** Who found the bug, as credited in the original history. */
@@ -29,7 +31,7 @@ interface RawRelease {
   version: string;
   date: string | null;
   summary?: string;
-  changes: { kind: string; text: string; credit?: string }[];
+  changes: { kind: string; title?: string; text: string; credit?: string }[];
 }
 
 function isChangeKind(value: string): value is ChangeKind {
@@ -41,11 +43,16 @@ function parseHistory(releases: RawRelease[]): HistoryRelease[] {
     version,
     date,
     ...(summary === undefined ? {} : { summary }),
-    changes: changes.map(({ kind, text, credit }) => {
+    changes: changes.map(({ kind, title, text, credit }) => {
       if (!isChangeKind(kind)) {
         throw new Error(`Unknown change kind "${kind}" in version ${version}`);
       }
-      return { kind, text, ...(credit === undefined ? {} : { credit }) };
+      return {
+        kind,
+        ...(title === undefined ? {} : { title }),
+        text,
+        ...(credit === undefined ? {} : { credit }),
+      };
     }),
   }));
 }

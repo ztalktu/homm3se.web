@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { session } from '../../../app/session.svelte';
+  import { saveLimits, session } from '../../../app/session.svelte';
   import type { Hero } from '../../../core/hero';
   import { HERO_LIMITS, creatureProblem } from '../../../core/rules';
-  import { CREATURES, TOWNS, creatureGroup, type Creature } from '../../../data/creatures';
+  import { TOWNS, creatureGroup, creaturesOf, type Creature } from '../../../data/creatures';
   import { classTown } from '../../../data/heroClasses';
   import { creatureDescription, creatureName } from '../../../i18n/game.svelte';
   import { t } from '../../../i18n/index.svelte';
@@ -27,25 +27,30 @@
     return creature.town ? TOWNS.indexOf(creature.town) : TOWNS.length;
   }
 
-  /** The hero's own town first, then the other towns, level 1 to 7, the upgrade after its base. */
+  /**
+   * The hero's own town first, then the other towns, level 1 to 7. Within a level the sort is
+   * stable and keeps the order of the creature list: base, its upgrades, then the next line
+   * (the Factory has two level 7 lines, the Pirate two upgrades).
+   */
   function byTownAndLevel(a: Creature, b: Creature): number {
     return (
       Number(a.town !== heroTown) - Number(b.town !== heroTown) ||
       townOrder(a) - townOrder(b) ||
-      (a.level ?? 0) - (b.level ?? 0) ||
-      Number(a.upgraded ?? false) - Number(b.upgraded ?? false)
+      (a.level ?? 0) - (b.level ?? 0)
     );
   }
 
   // Only creatures the save can hold: those the edition does not know and the holes
   // New World Computing left in the list are left out.
+  const limits = $derived(saveLimits());
   const items: ComboboxItem<number>[] = $derived([
     { value: EMPTY, label: t('heroDialog.noCreature') },
-    ...CREATURES.filter((creature) => creatureProblem(creature.id, session.edition) === null)
+    ...creaturesOf(session.edition)
+      .filter((creature) => creatureProblem(creature.id, session.edition, limits) === null)
       .sort(byTownAndLevel)
       .map((creature) => ({
         value: creature.id,
-        label: creatureName(creature.id),
+        label: creatureName(creature.id, session.edition),
         description: creatureDescription(creature),
         keywords: creature.town,
       })),
@@ -74,10 +79,10 @@
       onchange={(creatureId) => setCreature(slot, creatureId)}
     >
       {#snippet before()}
-        <TownIcon group={creatureGroup(troop?.creatureId)} />
+        <TownIcon group={creatureGroup(troop?.creatureId, session.edition)} />
       {/snippet}
       {#snippet optionIcon(item)}
-        <TownIcon group={creatureGroup(item.value)} />
+        <TownIcon group={creatureGroup(item.value, session.edition)} />
       {/snippet}
     </Combobox>
     {#if troop}

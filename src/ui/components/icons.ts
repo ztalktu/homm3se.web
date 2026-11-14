@@ -21,7 +21,8 @@ export const ICONS = {
   check: 'M5 12l5 5L20 7',
   warning: 'M12 4l9 16H3zM12 10v4M12 17h.01',
   upload: 'M12 20V9M7 14l5-5 5 5M5 4h14',
-  hero: 'M14.5 3.5L20.5 3.5L20.5 9.5L10 20l-4-4zM6 16l-2.5 2.5L5.5 20.5 8 18M8 14l2 2',
+  // A horned helmet.
+  hero: 'M7 20v-7a5 5 0 0 1 10 0v7zM7 15h3.5M13.5 15h3.5M12 15v5M7.5 11C4.5 10.5 3 8 3 5M16.5 11c3-.5 4.5-3 4.5-6',
   chest:
     'M4 11h16v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM4 11a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5M10 14h4v3h-4z',
   attributes: 'M4 20V10M10 20V4M16 20v-8M22 20H2',

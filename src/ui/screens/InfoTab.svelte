@@ -4,7 +4,8 @@
   import { t } from '../../i18n/index.svelte';
   import Button from '../components/Button.svelte';
   import Fieldset from '../components/Fieldset.svelte';
-  import { formatName, formatSize, formatTime, gameTypeLabel } from '../format';
+  import { formatDateTime, formatName, formatSize, gameTypeLabel } from '../format';
+  import ChangesSummary from './ChangesSummary.svelte';
 
   interface Props {
     onopen: () => void;
@@ -16,32 +17,45 @@
 </script>
 
 {#if save}
-  <div class="grid">
+  <div class="blocks">
     <Fieldset legend={t('info.openedTitle')}>
+      <!-- Two columns of three, filled top to bottom. -->
       <dl>
-        <dt>{t('info.file')}</dt>
-        <dd>{save.fileName}</dd>
-        <dt>{t('info.game')}</dt>
-        <dd>{gameTypeLabel(save.gameType)}</dd>
-        <dt>{t('info.edition')}</dt>
-        <dd>{editionName(session.edition)}</dd>
-        <dt>{t('info.format')}</dt>
-        <dd>{formatName(save.format)}</dd>
-        <dt>{t('info.size')}</dt>
-        <dd>{formatSize(save.buffer.length)}</dd>
+        <div>
+          <dt>{t('info.file')}</dt>
+          <dd>{save.fileName}</dd>
+        </div>
+        <div>
+          <dt>{t('info.game')}</dt>
+          <dd>{gameTypeLabel(save.gameType)}</dd>
+        </div>
+        <div>
+          <dt>{t('info.edition')}</dt>
+          <dd>{editionName(session.edition)}</dd>
+        </div>
+        <div>
+          <dt>{t('info.format')}</dt>
+          <dd>{formatName(save.format)}</dd>
+        </div>
+        <div>
+          <dt>{t('info.size')}</dt>
+          <dd>{formatSize(save.buffer.length)}</dd>
+        </div>
+        <div>
+          <dt>{t('info.savedTitle')}</dt>
+          <dd>
+            {#if session.savedAs}
+              <strong>{session.savedAs.fileName}</strong>
+              <span class="muted when">· {formatDateTime(session.savedAs.at)}</span>
+            {:else}
+              <span class="muted">{t('info.notSavedYet')}</span>
+            {/if}
+          </dd>
+        </div>
       </dl>
     </Fieldset>
-    <Fieldset legend={t('info.savedTitle')}>
-      {#if session.savedAs}
-        <dl>
-          <dt>{t('info.file')}</dt>
-          <dd>{session.savedAs.fileName}</dd>
-          <dt>{t('info.savedAt')}</dt>
-          <dd>{formatTime(session.savedAs.at)}</dd>
-        </dl>
-      {:else}
-        <p class="muted">{t('info.notSavedYet')}</p>
-      {/if}
+    <Fieldset legend={t('info.changesTitle')}>
+      <ChangesSummary />
     </Fieldset>
   </div>
 {:else}
@@ -55,20 +69,28 @@
 <p class="warning">{t('info.warning')}</p>
 
 <style>
-  .grid {
+  .blocks {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: var(--space-4);
   }
 
   dl {
     display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: var(--space-2) var(--space-4);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(3, auto);
+    grid-auto-flow: column;
+    gap: var(--space-2) var(--space-6);
     margin: var(--space-2) 0 0;
   }
 
+  dl > div {
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
   dt {
+    padding-top: 2px;
     color: var(--color-label);
     font-size: 13px;
   }
@@ -76,6 +98,22 @@
   dd {
     margin: 0;
     overflow-wrap: anywhere;
+  }
+
+  .when {
+    white-space: nowrap;
+  }
+
+  @media (max-width: 760px) {
+    dl {
+      grid-template-columns: minmax(0, 1fr);
+      grid-auto-flow: row;
+    }
+
+    dl > div {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
   }
 
   .empty {
@@ -94,7 +132,6 @@
   }
 
   .muted {
-    margin: var(--space-2) 0 0;
     color: var(--color-text-muted);
   }
 

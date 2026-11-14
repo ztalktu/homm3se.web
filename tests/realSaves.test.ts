@@ -132,9 +132,9 @@ describe.skipIf(files.length === 0)('real saves', () => {
         save.edit((target) => writeHero(target, first.position, layout, first.codePage, edited));
         expect(readHero(save.originalBuffer, first.position, layout, first.codePage)).toEqual(hero);
 
-        const editCount = save.editCount;
-        const reopened = await SaveGame.open(file, await save.pack());
-        save.markSaved(editCount);
+        const packed = await save.pack();
+        const reopened = await SaveGame.open(file, packed.file);
+        save.markSaved(packed);
         expect(save.hasUnsavedChanges).toBe(false);
         expect(save.originalBuffer.bytes).toEqual(unpacked);
 

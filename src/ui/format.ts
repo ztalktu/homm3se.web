@@ -21,11 +21,16 @@ export function formatSize(bytes: number): string {
   return `${size.toLocaleString(preferences.locale, { maximumFractionDigits: digits })} ${units[unit]}`;
 }
 
-export function formatTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString(preferences.locale, {
-    hour: '2-digit',
-    minute: '2-digit',
+export function formatDateTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleString(preferences.locale, {
+    dateStyle: 'short',
+    timeStyle: 'short',
   });
+}
+
+/** Difference with its sign: "+38", "−4" (a real minus, as wide as the plus). */
+export function formatDelta(delta: number): string {
+  return `${delta > 0 ? '+' : '−'}${formatNumber(Math.abs(delta))}`;
 }
 
 export function gameTypeLabel(gameType: GameType): string {

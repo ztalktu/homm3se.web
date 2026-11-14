@@ -286,7 +286,18 @@
       <span
         >{t('status.opened', { file: save.fileName, size: formatSize(save.buffer.length) })}</span
       >
-      <span class:unsaved>{unsaved ? t('status.unsaved') : t('status.saved')}</span>
+      {#if unsaved}
+        <button
+          type="button"
+          class="status-link"
+          onclick={() => (activeTab = 'info')}
+          use:tooltip={t('status.unsavedHint')}
+        >
+          <Icon name="info" size={15} />{t('status.unsaved')}
+        </button>
+      {:else}
+        <span>{t('status.saved')}</span>
+      {/if}
     {:else}
       <span>{t('status.noFile')}</span>
     {/if}
@@ -571,8 +582,25 @@
     font-size: 13px;
   }
 
-  .status-bar .unsaved {
+  /* Unsaved changes: a link to the info page, which lists them. */
+  .status-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font-size: inherit;
     font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: color-mix(in srgb, currentColor 55%, transparent);
+    cursor: pointer;
+  }
+
+  .status-link:hover {
+    text-decoration-color: currentColor;
   }
 
   .drop-overlay {

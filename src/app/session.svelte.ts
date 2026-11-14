@@ -7,6 +7,13 @@ import { EDITIONS, isAvailableIn, type Edition } from '../data/editions';
 import { KNOWN_HERO_NAMES } from '../data/heroNames';
 import { PLAYER_COLORS, type PlayerColor } from '../data/players';
 import { requiredEdition } from '../core/editionDetection';
+import {
+  hasHeroChanges,
+  heroChanges,
+  resourceChanges,
+  type HeroChanges,
+  type ResourceChange,
+} from '../core/changes';
 import { readHero, readHeroOwner, writeHero, type Hero, type HeroOwner } from '../core/hero';
 import { findHero, findHeroNames, findNextHero, type HeroMatch } from '../core/heroSearch';
 import {
@@ -26,6 +33,8 @@ import {
   type ResourceQuery,
 } from '../core/resources';
 import { NotASaveError, SaveGame, editedFileName } from '../core/saveGame';
+import type { SaveBuffer } from '../core/saveBuffer';
+import type { CodePage } from '../core/textEncoding';
 import {
   editionFromHeader,
   isEditingTested,
@@ -60,6 +69,13 @@ const stored = readJson<StoredSession>(
   isStoredSession,
 );
 
+/** A hero record the user applied changes to, read the same way it was written. */
+interface EditedHero {
+  position: number;
+  layout: HeroLayout;
+  codePage: CodePage;
+}
+
 interface Session {
   /** Not reactive by itself: `revision` changes whenever the save is opened or edited. */
   save: SaveGame | null;
@@ -69,6 +85,8 @@ interface Session {
   editionAutoChanges: number;
   /** File name and time (ms since epoch) of the last successful save. */
   savedAs: { fileName: string; at: number } | null;
+  /** Hero records and treasuries (gold positions) changed since the save was opened. */
+  edited: { heroes: EditedHero[]; treasuries: number[] };
   heroName: string;
   heroMatch: HeroMatch | null;
   /** Name `heroMatch` was found by: "Find hero" continues only while the name stays the same. */
@@ -121,6 +139,7 @@ export const session: Session = $state({
   edition: stored.edition,
   editionAutoChanges: 0,
   savedAs: null,
+  edited: { heroes: [], treasuries: [] },
   heroName: '',
   heroMatch: null,
   heroMatchName: null,
@@ -153,6 +172,7 @@ export async function openSaveFile(file: File): Promise<void> {
     const sameVersion = session.save !== null && isSameFormat(session.save.format, save.format);
     session.save = save;
     session.savedAs = null;
+    session.edited = { heroes: [], treasuries: [] };
     session.heroMatch = null;
     session.heroMatchName = null;
     session.heroNamesInSave = findHeroNames(save.buffer, KNOWN_HERO_NAMES);
@@ -217,11 +237,10 @@ export async function saveCurrent(): Promise<boolean> {
     return false;
   }
   try {
-    const editCount = save.editCount;
     const packed = await save.pack();
     const suggested = session.savedAs?.fileName ?? editedFileName(save.fileName);
-    const fileName = await saveBytes(packed, suggested, t('app.title'));
-    save.markSaved(editCount);
+    const fileName = await saveBytes(packed.file, suggested, t('app.title'));
+    save.markSaved(packed);
     session.savedAs = { fileName, at: Date.now() };
     session.revision += 1;
     showToast(t('message.saved', { file: fileName }), { kind: 'success' });
@@ -274,22 +293,31 @@ export function currentHeroOwner(): HeroOwner {
   return save && heroMatch ? readHeroOwner(save.buffer, heroMatch.position) : null;
 }
 
-function readFoundHero(from: 'current' | 'original'): Hero | null {
-  void session.revision;
-  const { save, heroMatch } = session;
-  if (!save || !heroMatch) {
-    return null;
-  }
+/** The hero record at `position`, or null when it does not fit in the file. */
+function readHeroOrNull(
+  buffer: SaveBuffer,
+  position: number,
+  layout: HeroLayout,
+  codePage: CodePage,
+): Hero | null {
   try {
-    return readHero(
-      from === 'current' ? save.buffer : save.originalBuffer,
-      heroMatch.position,
-      heroLayout(save, heroMatch),
-      heroMatch.codePage,
-    );
+    return readHero(buffer, position, layout, codePage);
   } catch {
     return null;
   }
+}
+
+function readFoundHero(from: 'current' | 'original'): Hero | null {
+  void session.revision;
+  const { save, heroMatch } = session;
+  return save && heroMatch
+    ? readHeroOrNull(
+        from === 'current' ? save.buffer : save.originalBuffer,
+        heroMatch.position,
+        heroLayout(save, heroMatch),
+        heroMatch.codePage,
+      )
+    : null;
 }
 
 /** Raises the edition until the hero fits it, as the 2.05 version auto-detection did. */
@@ -356,9 +384,15 @@ export function applyHero(hero: Hero): void {
   if (!save || !heroMatch) {
     return;
   }
-  save.edit((buffer) =>
-    writeHero(buffer, heroMatch.position, heroLayout(save, heroMatch), heroMatch.codePage, hero),
-  );
+  const edited = {
+    position: heroMatch.position,
+    layout: heroLayout(save, heroMatch),
+    codePage: heroMatch.codePage,
+  };
+  save.edit((buffer) => writeHero(buffer, edited.position, edited.layout, edited.codePage, hero));
+  // The latest write tells how to read the record: the edition may have changed since.
+  const index = session.edited.heroes.findIndex((known) => known.position === edited.position);
+  session.edited.heroes.splice(index < 0 ? session.edited.heroes.length : index, 1, edited);
   session.heroName = hero.name;
   session.heroMatchName = hero.name.trim();
   // A rename adds the new name and may remove the old one.
@@ -418,12 +452,16 @@ export function searchResources(): void {
   session.revision += 1;
 }
 
+/** The player whose treasury has its gold at `goldPosition`; null when it is not one of theirs. */
+function treasuryColor(goldPosition: number | null): PlayerColor | null {
+  const index =
+    goldPosition === null ? -1 : (session.playerTreasuries?.indexOf(goldPosition) ?? -1);
+  return PLAYER_COLORS[index] ?? null;
+}
+
 /** The player whose treasury is shown, when it was picked by color; null otherwise. */
 export function selectedTreasuryColor(): PlayerColor | null {
-  const { playerTreasuries, goldPosition } = session;
-  const index =
-    playerTreasuries && goldPosition !== null ? playerTreasuries.indexOf(goldPosition) : -1;
-  return PLAYER_COLORS[index] ?? null;
+  return treasuryColor(session.goldPosition);
 }
 
 /** Like the other single-choice filters: a click shows the player's treasury, a second hides it. */
@@ -458,6 +496,9 @@ export function applyResources(amounts: ResourceAmounts): void {
     return;
   }
   save.edit((buffer) => writeResources(buffer, goldPosition, amounts));
+  if (!session.edited.treasuries.includes(goldPosition)) {
+    session.edited.treasuries.push(goldPosition);
+  }
   // The treasury now holds the new gold: search for that amount next time. A search that found
   // this treasury goes on from it, as if it had been made with the new gold.
   session.goldQuery = amounts.gold;
@@ -471,4 +512,63 @@ export function applyResources(amounts: ResourceAmounts): void {
 export function hasUnsavedChanges(): boolean {
   void session.revision;
   return session.save?.hasUnsavedChanges ?? false;
+}
+
+// ---------- changes ----------
+
+export interface TreasuryChanges {
+  /** The player, when the treasury is one of the player block's; null otherwise. */
+  color: PlayerColor | null;
+  resources: ResourceChange[];
+}
+
+export interface EditedHeroChanges {
+  name: string;
+  classId: number;
+  owner: HeroOwner;
+  changes: HeroChanges;
+}
+
+/** Everything changed since the save was opened, for the info page. Reactive through `revision`. */
+export function changeSummary(): { treasuries: TreasuryChanges[]; heroes: EditedHeroChanges[] } {
+  void session.revision;
+  const save = session.save;
+  if (!save) {
+    return { treasuries: [], heroes: [] };
+  }
+  const original = save.originalBuffer;
+  const saved = save.savedBuffer;
+
+  const treasuries = session.edited.treasuries.flatMap((gold) => {
+    const before = readResources(original, gold);
+    const after = readResources(save.buffer, gold);
+    if (!before || !after) {
+      return [];
+    }
+    const resources = resourceChanges(before, after, saved && readResources(saved, gold));
+    return resources.length > 0 ? [{ color: treasuryColor(gold), resources }] : [];
+  });
+
+  const heroes = session.edited.heroes.flatMap(({ position, layout, codePage }) => {
+    const read = (buffer: SaveBuffer): Hero | null =>
+      readHeroOrNull(buffer, position, layout, codePage);
+    const before = read(original);
+    const after = read(save.buffer);
+    if (!before || !after) {
+      return [];
+    }
+    const changes = heroChanges(before, after, saved && read(saved));
+    return hasHeroChanges(changes)
+      ? [
+          {
+            name: after.name,
+            classId: after.classId,
+            owner: readHeroOwner(save.buffer, position),
+            changes,
+          },
+        ]
+      : [];
+  });
+
+  return { treasuries, heroes };
 }

@@ -7,7 +7,7 @@ import { COMMON_HERO_FIELDS, type HeroLayout } from './layouts';
 import { EMPTY_SLOT, type SaveBuffer } from './saveBuffer';
 import { decodeText, encodeText, type CodePage } from './textEncoding';
 
-interface Troop {
+export interface Troop {
   creatureId: number;
   count: number;
 }

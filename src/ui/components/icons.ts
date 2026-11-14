@@ -24,6 +24,10 @@ export const ICONS = {
   hero: 'M14.5 3.5L20.5 3.5L20.5 9.5L10 20l-4-4zM6 16l-2.5 2.5L5.5 20.5 8 18M8 14l2 2',
   chest:
     'M4 11h16v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM4 11a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5M10 14h4v3h-4z',
+  attributes: 'M4 20V10M10 20V4M16 20v-8M22 20H2',
+  troops: 'M12 3l7 3v5c0 5-3.5 8-7 10c-3.5-2-7-5-7-10V6z',
+  skills: 'M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z',
+  spells: 'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11',
 } as const;
 
 export type IconName = keyof typeof ICONS;

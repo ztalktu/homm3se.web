@@ -28,6 +28,16 @@ export class NotASaveError extends Error {
   }
 }
 
+/** A packed copy of the save and what it holds, for `markSaved` once the file is written. */
+export interface PackedSave {
+  /** The gzip file the game can load. */
+  readonly file: Uint8Array;
+  /** The unpacked bytes it was made from. */
+  readonly unpacked: Uint8Array;
+  /** Edits it contains. */
+  readonly edits: number;
+}
+
 export class SaveGame {
   readonly fileName: string;
   readonly gameType: GameType;
@@ -38,6 +48,8 @@ export class SaveGame {
   private savedEdits = 0;
   /** Unpacked bytes as opened; writing to disk does not change them. */
   private readonly originalBytes: Uint8Array;
+  /** Unpacked bytes of the last written file, or null before the first write. */
+  private savedBytes: Uint8Array | null = null;
 
   private constructor(fileName: string, unpacked: Uint8Array) {
     this.fileName = fileName;
@@ -70,11 +82,6 @@ export class SaveGame {
     return this.edits !== this.savedEdits;
   }
 
-  /** Number of edits so far; pass the value taken before `pack` to `markSaved`. */
-  get editCount(): number {
-    return this.edits;
-  }
-
   /** Runs an edit on the buffer and remembers that the save has changed. */
   edit(change: (buffer: SaveBuffer) => void): void {
     change(this.buffer);
@@ -86,16 +93,24 @@ export class SaveGame {
     return new SaveBuffer(this.originalBytes);
   }
 
+  /** The save as last written to disk, or null before the first write; read only. */
+  get savedBuffer(): SaveBuffer | null {
+    return this.savedBytes && new SaveBuffer(this.savedBytes);
+  }
+
   /** Packs a snapshot of the current bytes into a gzip file the game can load. */
-  async pack(): Promise<Uint8Array> {
-    return compressGzip(this.buffer.bytes.slice());
+  async pack(): Promise<PackedSave> {
+    const unpacked = this.buffer.bytes.slice();
+    const edits = this.edits;
+    return { file: await compressGzip(unpacked), unpacked, edits };
   }
 
   /**
-   * Call after the packed file has been written to disk, with the edit count taken before
-   * packing: edits made while the save dialog was open are still unsaved.
+   * Call after the packed file has been written to disk: edits made while the save dialog
+   * was open are still unsaved.
    */
-  markSaved(editCount = this.edits): void {
-    this.savedEdits = editCount;
+  markSaved(packed: PackedSave): void {
+    this.savedEdits = packed.edits;
+    this.savedBytes = packed.unpacked;
   }
 }

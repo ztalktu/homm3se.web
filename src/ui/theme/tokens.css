@@ -139,6 +139,14 @@
   --color-warning: #8a6114;
   --color-warning-text: #fbefd4;
 
+  /* Info page: numbers that went up or down, added and removed items, edits not yet saved. */
+  --color-increase: #9fd07a;
+  --color-decrease: #f0a08f;
+  --color-added-text: #8fb2f0;
+  --color-removed-text: #f0a35a;
+  --color-unsaved: #f3d678;
+  --color-unsaved-soft: rgb(243 214 120 / 20%);
+
   --color-focus: #f3d678;
   --color-tab-inactive: #bfa978;
   --color-overlay: rgb(10 5 2 / 70%);
@@ -198,6 +206,13 @@
   --color-success-text: #f3f8ea;
   --color-warning: #8a6114;
   --color-warning-text: #fdf6e6;
+
+  --color-increase: #3d7a26;
+  --color-decrease: #a3261b;
+  --color-added-text: #2459b0;
+  --color-removed-text: #a8520f;
+  --color-unsaved: #8a6114;
+  --color-unsaved-soft: rgb(201 147 15 / 16%);
 
   --color-focus: #b08e3e;
   --color-tab-inactive: #6a5c3e;

@@ -80,7 +80,7 @@ describe('gzip', () => {
     expect(save.hasUnsavedChanges).toBe(false);
     save.edit((buffer) => buffer.writeU8(10, 42));
     expect(save.hasUnsavedChanges).toBe(true);
-    const repacked = await decompressGzip(await save.pack());
+    const repacked = await decompressGzip((await save.pack()).file);
     expect(repacked[10]).toBe(42);
   });
 
@@ -91,10 +91,10 @@ describe('gzip', () => {
     save.edit((buffer) => buffer.writeU8(10, 42));
     expect(save.originalBuffer.bytes[10]).toBe(before);
 
-    const editCount = save.editCount;
-    await save.pack();
-    save.markSaved(editCount);
+    expect(save.savedBuffer).toBeNull();
+    save.markSaved(await save.pack());
     expect(save.hasUnsavedChanges).toBe(false);
+    expect(save.savedBuffer?.bytes[10]).toBe(42);
     expect(save.originalBuffer.bytes[10]).toBe(before);
     expect(save.buffer.bytes[10]).toBe(42);
   });

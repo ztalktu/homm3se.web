@@ -18,6 +18,7 @@
   } from '../../i18n/game.svelte';
   import { t, type MessageKey } from '../../i18n/index.svelte';
   import Icon from '../components/Icon.svelte';
+  import PlayerFlag from '../components/PlayerFlag.svelte';
   import type { IconName } from '../components/icons';
   import { formatDelta, formatNumber } from '../format';
 
@@ -109,8 +110,9 @@
     <section>
       <h3><Icon name="chest" />{t('info.changedResources')}</h3>
       {#each summary.treasuries as treasury, index (index)}
-        {#if treasury.color && summary.treasuries.length > 1}
-          <h4>{playerLabel(treasury.color)}</h4>
+        <!-- Always named, even when only one treasury changed: the reader should not guess whose. -->
+        {#if treasury.color}
+          <h4 class="player"><PlayerFlag color={treasury.color} />{playerLabel(treasury.color)}</h4>
         {/if}
         <ul class="resources">
           {#each treasury.resources as change (change.resource)}
@@ -246,6 +248,12 @@
 
   section > h4 {
     margin: var(--space-2) 0 var(--space-1);
+  }
+
+  .player {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
   }
 
   h5 {

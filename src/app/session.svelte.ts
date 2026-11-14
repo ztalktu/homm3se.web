@@ -459,8 +459,11 @@ function treasuryColor(goldPosition: number | null): PlayerColor | null {
   return PLAYER_COLORS[index] ?? null;
 }
 
-/** The player whose treasury is shown, when it was picked by color; null otherwise. */
-export function selectedTreasuryColor(): PlayerColor | null {
+/**
+ * The player whose treasury is shown, picked by color or found by amounts; null when nothing is
+ * shown or the hit is not a player's treasury.
+ */
+export function shownTreasuryColor(): PlayerColor | null {
   return treasuryColor(session.goldPosition);
 }
 
@@ -470,7 +473,7 @@ export function selectTreasuryByColor(color: PlayerColor): void {
   if (position === undefined) {
     return;
   }
-  session.goldPosition = selectedTreasuryColor() === color ? null : position;
+  session.goldPosition = shownTreasuryColor() === color ? null : position;
   session.goldMatchQuery = null;
   session.revision += 1;
 }

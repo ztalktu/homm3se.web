@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { RESOURCES } from '../src/core/layouts';
+import { RESOURCE_ART } from '../src/ui/components/resourceArt';
 import { formatDateTime } from '../src/ui/format';
 import { filterOptions, normalizeSearchText } from '../src/ui/logic/filterOptions';
 import {
@@ -107,5 +109,16 @@ describe('formatDateTime', () => {
 
   it('says today instead of the date', () => {
     expect(formatDateTime(saved, new Date(2026, 10, 14, 23, 59).getTime())).toBe('today 20:05');
+  });
+});
+
+describe('resource icons', () => {
+  it('draws every resource with whole numbers in its shapes', () => {
+    for (const resource of RESOURCES) {
+      expect(RESOURCE_ART[resource].length).toBeGreaterThan(0);
+      for (const { attrs } of RESOURCE_ART[resource]) {
+        expect(Object.values(attrs).join(' ')).not.toMatch(/NaN|undefined|Infinity/);
+      }
+    }
   });
 });

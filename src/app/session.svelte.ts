@@ -409,6 +409,13 @@ export function currentResources(): ResourceAmounts | null {
   return save && goldPosition !== null ? readResources(save.buffer, goldPosition) : null;
 }
 
+/** The shown treasury as it was in the opened file, before any edits. */
+export function originalResources(): ResourceAmounts | null {
+  void session.revision;
+  const { save, goldPosition } = session;
+  return save && goldPosition !== null ? readResources(save.originalBuffer, goldPosition) : null;
+}
+
 /** The typed search: gold and the ticked other resources. */
 function resourceQuery(): ResourceQuery {
   const also: Partial<Record<OtherResource, number>> = {};

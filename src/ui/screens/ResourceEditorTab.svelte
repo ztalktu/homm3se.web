@@ -2,6 +2,7 @@
   import {
     applyResources,
     currentResources,
+    originalResources,
     playersWithTreasury,
     searchResources,
     shownTreasuryColor,
@@ -26,7 +27,7 @@
   import PlayerPicker from '../components/PlayerPicker.svelte';
   import ResourceIcon from '../components/ResourceIcon.svelte';
   import SearchForm from '../components/SearchForm.svelte';
-  import { filePercent, formatNumber } from '../format';
+  import { filePercent, formatDelta, formatNumber } from '../format';
 
   /** Gold first: it is the resource players look for, as in the search above. */
   const TABLE_RESOURCES: Resource[] = ['gold', ...OTHER_RESOURCES];
@@ -45,6 +46,7 @@
   }
 
   const found = $derived(currentResources());
+  const original = $derived(originalResources());
   const players = $derived(playersWithTreasury());
   /** The color buttons work only when the save's game has a known player block. */
   const byAmountOnly = $derived(session.playerTreasuries === null);
@@ -156,7 +158,22 @@
           <span class="head">{t('resources.new')}</span>
           {#each TABLE_RESOURCES as resource (resource)}
             <span class="name"><ResourceIcon {resource} />{resourceLabel(resource)}</span>
-            <span class="value">{formatNumber(found[resource])}</span>
+            {@const before = original?.[resource] ?? found[resource]}
+            {@const after = found[resource]}
+            <!-- Once changes are applied: what the opened file had » what it has now (difference). -->
+            <span class="value">
+              {#if before !== after}
+                <span class="number">{formatNumber(before)}</span>
+                <span class="arrow" aria-hidden="true">»</span><span class="visually-hidden">→</span
+                >
+                <span class="number">{formatNumber(after)}</span>
+                <span class:up={after > before} class:down={after < before}
+                  >({formatDelta(after - before)})</span
+                >
+              {:else}
+                {formatNumber(after)}
+              {/if}
+            </span>
             <NumberField
               label={t('resources.newAmount', { resource: resourceLabel(resource) })}
               hideLabel
@@ -263,6 +280,24 @@
 
   .value {
     font-variant-numeric: tabular-nums;
+  }
+
+  .number {
+    white-space: nowrap;
+  }
+
+  .arrow {
+    padding: 0 2px;
+    font-weight: 700;
+    color: var(--color-heading);
+  }
+
+  .up {
+    color: var(--color-increase);
+  }
+
+  .down {
+    color: var(--color-decrease);
   }
 
   .muted {

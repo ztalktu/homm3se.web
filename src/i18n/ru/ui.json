@@ -92,6 +92,7 @@
   "hero.playerColor": "{color} (игрок {number})",
   "hero.noPlayer": "вольный",
   "hero.playerFilter": "Игроки",
+  "hero.townFilter": "Города",
   "hero.class": "Класс",
   "hero.level": "Уровень",
   "hero.experience": "Опыт",

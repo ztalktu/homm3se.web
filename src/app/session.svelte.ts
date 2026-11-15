@@ -3,6 +3,7 @@
  * Screens read `session` and change it only through the actions below.
  */
 
+import { TOWNS, type Town } from '../data/creatures';
 import { EDITIONS, isAvailableIn, type Edition } from '../data/editions';
 import { KNOWN_HERO_NAMES } from '../data/heroNames';
 import { PLAYER_COLORS, type PlayerColor } from '../data/players';
@@ -16,7 +17,13 @@ import {
   type ResourceChange,
 } from '../core/changes';
 import { readHero, readHeroOwner, writeHero, type Hero, type HeroOwner } from '../core/hero';
-import { findHero, findHeroNames, findNextHero, type HeroMatch } from '../core/heroSearch';
+import {
+  findHero,
+  findHeroNames,
+  findNextHero,
+  type HeroInSave,
+  type HeroMatch,
+} from '../core/heroSearch';
 import {
   heroLayoutAt,
   OTHER_RESOURCES,
@@ -93,15 +100,17 @@ interface Session {
   /** Name `heroMatch` was found by: "Find hero" continues only while the name stays the same. */
   heroMatchName: string | null;
   /**
-   * Known hero names that have a hero record in the open save, with the owners of those
-   * records; null when no save is open.
+   * Known hero names that have a hero record in the open save, with the owners and town of
+   * those records; null when no save is open.
    */
-  heroNamesInSave: ReadonlyMap<string, readonly HeroOwner[]> | null;
+  heroNamesInSave: ReadonlyMap<string, Readonly<HeroInSave>> | null;
   /**
    * The only owner the player filter shows in the name list (null: free heroes), or undefined
    * when the filter is off. The search itself finds heroes of any owner.
    */
   ownerFilter: HeroOwner | undefined;
+  /** The only town the town filter shows in the name list, or undefined when it is off. */
+  townFilter: Town | undefined;
   /**
    * Gold positions of the eight players' treasuries in color order, or null when the save's
    * game has no known player block or the block was not found.
@@ -146,6 +155,7 @@ export const session: Session = $state({
   heroMatchName: null,
   heroNamesInSave: null,
   ownerFilter: undefined,
+  townFilter: undefined,
   playerTreasuries: null,
   resourceSearchByAmount: true,
   goldQuery: 0,
@@ -174,15 +184,12 @@ export async function openSaveFile(file: File): Promise<void> {
     session.save = save;
     session.savedAs = null;
     session.edited = { heroes: [], treasuries: [] };
-    session.heroMatch = null;
-    session.heroMatchName = null;
     session.heroNamesInSave = findHeroNames(save.buffer, KNOWN_HERO_NAMES);
-    // A save of another game version starts with an empty name field. With the same version
-    // the last search stays, unless it is a listed name this save has no hero for.
-    const name = session.heroName.trim();
-    const missing = KNOWN_HERO_NAMES.includes(name) && !session.heroNamesInSave.has(name);
-    if (!sameVersion || missing) {
-      session.heroName = '';
+    if (session.ownerFilter !== undefined && !heroOwnersInSave().includes(session.ownerFilter)) {
+      session.ownerFilter = undefined;
+    }
+    if (session.townFilter && !heroTownsInSave().includes(session.townFilter)) {
+      session.townFilter = undefined;
     }
     session.goldPosition = null;
     session.goldMatchQuery = null;
@@ -190,6 +197,9 @@ export async function openSaveFile(file: File): Promise<void> {
     session.playerTreasuries = playerBlock && findPlayerTreasuries(save.buffer, playerBlock);
     session.resourceSearchByAmount = session.playerTreasuries === null;
     applyEditionFromFormat(save);
+    // With the same game version the last hero stays if the list has it; else the list's first.
+    const name = session.heroName.trim();
+    showHero(sameVersion && heroNamesInList().includes(name) ? name : undefined);
     session.revision += 1;
     if (!isEditingTested(save.format)) {
       showToast(t('message.unsupportedFormat', { game: formatName(save.format) }), {
@@ -302,7 +312,52 @@ export function saveLimits(): SaveLimits {
 
 /** Owners of the known heroes in the open save (null: free heroes), each at least once. */
 export function heroOwnersInSave(): HeroOwner[] {
-  return [...(session.heroNamesInSave?.values() ?? [])].flat();
+  return [...(session.heroNamesInSave?.values() ?? [])].flatMap((hero) => hero.owners);
+}
+
+/** Towns of the known heroes in the open save, in town order. */
+export function heroTownsInSave(): Town[] {
+  const towns = [...(session.heroNamesInSave?.values() ?? [])].map((hero) => hero.town);
+  return TOWNS.filter((town) => towns.includes(town));
+}
+
+/** Known names the open save has heroes for, narrowed by the player and town filters. */
+export function heroNamesInList(): string[] {
+  const { heroNamesInSave, ownerFilter, townFilter } = session;
+  return KNOWN_HERO_NAMES.filter((name) => {
+    const hero = heroNamesInSave?.get(name);
+    return (
+      hero !== undefined &&
+      (ownerFilter === undefined || hero.owners.includes(ownerFilter)) &&
+      (townFilter === undefined || hero.town === townFilter)
+    );
+  });
+}
+
+/** Searches `name` from the top of the file; without one, the list's first hero or nobody. */
+function showHero(name = heroNamesInList()[0]): void {
+  session.heroMatch = null;
+  session.heroMatchName = null;
+  session.heroName = name ?? '';
+  if (name !== undefined) {
+    searchHero();
+  }
+}
+
+/**
+ * Like the spell filter: a click lists only this owner's heroes, a second click lists everyone
+ * again. The field gets the first hero left in the list. "Find hero" still finds a typed name
+ * of any owner.
+ */
+export function filterHeroesByOwner(owner: HeroOwner): void {
+  session.ownerFilter = session.ownerFilter === owner ? undefined : owner;
+  showHero();
+}
+
+/** The town filter, working like the player one. */
+export function filterHeroesByTown(town: Town): void {
+  session.townFilter = session.townFilter === town ? undefined : town;
+  showHero();
 }
 
 /** Color of the player who owns the found hero; null when nobody does or nothing is found. */

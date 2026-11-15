@@ -92,6 +92,7 @@
   "hero.playerColor": "{color} (player {number})",
   "hero.noPlayer": "free",
   "hero.playerFilter": "Players",
+  "hero.townFilter": "Towns",
   "hero.class": "Class",
   "hero.level": "Level",
   "hero.experience": "Experience",

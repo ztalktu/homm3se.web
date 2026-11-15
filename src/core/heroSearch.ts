@@ -3,6 +3,8 @@
  * the spell flags around the hit are all 0 or 1, which random text almost never is.
  */
 
+import type { Town } from '../data/creatures';
+import { classTown } from '../data/heroClasses';
 import { readHeroOwner, type HeroOwner } from './hero';
 import { COMMON_HERO_FIELDS, SEARCH_CHECKED_SPELLS } from './layouts';
 import type { SaveBuffer } from './saveBuffer';
@@ -15,6 +17,14 @@ export interface HeroMatch {
   position: number;
   /** Code page the name was found in; the hero is read and written with it. */
   codePage: CodePage;
+}
+
+/** What the save holds for one hero name. */
+export interface HeroInSave {
+  /** Owners of the records with that name, each once. */
+  owners: HeroOwner[];
+  /** Town of the hero's class, from the first record; undefined for an unknown class. */
+  town: Town | undefined;
 }
 
 function looksLikeHero(buffer: SaveBuffer, position: number): boolean {
@@ -69,7 +79,7 @@ export function findHero(buffer: SaveBuffer, name: string, from = 0): HeroMatch 
 }
 
 /**
- * Which of `names` the save holds a hero record for, with the owners of those records,
+ * Which of `names` the save holds a hero record for, with the owners and town of those records,
  * in one pass over the file. Same rules as `findHero` (whole name, zero byte after it, spell
  * flags of a hero), but calling `findHero` for every name scans the file hundreds of times
  * and takes seconds.
@@ -81,7 +91,7 @@ export function findHero(buffer: SaveBuffer, name: string, from = 0): HeroMatch 
 export function findHeroNames(
   buffer: SaveBuffer,
   names: Iterable<string>,
-): Map<string, HeroOwner[]> {
+): Map<string, HeroInSave> {
   const byPrefix = new Map<number, { name: string; pattern: Uint8Array }[]>();
   for (const name of names) {
     for (const codePage of codePagesFor(name)) {
@@ -105,7 +115,7 @@ export function findHeroNames(
     hasPrefix[prefix] = 1;
   }
 
-  const found = new Map<string, HeroOwner[]>();
+  const found = new Map<string, HeroInSave>();
   const bytes = buffer.bytes;
   for (let offset = 0; offset + 1 < bytes.length; offset += 1) {
     const prefix = (bytes[offset] ?? 0) | ((bytes[offset + 1] ?? 0) << 8);
@@ -128,15 +138,20 @@ export function findHeroNames(
         continue;
       }
       // The owner byte is cheap; the hero check is not, so it runs only for a new owner.
-      const owner = readHeroOwner(buffer, recordStart(buffer, offset));
-      const owners = found.get(name);
-      if (owners?.includes(owner) || !looksLikeHero(buffer, offset)) {
+      const start = recordStart(buffer, offset);
+      const owner = readHeroOwner(buffer, start);
+      const known = found.get(name);
+      if (known?.owners.includes(owner) || !looksLikeHero(buffer, offset)) {
         continue;
       }
-      if (owners) {
-        owners.push(owner);
+      if (known) {
+        known.owners.push(owner);
       } else {
-        found.set(name, [owner]);
+        const classId = buffer.readU8(start + COMMON_HERO_FIELDS.heroClass);
+        found.set(name, {
+          owners: [owner],
+          town: classId === undefined ? undefined : classTown(classId),
+        });
       }
     }
   }

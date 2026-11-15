@@ -9,6 +9,8 @@
     size?: 'normal' | 'small' | undefined;
     type?: 'button' | 'submit' | undefined;
     icon?: IconName | undefined;
+    /** Drawn after the text, e.g. an arrow for "go on". */
+    iconAfter?: IconName | undefined;
     /** Text for icon-only buttons; it becomes the accessible name. */
     label?: string | undefined;
     hint?: string | undefined;
@@ -24,6 +26,7 @@
     size = 'normal',
     type = 'button',
     icon,
+    iconAfter,
     label,
     hint,
     disabled = false,
@@ -51,6 +54,9 @@
   {/if}
   {#if children}
     <span>{@render children()}</span>
+  {/if}
+  {#if iconAfter}
+    <Icon name={iconAfter} size={size === 'small' ? 16 : 18} />
   {/if}
 </button>
 

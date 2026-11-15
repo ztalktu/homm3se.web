@@ -21,10 +21,10 @@
   import { t, type MessageKey } from '../../i18n/index.svelte';
   import Button from '../components/Button.svelte';
   import Checkbox from '../components/Checkbox.svelte';
+  import ChoicePicker from '../components/ChoicePicker.svelte';
   import Fieldset from '../components/Fieldset.svelte';
   import NumberField from '../components/NumberField.svelte';
   import PlayerFlag from '../components/PlayerFlag.svelte';
-  import PlayerPicker from '../components/PlayerPicker.svelte';
   import ResourceIcon from '../components/ResourceIcon.svelte';
   import SearchForm from '../components/SearchForm.svelte';
   import { filePercent, formatDelta, formatNumber } from '../format';
@@ -81,14 +81,17 @@
       disabled={!byAmount}
     >
       {#if !byAmountOnly}
-        <PlayerPicker
+        <ChoicePicker
           label={t('hero.playerFilter')}
-          owners={players}
+          options={players}
           selected={ownerColor}
-          ownerLabel={playerLabel}
+          optionLabel={playerLabel}
           onpick={selectTreasuryByColor}
           disabled={byAmount}
-        />
+          round
+        >
+          {#snippet icon(color)}<PlayerFlag {color} size={14} />{/snippet}
+        </ChoicePicker>
       {/if}
       <Checkbox
         label={t('resources.byAmount')}

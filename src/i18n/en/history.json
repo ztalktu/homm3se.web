@@ -24,6 +24,10 @@
       },
       {
         "kind": "changed",
+        "text": "The interface got a careful rework: more information on screen, groups and elements set apart visually. New filters for quick search. The search itself was revised: it finds more often and often picks the right hero or treasury by itself. Picking artifacts is more interactive. The spell screen was redrawn from scratch: spells are laid out by level and school, and whole groups can be added or removed in one click. The creature, artifact and spell lists offer only what the save's edition has."
+      },
+      {
+        "kind": "changed",
         "text": "The jokes and wisecracks of the old version moved in too."
       },
       {
@@ -60,10 +64,6 @@
       },
       {
         "kind": "added",
-        "text": "Creature and artifact lists you can search by the first letters."
-      },
-      {
-        "kind": "added",
         "text": "Level and experience are linked: change the level and the experience follows; with \"Level follows the experience\" checked it is the other way round."
       },
       {
@@ -88,7 +88,7 @@
       },
       {
         "kind": "added",
-        "text": "Every secondary skill has its own badge, in the list and next to the field. The level shows as stripes: one for basic, two for advanced, three for expert. Skills can now be found by their first letters."
+        "text": "Every secondary skill has its own badge, in the list and next to the field. The level shows as stripes: one for basic, two for advanced, three for expert."
       },
       {
         "kind": "added",

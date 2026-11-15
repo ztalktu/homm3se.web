@@ -42,7 +42,7 @@
   <form class="search" {onsubmit}>
     {@render children()}
     <div class="buttons">
-      <Button type="submit" variant="primary" icon="search" {disabled}>{findLabel}</Button>
+      <Button type="submit" variant="primary" iconAfter="forward" {disabled}>{findLabel}</Button>
     </div>
     {#if percent !== null}
       <div class="progress" aria-hidden="true"><span style:width={`${percent}%`}></span></div>

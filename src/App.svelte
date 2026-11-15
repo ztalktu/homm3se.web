@@ -544,7 +544,7 @@
   main {
     flex: 1;
     width: 100%;
-    max-width: 1180px;
+    max-width: 1240px;
     margin: 0 auto;
     padding: var(--space-5) var(--space-4) var(--space-4);
   }

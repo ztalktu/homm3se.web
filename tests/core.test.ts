@@ -160,7 +160,7 @@ describe('hero search', () => {
     expect(findHero(buffer, 'Джелу')).toEqual({ position: 1000, codePage: 'windows-1251' });
   });
 
-  it('lists the names that have hero records with their owners, in one pass', () => {
+  it('lists the names that have hero records with their owners and town, in one pass', () => {
     const bytes = buildSave(8000, [
       GELU,
       { ...GELU, position: 3000, name: [...(encodeText('Джелу', 'windows-1251') ?? [])] },
@@ -172,7 +172,10 @@ describe('hero search', () => {
     bytes.set(ascii('Adela'), 200); // fake hit: impossible spell flag next to it
     bytes[200 + 73] = 7;
     const names = findHeroNames(new SaveBuffer(bytes), ['Gelu', 'Gel', 'Джелу', 'Adela', 'Ash']);
-    expect(Object.fromEntries(names)).toEqual({ Gelu: ['blue', null], Джелу: [null] });
+    expect(Object.fromEntries(names)).toEqual({
+      Gelu: { owners: ['blue', null], town: 'rampart' },
+      Джелу: { owners: [null], town: 'rampart' },
+    });
   });
 });
 

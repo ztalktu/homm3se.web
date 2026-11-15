@@ -80,8 +80,8 @@
 
   <Fieldset legend="Buttons">
     <div class="row">
-      <Button variant="primary" icon="search">Find hero</Button>
-      <Button icon="search">Find next</Button>
+      <Button variant="primary" iconAfter="forward">Find hero</Button>
+      <Button iconAfter="forward">Find next</Button>
       <Button variant="danger" icon="trash">Delete template</Button>
       <Button variant="ghost">Ghost</Button>
       <Button variant="primary" disabled>Disabled</Button>

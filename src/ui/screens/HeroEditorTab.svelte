@@ -2,22 +2,25 @@
   import {
     currentHero,
     currentHeroOwner,
+    filterHeroesByOwner,
+    filterHeroesByTown,
+    heroNamesInList,
     heroOwnersInSave,
+    heroTownsInSave,
     searchHero,
     session,
   } from '../../app/session.svelte';
   import { creatureGroup } from '../../data/creatures';
   import { classTown } from '../../data/heroClasses';
-  import { KNOWN_HERO_NAMES } from '../../data/heroNames';
   import { PLAYER_COLORS } from '../../data/players';
   import type { HeroOwner } from '../../core/hero';
   import { creatureName, heroClassName, playerLabel, townName } from '../../i18n/game.svelte';
   import { t } from '../../i18n/index.svelte';
   import Button from '../components/Button.svelte';
+  import ChoicePicker from '../components/ChoicePicker.svelte';
   import Combobox from '../components/Combobox.svelte';
   import Fieldset from '../components/Fieldset.svelte';
   import PlayerFlag from '../components/PlayerFlag.svelte';
-  import PlayerPicker from '../components/PlayerPicker.svelte';
   import SearchForm from '../components/SearchForm.svelte';
   import type { ComboboxItem } from '../components/combobox';
   import { filePercent, formatNumber } from '../format';
@@ -32,29 +35,19 @@
     return [...PLAYER_COLORS, null].filter((owner) => present.includes(owner));
   });
 
-  /**
-   * Only the names the open save has heroes for, and only of the players the filter shows;
-   * other names can still be typed in. Owned heroes get their player colors on the right.
-   */
-  const nameItems: ComboboxItem<string>[] = $derived(
-    KNOWN_HERO_NAMES.flatMap((name) => {
-      const owners = session.heroNamesInSave?.get(name);
-      const filter = session.ownerFilter;
-      if (!owners || (filter !== undefined && !owners.includes(filter))) {
-        return [];
-      }
-      const marks = owners.flatMap((owner) => (owner ? [`var(--color-player-${owner})`] : []));
-      return [{ value: name, label: name, marks }];
-    }),
-  );
+  const townsInSave = $derived(heroTownsInSave());
 
   /**
-   * Like the spell filter: list only this owner's heroes, a second click lists everyone again.
-   * Only the list gets shorter; "Find hero" still finds a typed name of any owner.
+   * Only the names the open save has heroes for, narrowed by the filters; other names can still
+   * be typed in. Owned heroes get their player colors on the right.
    */
-  function filterByOwner(owner: HeroOwner): void {
-    session.ownerFilter = session.ownerFilter === owner ? undefined : owner;
-  }
+  const nameItems: ComboboxItem<string>[] = $derived(
+    heroNamesInList().map((name) => {
+      const owners = session.heroNamesInSave?.get(name)?.owners ?? [];
+      const marks = owners.flatMap((owner) => (owner ? [`var(--color-player-${owner})`] : []));
+      return { value: name, label: name, marks };
+    }),
+  );
 
   /** The list item for the typed name; picking an item sets the text, so nothing to store. */
   const selectedName = $derived(
@@ -82,14 +75,34 @@
       positionText={t('hero.position', { percent: percent ?? 0 })}
       onfind={searchHero}
     >
-      {#if ownersInSave.length > 1}
-        <PlayerPicker
-          label={t('hero.playerFilter')}
-          owners={ownersInSave}
-          selected={session.ownerFilter}
-          ownerLabel={playerLabel}
-          onpick={filterByOwner}
-        />
+      {#if ownersInSave.length > 1 || townsInSave.length > 1}
+        <div class="filters">
+          {#if ownersInSave.length > 1}
+            <ChoicePicker
+              label={t('hero.playerFilter')}
+              options={ownersInSave}
+              selected={session.ownerFilter}
+              optionLabel={playerLabel}
+              onpick={filterHeroesByOwner}
+              round
+              inlineLabel
+            >
+              {#snippet icon(color)}<PlayerFlag {color} size={14} />{/snippet}
+            </ChoicePicker>
+          {/if}
+          {#if townsInSave.length > 1}
+            <ChoicePicker
+              label={t('hero.townFilter')}
+              options={townsInSave}
+              selected={session.townFilter}
+              optionLabel={townName}
+              onpick={filterHeroesByTown}
+              inlineLabel
+            >
+              {#snippet icon(town)}<TownIcon group={town} size={18} />{/snippet}
+            </ChoicePicker>
+          {/if}
+        </div>
       {/if}
       <!-- Picking a name from the list searches at once; Enter on typed text submits the form. -->
       <Combobox
@@ -101,7 +114,11 @@
         onpick={searchHero}
         hint={t('hero.nameHint')}
         hintDelayMs={2000}
-      />
+      >
+        {#snippet optionIcon(item)}
+          <TownIcon group={session.heroNamesInSave?.get(item.value)?.town} size={18} />
+        {/snippet}
+      </Combobox>
     </SearchForm>
 
     {#if hero}
@@ -176,15 +193,22 @@
 <style>
   .layout {
     display: grid;
-    grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr);
+    grid-template-columns: minmax(260px, max-content) minmax(0, 1fr);
     gap: var(--space-4);
     align-items: start;
   }
 
-  @media (max-width: 760px) {
+  @media (max-width: 900px) {
     .layout {
       grid-template-columns: minmax(0, 1fr);
     }
+  }
+
+  .filters {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    align-items: center;
+    gap: var(--space-1);
   }
 
   .actions {
@@ -197,7 +221,7 @@
 
   .summary {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
     gap: var(--space-4);
   }
 

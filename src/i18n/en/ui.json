@@ -148,7 +148,7 @@
   "heroDialog.schoolNone": "None",
   "heroDialog.schoolAllHint": "Check every spell of the school",
   "heroDialog.schoolNoneHint": "Clear every spell of the school",
-  "heroDialog.spellNotInEditionHint": "This spell is not in the save's game edition",
+  "heroDialog.spellNotInEditionHint": "This spell is not in the save's game edition: it can only be removed",
   "heroDialog.spellKeySaved": "Learned (as saved)",
   "heroDialog.spellKeyNone": "Not learned",
   "heroDialog.spellKeyAdded": "Added",

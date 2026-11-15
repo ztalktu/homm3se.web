@@ -1,7 +1,9 @@
 <script lang="ts">
   /**
    * Spells as a grid: levels 1–5 down, the four schools across. Each spell shows its purpose,
-   * a hint with its effect, and whether it was added or removed against the save.
+   * a hint with its effect, and whether it was added or removed against the save. Spells missing
+   * from the save's edition are hidden, unless the hero has one or had it in the file: it stays so
+   * it can be removed.
    */
   import { session } from '../../../app/session.svelte';
   import type { Hero } from '../../../core/hero';
@@ -44,7 +46,13 @@
   const available = $derived(
     new Set(SPELLS.filter((s) => isAvailableIn(s.introducedIn, session.edition)).map((s) => s.id)),
   );
-  const shown = $derived(SPELLS.filter((s) => filter === null || s.purpose === filter));
+  const shown = $derived(
+    SPELLS.filter(
+      (s) =>
+        (available.has(s.id) || owned.has(s.id) || openedSet.has(s.id)) &&
+        (filter === null || s.purpose === filter),
+    ),
+  );
   /** With a filter on, a level with nothing to show is left out. */
   const levels = $derived(SPELL_LEVELS.filter((level) => shown.some((s) => s.level === level)));
   const added = $derived(hero.spells.filter((id) => !openedSet.has(id)).length);
@@ -70,9 +78,9 @@
     return `${spells.filter((s) => owned.has(s.id)).length} / ${spells.length}`;
   }
 
-  /** Learns or forgets the given spells; spells missing from the save's edition stay as they are. */
+  /** Learns or forgets the given spells; one missing from the save's edition can only be forgotten. */
   function setSpells(spells: Spell[], learned: boolean): void {
-    const changed = spells.filter((s) => available.has(s.id)).map((s) => s.id);
+    const changed = spells.filter((s) => !learned || available.has(s.id)).map((s) => s.id);
     const others = hero.spells.filter((id) => !changed.includes(id));
     hero.spells = (learned ? [...others, ...changed] : others).sort((a, b) => a - b);
   }
@@ -190,7 +198,8 @@
         {#each SPELL_SCHOOLS as school (school)}
           <div class="cell">
             {#each cell(level, school) as spell (spell.id)}
-              {@const disabled = !hero.hasSpellBook || !available.has(spell.id)}
+              {@const disabled =
+                !hero.hasSpellBook || (!available.has(spell.id) && !owned.has(spell.id))}
               <label class="spell" class:disabled use:tooltip={hint(spell)}>
                 <input
                   type="checkbox"

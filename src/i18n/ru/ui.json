@@ -148,7 +148,7 @@
   "heroDialog.schoolNone": "Нет",
   "heroDialog.schoolAllHint": "Отметить все заклинания школы",
   "heroDialog.schoolNoneHint": "Снять все заклинания школы",
-  "heroDialog.spellNotInEditionHint": "Этого заклинания нет в версии игры сохранения",
+  "heroDialog.spellNotInEditionHint": "Этого заклинания нет в версии игры сохранения: его можно только убрать",
   "heroDialog.spellKeySaved": "Изучено (как в сохранении)",
   "heroDialog.spellKeyNone": "Не изучено",
   "heroDialog.spellKeyAdded": "Добавлено",

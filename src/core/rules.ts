@@ -12,11 +12,11 @@ import { SPELLS } from '../data/spells';
 import type { Hero } from './hero';
 import { COMMON_HERO_FIELDS, MAX_RESOURCE_AMOUNT } from './layouts';
 
-/** Field limits: the storage size, or the cap the 2.05 editor used for big numbers. */
+/** Field limits: the largest value the game reads back, or the 2.05 editor cap for big numbers. */
 export const HERO_LIMITS = {
-  primarySkill: 255,
   experience: 2_147_483_647,
-  mana: 65_535,
+  // Signed 16 bits in the game: 32 768 and above read as negative mana.
+  mana: 32_767,
   // Real values are about 1500–3000; the field is a u32, the cap keeps typos out.
   movementPoints: 99_999,
   // The same cap as the resource fields: what the 2.05 editor allowed in a count.
@@ -114,6 +114,11 @@ export function maxLevel(edition: Edition): number {
   return EDITION_RULES[edition].maxLevel;
 }
 
+/** Highest attack, defense, power or knowledge of an `edition` save. */
+export function maxPrimarySkill(edition: Edition): number {
+  return EDITION_RULES[edition].maxPrimarySkill;
+}
+
 function inRange(value: number, max: number, min = 0): boolean {
   return Number.isInteger(value) && value >= min && value <= max;
 }
@@ -128,13 +133,14 @@ export function validateHero(hero: Hero, edition: Edition, limits: SaveLimits = 
     problems.push({ code: 'classNotInEdition', classId: hero.classId });
   }
 
+  const skillCap = maxPrimarySkill(edition);
   const numbers: [string, number, number, number?][] = [
     ['level', hero.level, maxLevel(edition), 1],
     ['experience', hero.experience, HERO_LIMITS.experience],
-    ['attack', hero.attack, HERO_LIMITS.primarySkill],
-    ['defense', hero.defense, HERO_LIMITS.primarySkill],
-    ['spellPower', hero.spellPower, HERO_LIMITS.primarySkill],
-    ['knowledge', hero.knowledge, HERO_LIMITS.primarySkill],
+    ['attack', hero.attack, skillCap],
+    ['defense', hero.defense, skillCap],
+    ['spellPower', hero.spellPower, skillCap],
+    ['knowledge', hero.knowledge, skillCap],
     ['mana', hero.mana, HERO_LIMITS.mana],
     ['movementPoints', hero.movementPoints, HERO_LIMITS.movementPoints],
     ['maxMovementPoints', hero.maxMovementPoints, HERO_LIMITS.movementPoints],

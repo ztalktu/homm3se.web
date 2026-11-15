@@ -21,6 +21,7 @@ import {
   classAllowed,
   creatureProblem,
   maxLevel,
+  maxPrimarySkill,
   skillAllowed,
   validateHero,
 } from '../src/core/rules';
@@ -605,6 +606,19 @@ describe('rules', () => {
       'artifactNotAllowed',
       'spellNotInEdition',
     ]);
+  });
+
+  it('keeps primary skills and mana within what the game reads as positive', () => {
+    expect(
+      validateHero({ ...hero, attack: 127, knowledge: 127, mana: 32_767 }, 'shadowOfDeath'),
+    ).toEqual([]);
+    const fields = validateHero(
+      { ...hero, attack: 128, defense: 255, spellPower: 200, knowledge: 255, mana: 32_768 },
+      'shadowOfDeath',
+    ).map((problem) => (problem.code === 'valueOutOfRange' ? problem.field : problem.code));
+    expect(fields).toEqual(['attack', 'defense', 'spellPower', 'knowledge', 'mana']);
+    expect(maxPrimarySkill('hdEdition')).toBe(127);
+    expect(maxPrimarySkill('hornOfTheAbyss')).toBe(230);
   });
 
   it('tells placeholders from creatures of a newer edition', () => {

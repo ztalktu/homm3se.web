@@ -15,6 +15,7 @@
     saveCurrent,
     session,
     editionFixedBySave,
+    editionsAllowedBySave,
     setEdition,
   } from './app/session.svelte';
   import { APP_VERSION } from './app/version';
@@ -64,8 +65,20 @@
   ]);
 
   const editionFixed = $derived(editionFixedBySave());
+  const editionsAllowed = $derived(editionsAllowedBySave());
   const editionOptions = $derived(
-    EDITIONS.map((edition) => ({ value: edition, label: editionName(edition) })),
+    EDITIONS.map((edition) => ({
+      value: edition,
+      label: editionName(edition),
+      disabled: !editionsAllowed.includes(edition),
+    })),
+  );
+  const editionHint = $derived(
+    editionFixed
+      ? t('toolbar.editionFixedHint')
+      : editionsAllowed.length < EDITIONS.length
+        ? t('toolbar.editionLimitedHint')
+        : t('toolbar.editionHint'),
   );
 
   function chooseFile(): void {
@@ -239,7 +252,7 @@
       </button>
       <HeaderSelect
         label={t('toolbar.edition')}
-        hint={editionFixed ? t('toolbar.editionFixedHint') : t('toolbar.editionHint')}
+        hint={editionHint}
         value={session.edition}
         options={editionOptions}
         onchange={setEdition}

@@ -5,7 +5,7 @@
  * Where the fields are in each kind of save is described in layouts/.
  */
 
-import type { Edition } from '../data/editions';
+import { EDITIONS, type Edition } from '../data/editions';
 import type { SaveBuffer } from './saveBuffer';
 
 export type SaveFormat =
@@ -82,34 +82,28 @@ export function isArmageddonsBladeHeader(format: SaveFormat): boolean {
 export const SHADOW_OF_DEATH_HEADER_MAJOR = 0x20;
 
 /**
- * The edition that wrote this header when only one edition writes it: HD Edition,
- * Heroes Chronicles, Horn of the Abyss and Armageddon's Blade. Null for the others.
+ * The editions that may have written this header, in the order of EDITIONS. Most headers are
+ * written by one edition only: HD Edition, Heroes Chronicles, Horn of the Abyss,
+ * Armageddon's Blade (42/1) and Restoration of Erathia (below 0x20). The Shadow of Death's
+ * header (0x20 and above) is also written by In the Wake of Gods. An unknown header rules
+ * nothing out.
  */
-export function editionFromHeader(format: SaveFormat): Edition | null {
-  if (format.kind === 'hdEdition') {
-    return 'hdEdition';
+export function editionsForHeader(format: SaveFormat): readonly Edition[] {
+  switch (format.kind) {
+    case 'hdEdition':
+      return ['hdEdition'];
+    case 'heroesChronicles':
+      return ['heroesChronicles'];
+    case 'hornOfTheAbyss':
+      return ['hornOfTheAbyss'];
+    case 'unknown':
+      return EDITIONS;
+    case 'classic':
+      if (isArmageddonsBladeHeader(format)) {
+        return ['armageddonsBlade'];
+      }
+      return format.major < SHADOW_OF_DEATH_HEADER_MAJOR
+        ? ['restorationOfErathia']
+        : ['shadowOfDeath', 'inTheWakeOfGods'];
   }
-  if (format.kind === 'heroesChronicles') {
-    return 'heroesChronicles';
-  }
-  if (format.kind === 'hornOfTheAbyss') {
-    return 'hornOfTheAbyss';
-  }
-  return isArmageddonsBladeHeader(format) ? 'armageddonsBlade' : null;
-}
-
-/**
- * The oldest edition that writes this header, or null when the header does not tell.
- * The Shadow of Death's header (major 0x20 and above) is also written by In the Wake of Gods,
- * so the edition can only be raised to it, never set outright.
- */
-export function minimumEditionFor(format: SaveFormat): Edition | null {
-  const exact = editionFromHeader(format);
-  if (exact) {
-    return exact;
-  }
-  if (format.kind === 'classic' && format.major >= SHADOW_OF_DEATH_HEADER_MAJOR) {
-    return 'shadowOfDeath';
-  }
-  return null;
 }

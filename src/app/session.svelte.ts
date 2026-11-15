@@ -4,7 +4,7 @@
  */
 
 import { TOWNS, type Town } from '../data/creatures';
-import { EDITIONS, isAvailableIn, type Edition } from '../data/editions';
+import { closestEdition, EDITIONS, type Edition } from '../data/editions';
 import { KNOWN_HERO_NAMES } from '../data/heroNames';
 import { PLAYER_COLORS, type PlayerColor } from '../data/players';
 import { requiredEdition } from '../core/editionDetection';
@@ -43,12 +43,7 @@ import {
 import { NotASaveError, SaveGame, editedFileName } from '../core/saveGame';
 import type { SaveBuffer } from '../core/saveBuffer';
 import type { CodePage } from '../core/textEncoding';
-import {
-  editionFromHeader,
-  isEditingTested,
-  isSameFormat,
-  minimumEditionFor,
-} from '../core/saveFormat';
+import { editionsForHeader, isEditingTested, isSameFormat } from '../core/saveFormat';
 import { editionName } from '../i18n/game.svelte';
 import { formatName } from '../ui/format';
 import { t } from '../i18n/index.svelte';
@@ -217,29 +212,29 @@ export async function openSaveFile(file: File): Promise<void> {
 }
 
 /**
- * The header already names the game. When only one edition writes it (HD Edition,
- * Heroes Chronicles, Armageddon's Blade, Horn of the Abyss) the save gets that edition outright
- * and keeps it (see editionFixedBySave); for the others the edition is raised to what the header
- * needs, never lowered.
+ * The header tells which editions may have written the save. When the selected edition is not
+ * one of them, it is switched to the closest one that is: for a header written by one edition
+ * only (HD Edition, Heroes Chronicles, Armageddon's Blade, Horn of the Abyss, Restoration of
+ * Erathia) that is the one, and it stays (see editionFixedBySave).
  */
 function applyEditionFromFormat(save: SaveGame): void {
-  const exact = editionFromHeader(save.format);
-  if (exact) {
-    if (session.edition !== exact) {
-      session.edition = exact;
-      session.editionAutoChanges += 1;
-      remember();
-      showToast(t('message.editionFromHeader', { edition: editionName(exact) }));
-    }
+  const allowed = editionsForHeader(save.format);
+  const previous = session.edition;
+  const next = closestEdition(previous, allowed);
+  if (next === previous) {
     return;
   }
-  const minimum = minimumEditionFor(save.format);
-  if (minimum && !isAvailableIn(minimum, session.edition)) {
-    session.edition = minimum;
-    session.editionAutoChanges += 1;
-    remember();
-    showToast(t('message.editionRaised', { edition: editionName(minimum) }), { kind: 'warning' });
-  }
+  session.edition = next;
+  session.editionAutoChanges += 1;
+  remember();
+  showToast(
+    allowed.length === 1
+      ? t('message.editionFromHeader', { edition: editionName(next) })
+      : t('message.editionNotInHeader', {
+          previous: editionName(previous),
+          edition: editionName(next),
+        }),
+  );
 }
 
 /** Packs and writes the save. Returns false if the user cancelled or writing failed. */
@@ -265,16 +260,22 @@ export async function saveCurrent(): Promise<boolean> {
   }
 }
 
+/** The editions the header of the open save leaves possible; all of them with no save open. */
+export function editionsAllowedBySave(): readonly Edition[] {
+  return session.save ? editionsForHeader(session.save.format) : EDITIONS;
+}
+
 /**
  * The edition the header of the open save names outright, or null when the user may choose:
  * the same header is written by several editions, or no save is open.
  */
 export function editionFixedBySave(): Edition | null {
-  return session.save ? editionFromHeader(session.save.format) : null;
+  const allowed = editionsAllowedBySave();
+  return allowed.length === 1 ? (allowed[0] ?? null) : null;
 }
 
 export function setEdition(edition: Edition): void {
-  if (editionFixedBySave()) {
+  if (!editionsAllowedBySave().includes(edition)) {
     return;
   }
   session.edition = edition;
@@ -406,7 +407,7 @@ function detectEdition(save: SaveGame, match: HeroMatch): void {
       session.edition = before;
       return;
     }
-    const next = requiredEdition(hero, session.edition);
+    const next = requiredEdition(hero, session.edition, editionsForHeader(save.format));
     if (!next) {
       break;
     }

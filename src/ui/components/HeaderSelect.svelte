@@ -9,6 +9,8 @@
   interface Option {
     value: Value;
     label: string;
+    /** Shown in the list but cannot be picked. */
+    disabled?: boolean | undefined;
   }
 
   interface Props {
@@ -60,7 +62,7 @@
       use:tooltip={disabled ? '' : hint}
     >
       {#each options as option (option.value)}
-        <option value={option.value}>{option.label}</option>
+        <option value={option.value} disabled={option.disabled}>{option.label}</option>
       {/each}
     </select>
   </span>

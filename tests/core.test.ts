@@ -34,14 +34,13 @@ import {
 import { codePagesFor, decodeText, encodeText } from '../src/core/textEncoding';
 import {
   detectSaveFormat,
-  editionFromHeader,
+  editionsForHeader,
   isEditingTested,
   isSameFormat,
-  minimumEditionFor,
   type SaveFormat,
 } from '../src/core/saveFormat';
 import { heroLayoutAt, LAYOUTS, layoutFor, playerBlockFor } from '../src/core/layouts';
-import { isAvailableIn } from '../src/data/editions';
+import { closestEdition, EDITIONS, isAvailableIn } from '../src/data/editions';
 import type { SkillLevel } from '../src/data/skills';
 import { ascii, buildSave } from './fixtures/syntheticSave';
 
@@ -424,6 +423,44 @@ describe('edition detection', () => {
     expect(isAvailableIn('hornOfTheAbyss', 'inTheWakeOfGods')).toBe(false);
     expect(isAvailableIn('hornOfTheAbyss', 'shadowOfDeath')).toBe(false);
   });
+
+  it('stays within the editions the header allows', () => {
+    const wogTroops = [{ creatureId: 150, count: 1 }, null, null, null, null, null, null];
+    expect(
+      requiredEdition({ ...base, troops: wogTroops }, 'restorationOfErathia', [
+        'restorationOfErathia',
+      ]),
+    ).toBeNull();
+    expect(
+      requiredEdition({ ...base, troops: wogTroops }, 'shadowOfDeath', [
+        'shadowOfDeath',
+        'inTheWakeOfGods',
+      ]),
+    ).toBe('inTheWakeOfGods');
+  });
+});
+
+describe('closestEdition', () => {
+  const SOD_HEADER = ['shadowOfDeath', 'inTheWakeOfGods'] as const;
+
+  it('keeps an edition the header allows', () => {
+    expect(closestEdition('inTheWakeOfGods', SOD_HEADER)).toBe('inTheWakeOfGods');
+    expect(closestEdition('shadowOfDeath', SOD_HEADER)).toBe('shadowOfDeath');
+  });
+
+  it('goes back down the branch before going up', () => {
+    // A Shadow of Death save opened after a Horn of the Abyss one.
+    expect(closestEdition('hornOfTheAbyss', SOD_HEADER)).toBe('shadowOfDeath');
+    expect(closestEdition('heroesChronicles', SOD_HEADER)).toBe('shadowOfDeath');
+    expect(closestEdition('hornOfTheAbyss', ['restorationOfErathia'])).toBe('restorationOfErathia');
+    expect(closestEdition('inTheWakeOfGods', ['armageddonsBlade'])).toBe('armageddonsBlade');
+  });
+
+  it('raises an older edition to the poorest one that fits', () => {
+    expect(closestEdition('restorationOfErathia', SOD_HEADER)).toBe('shadowOfDeath');
+    expect(closestEdition('hdEdition', SOD_HEADER)).toBe('shadowOfDeath');
+    expect(closestEdition('hdEdition', ['hornOfTheAbyss'])).toBe('hornOfTheAbyss');
+  });
 });
 
 describe('Horn of the Abyss layouts', () => {
@@ -447,8 +484,7 @@ describe('Horn of the Abyss layouts', () => {
     );
     expect(layoutFor({ kind: 'unknown' }, 'hornOfTheAbyss').id).toBe('hornOfTheAbyss');
     const format = { kind: 'hornOfTheAbyss', major: 44, minor: 11 } as const;
-    expect(editionFromHeader(format)).toBe('hornOfTheAbyss');
-    expect(minimumEditionFor(format)).toBe('hornOfTheAbyss');
+    expect(editionsForHeader(format)).toEqual(['hornOfTheAbyss']);
     expect(isEditingTested(format)).toBe(true);
     // Versions the layouts were not checked on still open, with the warning.
     expect(isEditingTested({ kind: 'hornOfTheAbyss', major: 44, minor: 12 })).toBe(false);
@@ -623,11 +659,17 @@ describe('save format', () => {
     expect(layoutFor({ kind: 'unknown' }, 'armageddonsBlade').hero.backpack).toBe(357);
     expect(layoutFor({ kind: 'unknown' }, 'hdEdition').hero.backpack).toBe(357);
     expect(layoutFor({ kind: 'unknown' }, 'inTheWakeOfGods').hero.backpack).toBe(365);
-    expect(minimumEditionFor(detectSaveFormat(header(0x2a)))).toBe('shadowOfDeath');
-    expect(minimumEditionFor(detectSaveFormat(header(0x2a, 2)))).toBe('shadowOfDeath');
-    expect(minimumEditionFor(detectSaveFormat(header(0x12)))).toBe('hdEdition');
-    expect(minimumEditionFor(detectSaveFormat(header(0x10)))).toBeNull();
-    expect(minimumEditionFor({ kind: 'unknown' })).toBeNull();
+    expect(editionsForHeader(detectSaveFormat(header(0x2a)))).toEqual([
+      'shadowOfDeath',
+      'inTheWakeOfGods',
+    ]);
+    expect(editionsForHeader(detectSaveFormat(header(0x2a, 2)))).toEqual([
+      'shadowOfDeath',
+      'inTheWakeOfGods',
+    ]);
+    expect(editionsForHeader(detectSaveFormat(header(0x12)))).toEqual(['hdEdition']);
+    expect(editionsForHeader(detectSaveFormat(header(0x10)))).toEqual(['restorationOfErathia']);
+    expect(editionsForHeader({ kind: 'unknown' })).toEqual(EDITIONS);
   });
 
   it("recognises Armageddon's Blade by header 42/1", () => {
@@ -637,8 +679,7 @@ describe('save format', () => {
     new DataView(bytes.buffer).setUint32(12, 1, true);
     const format = detectSaveFormat(new SaveBuffer(bytes));
     expect(format).toEqual({ kind: 'classic', major: 42, minor: 1 });
-    expect(editionFromHeader(format)).toBe('armageddonsBlade');
-    expect(minimumEditionFor(format)).toBe('armageddonsBlade');
+    expect(editionsForHeader(format)).toEqual(['armageddonsBlade']);
     expect(layoutFor(format, 'shadowOfDeath').id).toBe('armageddonsBlade');
     expect(isEditingTested(format)).toBe(true);
   });
@@ -650,7 +691,7 @@ describe('save format', () => {
     new DataView(bytes.buffer).setUint32(13, 0, true);
     const format = detectSaveFormat(new SaveBuffer(bytes));
     expect(format).toEqual({ kind: 'heroesChronicles', major: 42, minor: 0 });
-    expect(editionFromHeader(format)).toBe('heroesChronicles');
+    expect(editionsForHeader(format)).toEqual(['heroesChronicles']);
     expect(layoutFor(format, 'restorationOfErathia').id).toBe('shadowOfDeath');
     expect(isEditingTested(format)).toBe(true);
   });

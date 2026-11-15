@@ -81,3 +81,25 @@ export function usesHotaIds(edition: Edition): boolean {
 export function isAvailableIn(introducedIn: Edition, edition: Edition): boolean {
   return EDITION_RULES[edition].includes.includes(introducedIn);
 }
+
+/**
+ * The edition from `allowed` to switch to when `current` is not in it: the richest one whose
+ * content `current` already has (Horn of the Abyss goes back to The Shadow of Death, not over
+ * to In the Wake of Gods), else the poorest one that has the content of `current`
+ * (Restoration of Erathia goes up to The Shadow of Death), else the first one.
+ */
+export function closestEdition(current: Edition, allowed: readonly Edition[]): Edition {
+  if (allowed.includes(current)) {
+    return current;
+  }
+  const size = (edition: Edition): number => EDITION_RULES[edition].includes.length;
+  const lower = allowed.filter((edition) => isAvailableIn(edition, current));
+  if (lower.length > 0) {
+    return lower.reduce((best, edition) => (size(edition) > size(best) ? edition : best));
+  }
+  const higher = allowed.filter((edition) => isAvailableIn(current, edition));
+  if (higher.length > 0) {
+    return higher.reduce((best, edition) => (size(edition) < size(best) ? edition : best));
+  }
+  return allowed[0] ?? current;
+}

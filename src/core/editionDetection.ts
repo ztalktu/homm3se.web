@@ -23,10 +23,15 @@ function introducedIns(hero: Hero, current: Edition): (Edition | undefined)[] {
 
 /**
  * Returns the edition to switch to, or null when `current` already fits the hero.
+ * The switch stays within `allowed`, the editions the save header leaves possible.
  * The artifact check needs the backpack read with the right layout, so callers re-read
  * the hero after switching and call this again until it returns null.
  */
-export function requiredEdition(hero: Hero, current: Edition): Edition | null {
+export function requiredEdition(
+  hero: Hero,
+  current: Edition,
+  allowed: readonly Edition[] = EDITIONS,
+): Edition | null {
   const needed = new Set<Edition>();
   for (const introducedIn of introducedIns(hero, current)) {
     if (introducedIn) {
@@ -49,7 +54,10 @@ export function requiredEdition(hero: Hero, current: Edition): Edition | null {
   return (
     EDITIONS.find(
       (edition) =>
-        !EDITION_RULES[edition].headerOnly && isAvailableIn(current, edition) && fits(edition),
+        allowed.includes(edition) &&
+        !EDITION_RULES[edition].headerOnly &&
+        isAvailableIn(current, edition) &&
+        fits(edition),
     ) ?? null
   );
 }

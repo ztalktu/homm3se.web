@@ -60,7 +60,7 @@
       },
       {
         "kind": "added",
-        "text": "The editor tells the edition by the save header, not just by the heroes. When the header leaves no doubt (HD Edition, Heroes Chronicles, Armageddon's Blade, Horn of the Abyss), the edition in the header bar cannot be changed."
+        "text": "The editor tells the edition by the save header, not just by the heroes. When the header leaves no doubt (The Restoration of Erathia, HD Edition, Heroes Chronicles, Armageddon's Blade, Horn of the Abyss), the edition in the header bar cannot be changed; otherwise the list greys out the editions that could not have written the save."
       },
       {
         "kind": "added",

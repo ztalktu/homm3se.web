@@ -4,8 +4,8 @@
  * Hero names as the game writes them into saves, per game language: the 2.05 editor's lists,
  * plus heroes found in real saves and Horn of the Abyss heroes from its official documentation
  * (h3hota.com, English names also checked against HotA saves). The Russian list holds several
- * translations: the one of the 2.05 editor, Buka's (hero table of the HoMM3 ERA help) and the
- * one of HD Edition saves.
+ * translations: the one of the 2.05 editor, Buka's (hero table of the HoMM3 ERA help), the
+ * one of HD Edition saves and the one of the Russian Complete edition.
  * These are search suggestions, not interface translations: a Russian game stores Russian names
  * even when the editor runs in English.
  */
@@ -252,6 +252,7 @@ export const HERO_NAMES: Record<GameLanguage, readonly string[]> = {
     'Аделаида',
     'Адель',
     'Аджит',
+    'Адриана',
     'Адриэн',
     'Аерис',
     'Аин',
@@ -304,6 +305,7 @@ export const HERO_NAMES: Record<GameLanguage, readonly string[]> = {
     'Галтран',
     'Гаугир',
     'Гелар',
+    'Гело',
     'Гелу',
     'Гем',
     'Генриетта',
@@ -348,6 +350,7 @@ export const HERO_NAMES: Record<GameLanguage, readonly string[]> = {
     'Жизель',
     'Жозефина',
     'Жосефина',
+    'Зерон',
     'Зидар',
     'Зилар',
     'Зиф',
@@ -360,6 +363,7 @@ export const HERO_NAMES: Record<GameLanguage, readonly string[]> = {
     'Изра',
     'Иллор',
     'Ингэм',
+    'Интей',
     'Интеус',
     'Инхам',
     'Иона',
@@ -402,6 +406,7 @@ export const HERO_NAMES: Record<GameLanguage, readonly string[]> = {
     'Кэлх',
     'Лабета',
     'Лакус',
+    'Лакусса',
     'Лина',
     'Лоинс',
     'Лойнис',
@@ -430,6 +435,8 @@ export const HERO_NAMES: Record<GameLanguage, readonly string[]> = {
     'Моандор',
     'Монер',
     'Мортон',
+    'Мутара',
+    'Мутара Дрейк',
     'Мутаре',
     'Мутаре Дрэйк',
     'Мёрдок',
@@ -449,6 +456,7 @@ export const HERO_NAMES: Record<GameLanguage, readonly string[]> = {
     'Пайра',
     'Пакталь',
     'Пасис',
+    'Пасисса',
     'Пепелина',
     'Пигуедрам',
     'Пикедрам',
@@ -473,6 +481,7 @@ export const HERO_NAMES: Record<GameLanguage, readonly string[]> = {
     'Сепхинороф',
     'Серена',
     'Сефинрот',
+    'Сийла',
     'Сильвия',
     'Синка',
     'Сияль',
@@ -488,6 +497,7 @@ export const HERO_NAMES: Record<GameLanguage, readonly string[]> = {
     'Стракер',
     'Сэм',
     'Сэр Мюллих',
+    'Сэр Мюллич',
     'Тавин',
     'Тазар',
     'Тамика',
@@ -510,6 +520,7 @@ export const HERO_NAMES: Record<GameLanguage, readonly string[]> = {
     'Уфретин',
     'Фафнер',
     'Фиона',
+    'Фиур',
     'Флорибер',
     'Фредерик',
     'Фьюр',
@@ -527,6 +538,7 @@ export const HERO_NAMES: Record<GameLanguage, readonly string[]> = {
     'Эллезар',
     'Элмор',
     'Эльшар',
+    'Эниан',
     'Энсвита',
     'Эоваций',
     'Эргон',

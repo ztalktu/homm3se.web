@@ -29,7 +29,9 @@ describe('number input', () => {
     expect(parseNumberText('')).toBeNull();
     expect(parseNumberText('-')).toBeNull();
     expect(parseNumberText('0042')).toBe(42);
-    expect(parseNumberText('99999999999999999999')).toBeNull();
+    expect(parseNumberText('99999999999999999999')).toBe(Infinity);
+    expect(parseNumberText('-99999999999999999999')).toBe(-Infinity);
+    expect(clamp(parseNumberText('99999999999999999999') ?? 0, 0, 999_999_999)).toBe(999_999_999);
   });
 
   it('clamps and steps inside the range', () => {

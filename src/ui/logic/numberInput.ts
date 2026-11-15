@@ -7,13 +7,17 @@ export function sanitizeNumberText(text: string, allowNegative: boolean): string
   return negative ? `-${digits}` : digits;
 }
 
-/** Parses sanitized text; returns null for empty input or a lone minus. */
+/**
+ * Parses sanitized text; returns null for empty input or a lone minus.
+ * A number too long to hold exactly comes back as an infinity of its sign,
+ * so clamping turns it into the nearest bound instead of dropping it.
+ */
 export function parseNumberText(text: string): number | null {
   if (text === '' || text === '-') {
     return null;
   }
   const value = Number(text);
-  return Number.isSafeInteger(value) ? value : null;
+  return Number.isSafeInteger(value) ? value : Math.sign(value) * Infinity;
 }
 
 export function clamp(value: number, min: number, max: number): number {

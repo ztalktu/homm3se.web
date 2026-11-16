@@ -161,9 +161,9 @@ describe('reference data', () => {
   it.each(Object.keys(HERO_NAMES) as GameLanguage[])('has unique %s hero names', (language) => {
     const names = HERO_NAMES[language];
     // 153 of the 2.05 editor, plus names found in real saves (Ryland and Drakon from SoD,
-    // the HD Edition and Complete edition translations in Russian), Buka's Russian spellings and
-    // the Horn of the Abyss heroes, its 16 campaign heroes included.
-    expect(names).toHaveLength({ english: 231, russian: 301 }[language]);
+    // the HD Edition, Complete edition and Horn of the Abyss translations in Russian), Buka's
+    // Russian spellings and the Horn of the Abyss heroes, its 16 campaign heroes included.
+    expect(names).toHaveLength({ english: 231, russian: 317 }[language]);
     expect(new Set(names).size).toBe(names.length);
     expect(names.every((name) => name.trim() === name && name !== '')).toBe(true);
   });

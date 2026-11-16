@@ -193,6 +193,7 @@
     flex: 1;
     min-height: 0;
     padding: var(--space-4);
+    overflow-x: hidden;
     overflow-y: auto;
   }
 

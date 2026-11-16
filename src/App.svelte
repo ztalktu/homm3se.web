@@ -508,7 +508,7 @@
       white-space: nowrap;
     }
 
-    /* A native select is as wide as its longest option ("Horn of the Abyss (test drive)"). */
+    /* A native select is as wide as its longest option ("The Restoration of Erathia"). */
     .toolbar :global(select) {
       max-width: calc(100vw - 180px);
       padding-left: var(--space-2);

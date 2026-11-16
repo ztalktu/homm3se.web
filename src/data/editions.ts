@@ -38,11 +38,19 @@ interface EditionRules {
   /** Highest hero level the game handles. */
   maxLevel: number;
   /**
+   * Highest primary skill value the game reads back. Above it the value overflows and the
+   * hero drops to the floor (0 attack and defense, 1 power and knowledge).
+   */
+  maxPrimarySkill: number;
+  /**
    * Only the save header can tell this edition: the version auto-detection never switches to
    * it from the content of a hero.
    */
   headerOnly?: true;
 }
+
+// The classic game reads primary skills as signed bytes: 128 and above turn negative.
+const SIGNED_BYTE_MAX = 127;
 
 const RESTORATION_OF_ERATHIA_CONTENT = ['restorationOfErathia', 'hdEdition'] as const;
 const ARMAGEDDONS_BLADE_CONTENT = [...RESTORATION_OF_ERATHIA_CONTENT, 'armageddonsBlade'] as const;
@@ -53,21 +61,44 @@ const SHADOW_OF_DEATH_CONTENT = [
 ] as const;
 
 export const EDITION_RULES: Record<Edition, EditionRules> = {
-  restorationOfErathia: { includes: RESTORATION_OF_ERATHIA_CONTENT, maxLevel: MAX_LEVEL },
+  restorationOfErathia: {
+    includes: RESTORATION_OF_ERATHIA_CONTENT,
+    maxLevel: MAX_LEVEL,
+    maxPrimarySkill: SIGNED_BYTE_MAX,
+  },
   // Ubisoft's 2015 remaster has the Restoration of Erathia content only.
-  hdEdition: { includes: RESTORATION_OF_ERATHIA_CONTENT, maxLevel: MAX_LEVEL },
-  armageddonsBlade: { includes: ARMAGEDDONS_BLADE_CONTENT, maxLevel: MAX_LEVEL },
-  shadowOfDeath: { includes: SHADOW_OF_DEATH_CONTENT, maxLevel: MAX_LEVEL },
-  heroesChronicles: { includes: SHADOW_OF_DEATH_CONTENT, maxLevel: MAX_LEVEL },
+  hdEdition: {
+    includes: RESTORATION_OF_ERATHIA_CONTENT,
+    maxLevel: MAX_LEVEL,
+    maxPrimarySkill: SIGNED_BYTE_MAX,
+  },
+  armageddonsBlade: {
+    includes: ARMAGEDDONS_BLADE_CONTENT,
+    maxLevel: MAX_LEVEL,
+    maxPrimarySkill: SIGNED_BYTE_MAX,
+  },
+  shadowOfDeath: {
+    includes: SHADOW_OF_DEATH_CONTENT,
+    maxLevel: MAX_LEVEL,
+    maxPrimarySkill: SIGNED_BYTE_MAX,
+  },
+  heroesChronicles: {
+    includes: SHADOW_OF_DEATH_CONTENT,
+    maxLevel: MAX_LEVEL,
+    maxPrimarySkill: SIGNED_BYTE_MAX,
+  },
   inTheWakeOfGods: {
     includes: [...SHADOW_OF_DEATH_CONTENT, 'inTheWakeOfGods'],
     maxLevel: MAX_LEVEL,
+    maxPrimarySkill: SIGNED_BYTE_MAX,
   },
   // Its own creature and artifact tables (see editionTable.ts) replace the ids above
   // The Shadow of Death ones; the header (major 44) is the only way to tell it.
   hornOfTheAbyss: {
     includes: [...SHADOW_OF_DEATH_CONTENT, 'hornOfTheAbyss'],
     maxLevel: 74,
+    // Its overflow starts at 231, not at 128.
+    maxPrimarySkill: 230,
     headerOnly: true,
   },
 };

@@ -2,7 +2,7 @@
   import { saveLimits, session } from '../../../app/session.svelte';
   import { experienceForLevel, levelForExperience } from '../../../core/experience';
   import type { Hero } from '../../../core/hero';
-  import { classAllowed, HERO_LIMITS, maxLevel } from '../../../core/rules';
+  import { classAllowed, HERO_LIMITS, maxLevel, maxPrimarySkill } from '../../../core/rules';
   import { HERO_CLASSES } from '../../../data/heroClasses';
   import { heroClassName } from '../../../i18n/game.svelte';
   import { t } from '../../../i18n/index.svelte';
@@ -25,6 +25,7 @@
 
   const limits = $derived(saveLimits());
   const levelCap = $derived(maxLevel(session.edition));
+  const skillCap = $derived(maxPrimarySkill(session.edition));
   const classOptions = $derived(
     HERO_CLASSES.map((heroClass) => ({
       value: String(heroClass.id),
@@ -92,26 +93,10 @@
 
   <Fieldset legend={t('heroDialog.primarySkills')}>
     <div class="pairs">
-      <NumberField
-        label={t('hero.attack')}
-        bind:value={hero.attack}
-        max={HERO_LIMITS.primarySkill}
-      />
-      <NumberField
-        label={t('hero.defense')}
-        bind:value={hero.defense}
-        max={HERO_LIMITS.primarySkill}
-      />
-      <NumberField
-        label={t('hero.spellPower')}
-        bind:value={hero.spellPower}
-        max={HERO_LIMITS.primarySkill}
-      />
-      <NumberField
-        label={t('hero.knowledge')}
-        bind:value={hero.knowledge}
-        max={HERO_LIMITS.primarySkill}
-      />
+      <NumberField label={t('hero.attack')} bind:value={hero.attack} max={skillCap} />
+      <NumberField label={t('hero.defense')} bind:value={hero.defense} max={skillCap} />
+      <NumberField label={t('hero.spellPower')} bind:value={hero.spellPower} max={skillCap} />
+      <NumberField label={t('hero.knowledge')} bind:value={hero.knowledge} max={skillCap} />
     </div>
   </Fieldset>
 

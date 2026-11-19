@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://heroes3se.vitonic.ru/sitemap.xml
+Sitemap: https://heroes3se.vitonic.org/sitemap.xml

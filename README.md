@@ -2,9 +2,9 @@
 
 A free save game editor for **Heroes of Might and Magic III** (Heroes 3, HoMM3) that
 runs entirely in the browser. It is the web successor of Heroes III SaveEditor 2.05
-(hmm3se.exe, Windows, 2001–2005) by Ztalker, [VItonIC Group](https://vitonic.ru/).
+(hmm3se.exe, Windows, 2001–2005) by Ztalker, [VItonIC Group](https://vitonic.org/).
 
-**Live at <https://heroes3se.vitonic.ru/>**
+**Live at <https://heroes3se.vitonic.org/>**
 
 Open a `.gm1`–`.gm8` save or a `.cgm` campaign, change it and write it back. Everything
 happens on your machine: nothing is uploaded anywhere. Settings are kept in the

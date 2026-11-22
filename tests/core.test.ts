@@ -355,7 +355,7 @@ describe('resources', () => {
     expect(recordSize({ kind: 'hdEdition', major: 18, minor: 0 })).toBe(143);
     expect(recordSize({ kind: 'classic', major: 42, minor: 2 })).toBe(145);
     expect(recordSize({ kind: 'hornOfTheAbyss', major: 44, minor: 11 })).toBe(149);
-    expect(recordSize({ kind: 'classic', major: 42, minor: 1 })).toBeNull();
+    expect(recordSize({ kind: 'classic', major: 42, minor: 1 })).toBe(145);
     expect(recordSize({ kind: 'heroesChronicles', major: 42, minor: 0 })).toBeNull();
     expect(recordSize({ kind: 'unknown' })).toBeNull();
   });
@@ -673,7 +673,8 @@ describe('save format', () => {
     expect(layoutFor({ kind: 'unknown' }, 'armageddonsBlade').hero.backpack).toBe(357);
     expect(layoutFor({ kind: 'unknown' }, 'hdEdition').hero.backpack).toBe(357);
     expect(layoutFor({ kind: 'unknown' }, 'inTheWakeOfGods').hero.backpack).toBe(365);
-    expect(editionsForHeader(detectSaveFormat(header(0x2a)))).toEqual([
+    expect(editionsForHeader(detectSaveFormat(header(0x2a)))).toEqual(['restorationOfErathia']);
+    expect(editionsForHeader(detectSaveFormat(header(0x2b)))).toEqual([
       'shadowOfDeath',
       'inTheWakeOfGods',
     ]);
@@ -746,6 +747,26 @@ describe("Armageddon's Blade variants", () => {
     const layout = heroLayoutAt(AB_HEADER, 'armageddonsBlade', buffer, 1000);
     expect(layout.backpack).toBe(365);
     expect(readHero(buffer, 1000, layout, 'windows-1252').backpack).toEqual([7, 45, 92]);
+  });
+
+  it('reads the newer variant when the hero records are 1094 bytes apart', () => {
+    // As Complete writes it: the 8 bytes before the backpack are an empty 19th slot, so the
+    // original backpack position looks real too.
+    const neighbour = { position: 1000 + 1094, name: ascii('Adela') };
+    const bytes = buildSave(4000, [{ ...GELU, backpackOffset: 365 }, neighbour]);
+    bytes.fill(0xff, 1000 + 357, 1000 + 365);
+    const buffer = new SaveBuffer(bytes);
+    const layout = heroLayoutAt(AB_HEADER, 'armageddonsBlade', buffer, 1000);
+    expect(layout.backpack).toBe(365);
+    expect(readHero(buffer, 1000, layout, 'windows-1252').backpack).toEqual([7, 45, 92]);
+    expect(heroLayoutAt(AB_HEADER, 'armageddonsBlade', buffer, 1000 + 1094).backpack).toBe(365);
+  });
+
+  it('reads the original variant when the hero records are 1065 bytes apart', () => {
+    const neighbour = { position: 1000 + 1065, name: ascii('Adela'), backpackOffset: 357 as const };
+    const bytes = buildSave(4000, [{ ...GELU, backpackOffset: 357 }, neighbour]);
+    const buffer = new SaveBuffer(bytes);
+    expect(heroLayoutAt(AB_HEADER, 'armageddonsBlade', buffer, 1000).backpack).toBe(357);
   });
 
   it('keeps the other layouts as they are', () => {

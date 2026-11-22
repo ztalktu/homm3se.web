@@ -12,8 +12,8 @@ import { decompressGzip } from '../src/core/gzip';
 import { findPlayerTreasuries, readResources } from '../src/core/resources';
 import { SaveBuffer } from '../src/core/saveBuffer';
 import { SaveGame } from '../src/core/saveGame';
-import { isEditingTested } from '../src/core/saveFormat';
-import { layoutFor, playerBlockFor } from '../src/core/layouts';
+import { editionsForHeader, isEditingTested } from '../src/core/saveFormat';
+import { heroLayoutAt, layoutFor, playerBlockFor } from '../src/core/layouts';
 import { EDITIONS, type Edition } from '../src/data/editions';
 import { KNOWN_HERO_NAMES } from '../src/data/heroNames';
 import { SPELLS } from '../src/data/spells';
@@ -46,19 +46,47 @@ describe.skipIf(files.length === 0)('real saves', () => {
       const view = new DataView(unpacked.buffer, unpacked.byteOffset);
       const version = [view.getUint32(8, true), view.getUint32(12, true)];
 
-      // The header picks the layout: HD Edition its own, The Shadow of Death the newer one,
-      // Horn of the Abyss one of its two by the header minor.
-      const expectedLayout = file.includes(`${SAVES_DIR}/H2HD/`)
+      // The header picks the layout: HD Edition its own, The Shadow of Death the newer one
+      // (also for Restoration of Erathia campaigns written by Complete), Armageddon's Blade its
+      // own, Horn of the Abyss one of its two by the header minor.
+      const inFolder = (folder: string): boolean => file.includes(`${SAVES_DIR}/${folder}/`);
+      const expectedLayout = inFolder('H2HD')
         ? 'hdEdition'
-        : file.includes(`${SAVES_DIR}/SoD/`)
+        : inFolder('SoD') || inFolder('H3E')
           ? 'shadowOfDeath'
-          : file.includes(`${SAVES_DIR}/HotA/`)
-            ? version[1]! >= 10
-              ? 'hornOfTheAbyss'
-              : 'hornOfTheAbyssEarly'
-            : null;
+          : inFolder('armagedon')
+            ? 'armageddonsBlade'
+            : inFolder('HotA')
+              ? version[1]! >= 10
+                ? 'hornOfTheAbyss'
+                : 'hornOfTheAbyssEarly'
+              : null;
       if (expectedLayout) {
         expect(layoutFor(save.format, 'restorationOfErathia').id).toBe(expectedLayout);
+      }
+      // The folders hold saves of these editions' content, which the header names.
+      const expectedEditions = inFolder('H3E')
+        ? ['restorationOfErathia']
+        : inFolder('armagedon')
+          ? ['armageddonsBlade']
+          : null;
+      if (expectedEditions) {
+        expect(editionsForHeader(save.format)).toEqual(expectedEditions);
+      }
+      // Complete writes Armageddon's Blade campaigns with The Shadow of Death's hero records.
+      if (inFolder('armagedon')) {
+        for (const name of names) {
+          const match = findHero(save.buffer, name);
+          if (match) {
+            const layout = heroLayoutAt(
+              save.format,
+              'armageddonsBlade',
+              save.buffer,
+              match.position,
+            );
+            expect(layout.backpack, name).toBe(365);
+          }
+        }
       }
 
       // Every known hero name that the search accepts as a hero record.
@@ -73,7 +101,7 @@ describe.skipIf(files.length === 0)('real saves', () => {
           const hero = readHero(
             buffer,
             match.position,
-            layoutFor(save.format, edition).hero,
+            heroLayoutAt(save.format, edition, buffer, match.position),
             match.codePage,
           );
           const needed = requiredEdition(hero, edition);
@@ -104,10 +132,12 @@ describe.skipIf(files.length === 0)('real saves', () => {
       const first = names.map((name) => findHero(buffer, name)).find(Boolean);
       if (first && isEditingTested(save.format)) {
         const copy = new SaveBuffer(buffer.bytes.slice());
-        const layout = layoutFor(save.format, edition).hero;
+        // Each hero with its own layout, as the editor reads it (Armageddon's Blade has two).
+        const layoutAt = (position: number) => heroLayoutAt(save.format, edition, buffer, position);
         for (const name of names) {
           let match = findHero(buffer, name);
           while (match) {
+            const layout = layoutAt(match.position);
             const hero = readHero(copy, match.position, layout, match.codePage);
             writeHero(copy, match.position, layout, match.codePage, hero);
             match = findNextHero(buffer, name, match);
@@ -118,6 +148,7 @@ describe.skipIf(files.length === 0)('real saves', () => {
 
         // Real edits, applied twice like two "Apply" clicks, survive packing and reopening and
         // touch only the edited bytes. The bytes as opened stay as they were throughout.
+        const layout = layoutAt(first.position);
         const hero = readHero(buffer, first.position, layout, first.codePage);
         const firstEdit = {
           ...hero,
@@ -159,7 +190,11 @@ describe.skipIf(files.length === 0)('real saves', () => {
       expect(playerBlock, 'player block layout').not.toBeNull();
       const treasuries = findPlayerTreasuries(buffer, playerBlock!);
       expect(treasuries, 'player treasuries').not.toBeNull();
-      expect(treasuries!.some((gold) => readResources(buffer, gold)!.gold > 0)).toBe(true);
+      // Some players have gold, unless the scenario starts everyone with nothing at all (the
+      // first Horn of the Abyss campaign scenario does).
+      const amounts = treasuries!.map((gold) => readResources(buffer, gold)!);
+      const empty = amounts.every((treasury) => Object.values(treasury).every((v) => v === 0));
+      expect(empty || amounts.some((treasury) => treasury.gold > 0)).toBe(true);
 
       if (process.env['SHOW_SAVES']) {
         console.log(

@@ -30,7 +30,8 @@ type PlayerBlockGame =
 export const PLAYER_BLOCKS: Record<PlayerBlockGame, PlayerBlockLayout | null> = {
   restorationOfErathia: { recordSize: 143, gold: 122 },
   hdEdition: { recordSize: 143, gold: 122 },
-  armageddonsBlade: null,
+  // Complete writes the Armageddon's Blade campaigns with The Shadow of Death's player records.
+  armageddonsBlade: { recordSize: 145, gold: 122 },
   shadowOfDeath: { recordSize: 145, gold: 122 },
   hornOfTheAbyss: { recordSize: 149, gold: 122 },
   heroesChronicles: null,

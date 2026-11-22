@@ -1,12 +1,15 @@
 /**
  * Armageddon's Blade (header 42/1): new content, but 18 equipment slots like Restoration of
  * Erathia. It comes in two variants that the header does not tell apart:
- * the original one keeps the backpack at +357, the newer one (GOG) has 8 more bytes after
- * the equipment and the backpack at +365. `armageddonsBladeLayoutAt` picks one by looking at
- * a hero record. There are no such saves to measure the record size on.
+ * the original one keeps the backpack at +357, the newer one has 8 more bytes after
+ * the equipment and the backpack at +365. The newer one is what Complete writes for an
+ * Armageddon's Blade campaign: its hero records are The Shadow of Death ones, 1094 bytes with
+ * a 19th equipment slot in those 8 bytes. `armageddonsBladeLayoutAt` picks one by looking at
+ * a hero record.
  */
 
 import { EMPTY_SLOT, type SaveBuffer } from '../saveBuffer';
+import { COMMON_HERO_FIELDS, SEARCH_CHECKED_SPELLS } from './common';
 import { RESTORATION_OF_ERATHIA_LAYOUT } from './restorationOfErathia';
 import type { SaveLayout } from './types';
 
@@ -53,13 +56,59 @@ function backpackLooksReal(buffer: SaveBuffer, start: number, layout: SaveLayout
   return true;
 }
 
+const FIRST_NAME_BYTE = 0x20;
+/** Hero record sizes of the two variants: Restoration of Erathia's and The Shadow of Death's. */
+const ORIGINAL_RECORD_SIZE = 1065;
+const NEWER_RECORD_SIZE = 1094;
+
+/** True when a hero record starts at `start`: a NUL-terminated name and 0/1 spell flags. */
+function recordAt(buffer: SaveBuffer, start: number): boolean {
+  const first = buffer.readU8(start);
+  if (first === undefined || first < FIRST_NAME_BYTE) {
+    return false;
+  }
+  let terminated = false;
+  for (let index = 1; index < COMMON_HERO_FIELDS.nameLength && !terminated; index += 1) {
+    const byte = buffer.readU8(start + index);
+    if (byte === undefined || (byte !== 0 && byte < FIRST_NAME_BYTE)) {
+      return false;
+    }
+    terminated = byte === 0;
+  }
+  if (!terminated) {
+    return false;
+  }
+  for (let spell = 0; spell < SEARCH_CHECKED_SPELLS; spell += 1) {
+    const learned = buffer.readU8(start + COMMON_HERO_FIELDS.spellsLearned + spell);
+    const available = buffer.readU8(start + COMMON_HERO_FIELDS.spellsAvailable + spell);
+    if (learned === undefined || available === undefined || learned > 1 || available > 1) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/** True when the hero records around `position` are `size` bytes apart. */
+function recordsSpaced(buffer: SaveBuffer, position: number, size: number): boolean {
+  return recordAt(buffer, position - size) || recordAt(buffer, position + size);
+}
+
 /**
- * The Armageddon's Blade variant of the hero whose name starts at `position`: the newer one
- * only when its backpack looks real and the original one's does not, the original otherwise.
+ * The Armageddon's Blade variant of the hero whose name starts at `position`. The heroes lie
+ * one after another, so the distance to a neighbouring record tells the variant. With no
+ * neighbour found, the newer one only when its backpack looks real and the original one's does
+ * not: in a record of the newer variant the 8 extra bytes can be an empty slot, and then the
+ * original backpack looks real too.
  */
 export function armageddonsBladeLayoutAt(buffer: SaveBuffer, position: number): SaveLayout {
   const original = ARMAGEDDONS_BLADE_LAYOUT;
   const gog = ARMAGEDDONS_BLADE_GOG_LAYOUT;
+  if (recordsSpaced(buffer, position, NEWER_RECORD_SIZE)) {
+    return gog;
+  }
+  if (recordsSpaced(buffer, position, ORIGINAL_RECORD_SIZE)) {
+    return original;
+  }
   const originalReal = backpackLooksReal(buffer, position + original.hero.backpack, original);
   const gogReal = backpackLooksReal(buffer, position + gog.hero.backpack, gog);
   return gogReal && !originalReal ? gog : original;

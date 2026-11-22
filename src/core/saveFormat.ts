@@ -70,9 +70,31 @@ export function isEditingTested(format: SaveFormat): boolean {
   return format.kind !== 'unknown';
 }
 
-/** Armageddon's Blade writes header 42/1; every other 42.x or 43.x is The Shadow of Death. */
+/**
+ * In header 42 the minor names the edition of the game's content: 0 Restoration of Erathia,
+ * 1 Armageddon's Blade, 2 The Shadow of Death. Complete writes all three, for example for the
+ * campaigns of each edition, with The Shadow of Death's hero records.
+ */
+const CONTENT_HEADER_MAJOR = 42;
+const RESTORATION_OF_ERATHIA_MINOR = 0;
+const ARMAGEDDONS_BLADE_MINOR = 1;
+
+/** Armageddon's Blade content writes header 42/1. */
 export function isArmageddonsBladeHeader(format: SaveFormat): boolean {
-  return format.kind === 'classic' && format.major === 42 && format.minor === 1;
+  return (
+    format.kind === 'classic' &&
+    format.major === CONTENT_HEADER_MAJOR &&
+    format.minor === ARMAGEDDONS_BLADE_MINOR
+  );
+}
+
+/** Restoration of Erathia content in a newer game writes header 42/0. */
+function isRestorationOfErathiaContentHeader(format: SaveFormat): boolean {
+  return (
+    format.kind === 'classic' &&
+    format.major === CONTENT_HEADER_MAJOR &&
+    format.minor === RESTORATION_OF_ERATHIA_MINOR
+  );
 }
 
 /**
@@ -82,10 +104,10 @@ export function isArmageddonsBladeHeader(format: SaveFormat): boolean {
 export const SHADOW_OF_DEATH_HEADER_MAJOR = 0x20;
 
 /**
- * The editions that may have written this header, in the order of EDITIONS. Most headers are
- * written by one edition only: HD Edition, Heroes Chronicles, Horn of the Abyss,
- * Armageddon's Blade (42/1) and Restoration of Erathia (below 0x20). The Shadow of Death's
- * header (0x20 and above) is also written by In the Wake of Gods. An unknown header rules
+ * The editions whose content this header allows, in the order of EDITIONS. Most headers name
+ * one edition only: HD Edition, Heroes Chronicles, Horn of the Abyss, Armageddon's Blade
+ * (42/1) and Restoration of Erathia (below 0x20, and 42/0). The Shadow of Death's header
+ * (other ones from 0x20 on) is also written by In the Wake of Gods. An unknown header rules
  * nothing out.
  */
 export function editionsForHeader(format: SaveFormat): readonly Edition[] {
@@ -101,6 +123,9 @@ export function editionsForHeader(format: SaveFormat): readonly Edition[] {
     case 'classic':
       if (isArmageddonsBladeHeader(format)) {
         return ['armageddonsBlade'];
+      }
+      if (isRestorationOfErathiaContentHeader(format)) {
+        return ['restorationOfErathia'];
       }
       return format.major < SHADOW_OF_DEATH_HEADER_MAJOR
         ? ['restorationOfErathia']

@@ -11,6 +11,8 @@ interface StoredPreferences {
   version: 1;
   locale: Locale;
   theme: ThemePreference;
+  /** Equipment tab: artifacts taken off a hero go to the backpack instead of being deleted. */
+  moveToBackpack: boolean;
 }
 
 const STORAGE_KEY = 'preferences';
@@ -19,6 +21,7 @@ const DEFAULT_PREFERENCES: StoredPreferences = {
   version: 1,
   locale: 'en',
   theme: 'system',
+  moveToBackpack: false,
 };
 
 function isStoredPreferences(value: unknown): value is StoredPreferences {
@@ -29,14 +32,17 @@ function isStoredPreferences(value: unknown): value is StoredPreferences {
   return (
     candidate['version'] === 1 &&
     LOCALES.includes(candidate['locale'] as Locale) &&
-    THEME_PREFERENCES.includes(candidate['theme'] as ThemePreference)
+    THEME_PREFERENCES.includes(candidate['theme'] as ThemePreference) &&
+    // Added later: preferences stored before it lack the field and take the default.
+    ['boolean', 'undefined'].includes(typeof candidate['moveToBackpack'])
   );
 }
 
 /** User preferences that survive page reloads. Change them only through the setters below. */
-export const preferences: StoredPreferences = $state(
-  readJson(STORAGE_KEY, DEFAULT_PREFERENCES, isStoredPreferences),
-);
+export const preferences: StoredPreferences = $state({
+  ...DEFAULT_PREFERENCES,
+  ...readJson(STORAGE_KEY, DEFAULT_PREFERENCES, isStoredPreferences),
+});
 
 function save(): void {
   writeJson(STORAGE_KEY, $state.snapshot(preferences));
@@ -49,6 +55,11 @@ export function setLocale(locale: Locale): void {
 
 export function setThemePreference(theme: ThemePreference): void {
   preferences.theme = theme;
+  save();
+}
+
+export function setMoveToBackpack(moveToBackpack: boolean): void {
+  preferences.moveToBackpack = moveToBackpack;
   save();
 }
 

@@ -4,6 +4,7 @@
    * figure. A click picks a slot; the card next to it shows what is worn there and changes it.
    * War machines and the spell book are switched on and off right on the figure.
    */
+  import { preferences, setMoveToBackpack } from '../../../app/preferences.svelte';
   import { session } from '../../../app/session.svelte';
   import {
     equipmentLocks,
@@ -77,7 +78,6 @@
   const wornSlots = $derived(WORN_SLOTS.filter((slot) => slot.index < hero.equipment.length));
 
   let selected = $state(3);
-  let moveToBackpack = $state(false);
   let search = $state('');
   let pick: number | null = $state(null);
 
@@ -175,7 +175,12 @@
    * deleted. A backpack without room for all of it asks first.
    */
   function apply(edit: EquipmentEdit): void {
-    const placed = placeTakenOff(edit.removed, moveToBackpack, edition, max - hero.backpack.length);
+    const placed = placeTakenOff(
+      edit.removed,
+      preferences.moveToBackpack,
+      edition,
+      max - hero.backpack.length,
+    );
     const commit = (): void => {
       hero.equipment = edit.equipment;
       hero.backpack.push(...placed.toBackpack);
@@ -215,7 +220,10 @@
       .sort((a, b) => a - b);
     ask({
       title: name(artifactId),
-      lines: fateLines(placeTakenOff(edit.removed, moveToBackpack, edition), 'willBeDeleted'),
+      lines: fateLines(
+        placeTakenOff(edit.removed, preferences.moveToBackpack, edition),
+        'willBeDeleted',
+      ),
       list: taken.map(equipmentSlotName),
       okLabel: t('heroDialog.confirm'),
       danger: false,
@@ -439,7 +447,8 @@
       <Checkbox
         label={t('heroDialog.moveToBackpack')}
         hint={t('heroDialog.moveToBackpackHint')}
-        bind:checked={moveToBackpack}
+        checked={preferences.moveToBackpack}
+        onchange={setMoveToBackpack}
       />
       <span class="count" class:full={hero.backpack.length >= max}>
         {t('heroDialog.backpack', { count: hero.backpack.length, max })}

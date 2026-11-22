@@ -1,5 +1,19 @@
 [
   {
+    "version": "3.0.1",
+    "date": "2026-11-22",
+    "changes": [
+      {
+        "kind": "fixed",
+        "text": "Armageddon's Blade campaign saves from Complete: backpack artifacts no longer slide one slot over (and no longer land in the fifth misc slot), and the player treasury is found right away."
+      },
+      {
+        "kind": "fixed",
+        "text": "Restoration of Erathia campaign saves from Complete are recognised as The Restoration of Erathia, not The Shadow of Death."
+      }
+    ]
+  },
+  {
     "version": "3.0",
     "date": "2026-11-16",
     "summary": "20 years later - off to the web! Step one: dragging everything we had into the new world.",

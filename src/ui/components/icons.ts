@@ -19,6 +19,7 @@ export const ICONS = {
   chevronDown: 'M6 9l6 6 6-6',
   chevronUp: 'M6 15l6-6 6 6',
   check: 'M5 12l5 5L20 7',
+  lock: 'M7 11V8a5 5 0 0 1 10 0v3M5 11h14v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1zM12 15v2',
   warning: 'M12 4l9 16H3zM12 10v4M12 17h.01',
   upload: 'M12 20V9M7 14l5-5 5 5M5 4h14',
   // A horned helmet.
@@ -28,6 +29,8 @@ export const ICONS = {
   attributes: 'M4 20V10M10 20V4M16 20v-8M22 20H2',
   troops: 'M12 3l7 3v5c0 5-3.5 8-7 10c-3.5-2-7-5-7-10V6z',
   skills: 'M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z',
+  // A sword, for what the hero wears.
+  equipment: 'M14 4h6v6L9.5 20.5l-6-6zM5.5 12.5l6 6M3 21l3-3',
   spells: 'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11',
 } as const;
 

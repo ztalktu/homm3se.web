@@ -22,6 +22,7 @@ const HERO: Hero = {
   ],
   spells: [2, 9],
   hasSpellBook: true,
+  equipment: [21, null, null, 11, null, null, null, null, null, null, null, null, null, 4],
   backpack: [7, 33, 33],
 };
 
@@ -55,6 +56,21 @@ describe('hero changes', () => {
       { attribute: 'level', before: 5, after: 12, saved: false },
     ]);
     expect(changes.troops.map((troop) => troop.slot)).toEqual([0, 2]);
+  });
+
+  it('lists worn artifacts by equipment slot', () => {
+    const equipment = [...HERO.equipment];
+    equipment[0] = null;
+    equipment[3] = 129;
+    equipment[14] = 5;
+    const saved = edit({ equipment: [...equipment] });
+    equipment[14] = null;
+    const changes = heroChanges(HERO, edit({ equipment }), saved);
+    expect(changes.equipment).toEqual([
+      { slot: 0, before: 21, after: null, saved: true },
+      { slot: 3, before: 11, after: 129, saved: true },
+    ]);
+    expect(hasHeroChanges(changes)).toBe(true);
   });
 
   it('compares skills by skill, not by slot', () => {

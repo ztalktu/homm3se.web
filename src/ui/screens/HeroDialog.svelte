@@ -3,12 +3,13 @@
   import { encodeHeroName, type Hero } from '../../core/hero';
   import { validateHero, type HeroProblem } from '../../core/rules';
   import { artifactName, spellName } from '../../i18n/game.svelte';
-  import { t } from '../../i18n/index.svelte';
+  import { equipmentSlotName, t } from '../../i18n/index.svelte';
   import Button from '../components/Button.svelte';
   import Dialog from '../components/Dialog.svelte';
   import Tabs from '../components/Tabs.svelte';
   import HeroAttributesTab from './hero/HeroAttributesTab.svelte';
   import HeroBackpackTab from './hero/HeroBackpackTab.svelte';
+  import HeroEquipmentTab from './hero/HeroEquipmentTab.svelte';
   import HeroSkillsTab from './hero/HeroSkillsTab.svelte';
   import HeroSpellsTab from './hero/HeroSpellsTab.svelte';
   import HeroTroopsTab from './hero/HeroTroopsTab.svelte';
@@ -22,7 +23,7 @@
 
   let { open = $bindable(), original }: Props = $props();
 
-  type TabId = 'attributes' | 'troops' | 'skills' | 'artifacts' | 'spells';
+  type TabId = 'attributes' | 'troops' | 'skills' | 'equipment' | 'artifacts' | 'spells';
 
   // A draft: nothing reaches the save until "Apply".
   // svelte-ignore state_referenced_locally
@@ -45,11 +46,15 @@
   }
   /** Spells as in the file when it was opened, before any "Apply": the Spells tab marks changes. */
   const openedSpells = $derived(originalHero()?.spells ?? original.spells);
+  /** Worn artifacts as in the file when it was opened: the Equipment tab marks changes. */
+  const openedEquipment = $derived(originalHero()?.equipment ?? original.equipment);
+  const openedSpellBook = $derived(originalHero()?.hasSpellBook ?? original.hasSpellBook);
 
   const tabs = $derived([
     { id: 'attributes' as const, label: t('heroDialog.tab.attributes') },
     { id: 'troops' as const, label: t('heroDialog.tab.troops') },
     { id: 'skills' as const, label: t('heroDialog.tab.skills') },
+    { id: 'equipment' as const, label: t('heroDialog.tab.equipment') },
     { id: 'artifacts' as const, label: t('heroDialog.tab.artifacts') },
     { id: 'spells' as const, label: t('heroDialog.tab.spells') },
   ]);
@@ -74,6 +79,11 @@
         return t('problem.creatureNotAllowed', { slot: problem.slot + 1 });
       case 'artifactNotAllowed':
         return t('problem.artifactNotAllowed', {
+          name: artifactName(problem.artifactId, session.edition),
+        });
+      case 'equipmentNotAllowed':
+        return t('problem.equipmentNotAllowed', {
+          slot: equipmentSlotName(problem.slot),
           name: artifactName(problem.artifactId, session.edition),
         });
       case 'spellNotInEdition':
@@ -132,6 +142,8 @@
         <HeroTroopsTab bind:hero />
       {:else if activeTab === 'skills'}
         <HeroSkillsTab bind:hero />
+      {:else if activeTab === 'equipment'}
+        <HeroEquipmentTab bind:hero opened={openedEquipment} {openedSpellBook} />
       {:else if activeTab === 'artifacts'}
         <HeroBackpackTab bind:hero />
       {:else}

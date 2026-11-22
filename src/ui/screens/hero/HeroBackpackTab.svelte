@@ -3,12 +3,7 @@
   import type { Hero } from '../../../core/hero';
   import { COMMON_HERO_FIELDS } from '../../../core/layouts';
   import { artifactAllowed } from '../../../core/rules';
-  import {
-    ARTIFACT_CATEGORIES,
-    artifactById,
-    artifactsOf,
-    type ArtifactCategory,
-  } from '../../../data/artifacts';
+  import { ARTIFACT_CATEGORIES, artifactsOf, type ArtifactCategory } from '../../../data/artifacts';
   import { artifactDescription, artifactName } from '../../../i18n/game.svelte';
   import { t } from '../../../i18n/index.svelte';
   import { tooltip } from '../../actions/tooltip';
@@ -17,6 +12,7 @@
   import Icon from '../../components/Icon.svelte';
   import type { ComboboxItem } from '../../components/combobox';
   import ArtifactCategoryIcon from './ArtifactCategoryIcon.svelte';
+  import ArtifactIcon from './ArtifactIcon.svelte';
 
   interface Props {
     hero: Hero;
@@ -112,10 +108,7 @@
     }}
   >
     {#snippet optionIcon(item)}
-      {@const category = artifactById(item.value, session.edition)?.category}
-      {#if category}
-        <ArtifactCategoryIcon {category} />
-      {/if}
+      <ArtifactIcon artifactId={item.value} />
     {/snippet}
   </Combobox>
 </div>
@@ -126,11 +119,8 @@
 {:else}
   <ul>
     {#each hero.backpack as artifactId, index (index)}
-      {@const category = artifactById(artifactId, session.edition)?.category}
       <li>
-        {#if category}
-          <span class="icon"><ArtifactCategoryIcon {category} /></span>
-        {/if}
+        <span class="icon"><ArtifactIcon {artifactId} /></span>
         <span class="name">{artifactName(artifactId, session.edition)}</span>
         <span class="effect">{artifactDescription(artifactId, session.edition)}</span>
         <button

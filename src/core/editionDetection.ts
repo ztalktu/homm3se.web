@@ -24,8 +24,8 @@ function introducedIns(hero: Hero, current: Edition): (Edition | undefined)[] {
 /**
  * Returns the edition to switch to, or null when `current` already fits the hero.
  * The switch stays within `allowed`, the editions the save header leaves possible.
- * The artifact check needs the backpack read with the right layout, so callers re-read
- * the hero after switching and call this again until it returns null.
+ * The artifact check needs the backpack and the equipment read with the right layout, so
+ * callers re-read the hero after switching and call this again until it returns null.
  */
 export function requiredEdition(
   hero: Hero,
@@ -38,7 +38,10 @@ export function requiredEdition(
       needed.add(introducedIn);
     }
   }
-  for (const artifactId of hero.backpack) {
+  for (const artifactId of [...hero.backpack, ...hero.equipment]) {
+    if (artifactId === null) {
+      continue;
+    }
     const artifact = artifactById(artifactId, current);
     // Ids beyond every edition are junk read with a wrong layout; they do not prove anything.
     if (artifact && !isAvailableIn(artifact.introducedIn, current)) {

@@ -1,4 +1,5 @@
 import { preferences, type Locale } from '../app/preferences.svelte';
+import { EQUIPMENT_SLOTS } from '../data/equipment';
 import enMessages from './en/ui.json';
 import ruMessages from './ru/ui.json';
 
@@ -30,4 +31,9 @@ export function translate(locale: Locale, key: MessageKey, params?: MessageParam
 /** Translates into the current interface language. Reactive inside Svelte templates. */
 export function t(key: MessageKey, params?: MessageParams): string {
   return translate(preferences.locale, key, params);
+}
+
+/** Name of a worn-artifact equipment slot ("Head", "Misc 3"), by its index in the save. */
+export function equipmentSlotName(slot: number): string {
+  return t(`equipmentSlot.${EQUIPMENT_SLOTS[slot]?.key}` as MessageKey);
 }

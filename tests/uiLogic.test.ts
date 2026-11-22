@@ -3,6 +3,7 @@ import { RESOURCES } from '../src/core/layouts';
 import { RESOURCE_ART } from '../src/ui/components/resourceArt';
 import { formatDateTime } from '../src/ui/format';
 import { filterOptions, normalizeSearchText } from '../src/ui/logic/filterOptions';
+import { placeTakenOff } from '../src/ui/logic/takenOff';
 import {
   clamp,
   parseNumberText,
@@ -122,5 +123,36 @@ describe('resource icons', () => {
         expect(Object.values(attrs).join(' ')).not.toMatch(/NaN|undefined|Infinity/);
       }
     }
+  });
+});
+
+describe('artifacts taken off a hero', () => {
+  it('deletes them without the box', () => {
+    expect(placeTakenOff([21, 11], false, 'shadowOfDeath', 64)).toEqual({
+      toBackpack: [],
+      deleted: [21, 11],
+      overflow: false,
+    });
+  });
+
+  it('puts them into the backpack while there is room', () => {
+    expect(placeTakenOff([21, 11], true, 'shadowOfDeath', 5)).toEqual({
+      toBackpack: [21, 11],
+      deleted: [],
+      overflow: false,
+    });
+    expect(placeTakenOff([21, 11, 98], true, 'shadowOfDeath', 1)).toEqual({
+      toBackpack: [21],
+      deleted: [11, 98],
+      overflow: true,
+    });
+  });
+
+  it('never moves a spell scroll, which would lose its spell', () => {
+    expect(placeTakenOff([1, 21], true, 'shadowOfDeath', 64)).toEqual({
+      toBackpack: [21],
+      deleted: [1],
+      overflow: false,
+    });
   });
 });

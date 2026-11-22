@@ -139,7 +139,7 @@ describe.skipIf(files.length === 0)('real saves', () => {
           while (match) {
             const layout = layoutAt(match.position);
             const hero = readHero(copy, match.position, layout, match.codePage);
-            writeHero(copy, match.position, layout, match.codePage, hero);
+            writeHero(copy, match.position, layout, match.codePage, hero, edition);
             match = findNextHero(buffer, name, match);
           }
         }
@@ -155,7 +155,9 @@ describe.skipIf(files.length === 0)('real saves', () => {
           attack: hero.attack === 99 ? 98 : 99,
           experience: hero.experience + 1000,
         };
-        save.edit((target) => writeHero(target, first.position, layout, first.codePage, firstEdit));
+        save.edit((target) =>
+          writeHero(target, first.position, layout, first.codePage, firstEdit, edition),
+        );
         // Second edit: learn one spell the hero lacks and forget one it knows.
         const missing = SPELLS.find((spell) => !hero.spells.includes(spell.id))!.id;
         const forgotten = hero.spells[0];
@@ -165,7 +167,9 @@ describe.skipIf(files.length === 0)('real saves', () => {
             (a, b) => a - b,
           ),
         };
-        save.edit((target) => writeHero(target, first.position, layout, first.codePage, edited));
+        save.edit((target) =>
+          writeHero(target, first.position, layout, first.codePage, edited, edition),
+        );
         expect(readHero(save.originalBuffer, first.position, layout, first.codePage)).toEqual(hero);
 
         const packed = await save.pack();

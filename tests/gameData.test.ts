@@ -3,6 +3,7 @@ import { LOCALES, setLocale } from '../src/app/preferences.svelte';
 import { ARTIFACTS, ARTIFACT_CATEGORIES, HOTA_ARTIFACTS, artifactsOf } from '../src/data/artifacts';
 import { CREATURES, HOTA_CREATURES, TOWNS, creaturesOf } from '../src/data/creatures';
 import { EDITIONS, isAvailableIn } from '../src/data/editions';
+import { artifactSlotKind, combinationLocks } from '../src/data/equipment';
 import { LEVEL_EXPERIENCE, MAX_LEVEL } from '../src/data/experience';
 import { HERO_CLASSES } from '../src/data/heroClasses';
 import { HERO_NAMES, type GameLanguage } from '../src/data/heroNames';
@@ -166,6 +167,33 @@ describe('reference data', () => {
     expect(names).toHaveLength({ english: 231, russian: 317 }[language]);
     expect(new Set(names).size).toBe(names.length);
     expect(names.every((name) => name.trim() === name && name !== '')).toBe(true);
+  });
+});
+
+describe('equipment slots', () => {
+  it('gives every artifact a slot but the Grail and the ids In the Wake of Gods took', () => {
+    for (const edition of EDITIONS) {
+      const without = artifactsOf(edition)
+        .filter((artifact) => artifactSlotKind(artifact.id, edition) === null)
+        .map((artifact) => artifact.id);
+      expect(without, edition).toEqual(edition === 'hornOfTheAbyss' ? [2] : [2, 141, 142, 143]);
+    }
+  });
+
+  it('knows combination artifacts only where they exist', () => {
+    const combinations = (edition: (typeof EDITIONS)[number]): number[] =>
+      artifactsOf(edition)
+        .filter((artifact) => combinationLocks(artifact.id, edition))
+        .map((artifact) => artifact.id);
+    expect(combinations('shadowOfDeath')).toEqual(range(12).map((index) => 129 + index));
+    expect(combinations('inTheWakeOfGods')).toEqual(range(12).map((index) => 129 + index));
+    expect(combinations('hornOfTheAbyss')).toEqual([
+      ...range(12).map((index) => 129 + index),
+      141,
+      142,
+      143,
+      160,
+    ]);
   });
 });
 

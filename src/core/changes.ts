@@ -46,6 +46,8 @@ export interface HeroChanges {
   troops: (ValueChange<Troop | null> & { slot: number })[];
   /** By skill rather than by slot, since removing a skill moves the ones below it up. */
   skills: (ValueChange<SkillLevel | null> & { skillId: number })[];
+  /** By equipment slot: an empty slot is null. */
+  equipment: (ValueChange<number | null> & { slot: number })[];
   artifacts: ListChange[];
   spellBook: ValueChange<boolean> | null;
   spells: ListChange[];
@@ -140,10 +142,20 @@ export function heroChanges(original: Hero, current: Hero, saved: Hero | null): 
     return change ? [{ ...change, skillId }] : [];
   });
 
+  const equipment = current.equipment.flatMap((artifactId, slot) => {
+    const change = valueChange(
+      original.equipment[slot] ?? null,
+      artifactId,
+      saved ? (saved.equipment[slot] ?? null) : undefined,
+    );
+    return change ? [{ ...change, slot }] : [];
+  });
+
   return {
     attributes,
     troops,
     skills,
+    equipment,
     artifacts: listChanges(original.backpack, current.backpack, saved?.backpack),
     spellBook: valueChange(original.hasSpellBook, current.hasSpellBook, saved?.hasSpellBook),
     spells: listChanges(original.spells, current.spells, saved?.spells),
@@ -151,10 +163,10 @@ export function heroChanges(original: Hero, current: Hero, saved: Hero | null): 
 }
 
 export function hasHeroChanges(changes: HeroChanges): boolean {
-  const { attributes, troops, skills, artifacts, spellBook, spells } = changes;
+  const { attributes, troops, skills, equipment, artifacts, spellBook, spells } = changes;
   return (
     spellBook !== null ||
-    [attributes, troops, skills, artifacts, spells].some((list) => list.length > 0)
+    [attributes, troops, skills, equipment, artifacts, spells].some((list) => list.length > 0)
   );
 }
 

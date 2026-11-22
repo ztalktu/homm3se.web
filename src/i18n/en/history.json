@@ -4,6 +4,11 @@
     "date": "2026-11-22",
     "changes": [
       {
+        "kind": "major",
+        "title": "Equipment editor!",
+        "text": "New Equipment tab in the hero window, with the slots laid out as on the game's hero screen. Put on and take off any artifact that fits, switch war machines and the spell book on and off. A combination artifact takes its slots by itself. A checkbox decides what happens to what comes off: unticked, it is deleted; ticked, it goes to the backpack, and the editor asks if there is not enough room. The changes show up in the Changed block."
+      },
+      {
         "kind": "fixed",
         "text": "Armageddon's Blade campaign saves from Complete: backpack artifacts no longer slide one slot over (and no longer land in the fifth misc slot), and the player treasury is found right away."
       },

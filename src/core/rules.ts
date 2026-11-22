@@ -9,6 +9,7 @@ import { EDITION_RULES, isAvailableIn, type Edition } from '../data/editions';
 import { HERO_CLASSES } from '../data/heroClasses';
 import { MAX_SECONDARY_SKILLS, SECONDARY_SKILLS } from '../data/skills';
 import { SPELLS } from '../data/spells';
+import { fitsSlot } from './equipment';
 import type { Hero } from './hero';
 import { COMMON_HERO_FIELDS, MAX_RESOURCE_AMOUNT } from './layouts';
 
@@ -34,6 +35,7 @@ export type HeroProblem =
   | { code: 'unknownSkill'; skillId: number }
   | { code: 'backpackFull' }
   | { code: 'artifactNotAllowed'; artifactId: number }
+  | { code: 'equipmentNotAllowed'; slot: number; artifactId: number }
   | { code: 'spellNotInEdition'; spellId: number }
   | { code: 'valueOutOfRange'; field: string };
 
@@ -190,6 +192,13 @@ export function validateHero(hero: Hero, edition: Edition, limits: SaveLimits = 
       problems.push({ code: 'artifactNotAllowed', artifactId });
     }
   }
+
+  // Worn artifacts the save already had pass too (a spell scroll), as long as they fit.
+  hero.equipment.forEach((artifactId, slot) => {
+    if (artifactId !== null && !fitsSlot(artifactId, slot, edition)) {
+      problems.push({ code: 'equipmentNotAllowed', slot, artifactId });
+    }
+  });
 
   for (const spellId of hero.spells) {
     const spell = SPELLS[spellId];

@@ -16,7 +16,8 @@
     skillName,
     spellName,
   } from '../../i18n/game.svelte';
-  import { t, type MessageKey } from '../../i18n/index.svelte';
+  import { isWarMachineSlot } from '../../data/equipment';
+  import { equipmentSlotName, t, type MessageKey } from '../../i18n/index.svelte';
   import Icon from '../components/Icon.svelte';
   import PlayerFlag from '../components/PlayerFlag.svelte';
   import type { IconName } from '../components/icons';
@@ -55,6 +56,9 @@
     troop
       ? `${creatureName(troop.creatureId, session.edition)} × ${formatNumber(troop.count)}`
       : t('hero.emptySlot');
+
+  const wornText = (artifactId: number | null): string =>
+    artifactId === null ? t('hero.emptySlot') : artifactName(artifactId, session.edition);
 
   const skillText = (level: SkillLevel | null): string =>
     level === null ? t('heroDialog.noSkill') : skillLevelName(level);
@@ -193,6 +197,40 @@
                   </li>
                 {/each}
               </ul>
+            {/if}
+
+            {#if changes.equipment.length > 0}
+              {@const worn = changes.equipment.filter((change) => !isWarMachineSlot(change.slot))}
+              {@const machines = changes.equipment.filter((change) =>
+                isWarMachineSlot(change.slot),
+              )}
+              {@render group('equipment', t('heroDialog.tab.equipment'))}
+              {#if worn.length > 0}
+                <ul>
+                  {#each worn as change (change.slot)}
+                    <li class:unsaved={marked && !change.saved}>
+                      {@render mark(change.saved)}{equipmentSlotName(change.slot)}:
+                      {wornText(change.before)}{@render arrow()}{wornText(change.after)}
+                    </li>
+                  {/each}
+                </ul>
+              {/if}
+              {#if machines.length > 0}
+                <div class="chips">
+                  {#each machines as change (change.slot)}
+                    {#if change.before !== null && change.after !== null}
+                      {@render chip(false, change.saved, wornText(change.before))}
+                      {@render chip(true, change.saved, wornText(change.after))}
+                    {:else}
+                      {@render chip(
+                        change.after !== null,
+                        change.saved,
+                        wornText(change.after ?? change.before),
+                      )}
+                    {/if}
+                  {/each}
+                </div>
+              {/if}
             {/if}
 
             {#if changes.artifacts.length > 0}

@@ -464,7 +464,10 @@ export function applyHero(hero: Hero): void {
     layout: heroLayout(save, heroMatch),
     codePage: heroMatch.codePage,
   };
-  save.edit((buffer) => writeHero(buffer, edited.position, edited.layout, edited.codePage, hero));
+  const edition = session.edition;
+  save.edit((buffer) =>
+    writeHero(buffer, edited.position, edited.layout, edited.codePage, hero, edition),
+  );
   // The latest write tells how to read the record: the edition may have changed since.
   const index = session.edited.heroes.findIndex((known) => known.position === edited.position);
   session.edited.heroes.splice(index < 0 ? session.edited.heroes.length : index, 1, edited);

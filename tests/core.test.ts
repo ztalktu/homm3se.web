@@ -25,6 +25,14 @@ import {
   skillAllowed,
   validateHero,
 } from '../src/core/rules';
+import {
+  combinationCounters,
+  equipmentLocks,
+  fitsSlot,
+  takeOffArtifact,
+  warMachines,
+  wearArtifact,
+} from '../src/core/equipment';
 import { SaveBuffer } from '../src/core/saveBuffer';
 import {
   NotASaveError,
@@ -65,7 +73,14 @@ const GELU = {
   ] as [number, number][],
   spells: [0, 15, 57],
   backpack: [7, 45, 92],
+  // Helm of Chaos, Red Dragon Flame Tongue, a ballista.
+  equipment: [21, null, null, 11, null, null, null, null, null, null, null, null, null, 4],
 };
+
+/** Nineteen empty equipment slots with the given artifacts in them. */
+function wearing(worn: Record<number, number> = {}, slots = 19): (number | null)[] {
+  return Array.from({ length: slots }, (_, slot) => worn[slot] ?? null);
+}
 
 describe('gzip', () => {
   it('round-trips data and recognizes the signature', async () => {
@@ -207,6 +222,7 @@ describe('hero record', () => {
     ],
     spells: [0, 15, 57],
     hasSpellBook: true,
+    equipment: wearing({ 0: 21, 3: 11, 13: 4 }),
     backpack: [7, 45, 92],
   };
 
@@ -251,9 +267,10 @@ describe('hero record', () => {
       secondarySkills: [{ skillId: 22, level: 3 }],
       spells: [26, 69],
       hasSpellBook: false,
+      equipment: wearing({ 0: 22, 18: 46 }),
       backpack: [128, 129],
     };
-    writeHero(buffer, 1000, SOD, 'windows-1252', changed);
+    writeHero(buffer, 1000, SOD, 'windows-1252', changed, 'shadowOfDeath');
     expect(readHero(buffer, 1000, SOD, 'windows-1252')).toEqual(changed);
   });
 
@@ -262,15 +279,159 @@ describe('hero record', () => {
     const before = bytes.slice();
     const buffer = new SaveBuffer(bytes);
     expect(() =>
-      writeHero(buffer, 1000, SOD, 'windows-1252', {
-        ...expected,
-        name: 'A name far too long',
-      }),
+      writeHero(
+        buffer,
+        1000,
+        SOD,
+        'windows-1252',
+        { ...expected, name: 'A name far too long' },
+        'shadowOfDeath',
+      ),
     ).toThrow(InvalidHeroNameError);
     expect(() =>
-      writeHero(buffer, 1000, SOD, 'windows-1252', { ...expected, name: 'Джелу' }),
+      writeHero(buffer, 1000, SOD, 'windows-1252', { ...expected, name: 'Джелу' }, 'shadowOfDeath'),
     ).toThrow(InvalidHeroNameError);
     expect(bytes).toEqual(before);
+  });
+});
+
+describe('equipment', () => {
+  it('reads 18 slots without the fifth misc one, and never the spell book as worn', () => {
+    const buffer = new SaveBuffer(buildSave(4000, [{ ...GELU, backpackOffset: 357 }]));
+    const hero = readHero(buffer, 1000, ROE, 'windows-1252');
+    expect(hero.equipment).toEqual(wearing({ 0: 21, 3: 11, 13: 4 }, 18));
+    expect(hero.hasSpellBook).toBe(true);
+  });
+
+  it('writes only the slots that changed and keeps the extra value of the others', () => {
+    const bytes = buildSave(4000, [
+      { ...GELU, equipment: [21, null, null, 11, null, null, null, null, null, 1] },
+    ]);
+    const view = new DataView(bytes.buffer);
+    view.setUint32(1000 + 213 + 9 * 8 + 4, 15, true); // a scroll of Magic Arrow in misc 1
+    const buffer = new SaveBuffer(bytes);
+    const hero = readHero(buffer, 1000, SOD, 'windows-1252');
+    expect(hero.equipment[9]).toBe(1);
+    writeHero(
+      buffer,
+      1000,
+      SOD,
+      'windows-1252',
+      { ...hero, equipment: wearing({ 0: 24, 3: 11, 9: 1 }) },
+      'shadowOfDeath',
+    );
+    expect(buffer.readU32(1000 + 213)).toBe(24);
+    expect(buffer.readU32(1000 + 213 + 4)).toBe(0xffffffff);
+    expect(buffer.readU32(1000 + 213 + 9 * 8 + 4)).toBe(15);
+    expect(buffer.readU32(1000 + 349)).toBe(0); // the spell book stays
+  });
+
+  it('tells which artifacts fit which slot', () => {
+    expect(fitsSlot(21, 0, 'restorationOfErathia')).toBe(true);
+    expect(fitsSlot(21, 3, 'restorationOfErathia')).toBe(false);
+    expect(fitsSlot(129, 3, 'armageddonsBlade')).toBe(false);
+    expect(fitsSlot(129, 3, 'shadowOfDeath')).toBe(true);
+    expect(fitsSlot(70, 6, 'shadowOfDeath')).toBe(true); // gloves go on a ring slot
+    expect(fitsSlot(146, 13, 'hornOfTheAbyss')).toBe(true);
+    expect(fitsSlot(146, 13, 'shadowOfDeath')).toBe(false);
+    expect(fitsSlot(155, 9, 'hornOfTheAbyss')).toBe(true);
+    expect(fitsSlot(141, 1, 'hornOfTheAbyss')).toBe(true);
+    expect(fitsSlot(141, 1, 'inTheWakeOfGods')).toBe(false);
+    expect(fitsSlot(2, 9, 'shadowOfDeath')).toBe(false); // the Grail is never worn
+    expect(fitsSlot(0, 17, 'shadowOfDeath')).toBe(false); // the book is a flag of its own
+  });
+
+  it('clears the slots a combination artifact takes and frees them when it comes off', () => {
+    // Helm of Chaos, Flame sword, Shield of the Damned, Boots of Speed, a ring.
+    const before = wearing({ 0: 21, 3: 11, 4: 17, 8: 98, 6: 94 });
+    const edit = wearArtifact(before, 3, 129, 'shadowOfDeath');
+    expect(edit.removed).toEqual([11, 21, 17, 98]);
+    expect(edit.displaced).toEqual([21, 17, 98]);
+    expect(edit.equipment).toEqual(wearing({ 3: 129, 6: 94 }));
+    expect([...equipmentLocks(edit.equipment, 'shadowOfDeath')]).toEqual([
+      [0, 3],
+      [2, 3],
+      [4, 3],
+      [5, 3],
+      [8, 3],
+    ]);
+    expect(combinationCounters(edit.equipment, 'shadowOfDeath')).toEqual([
+      1, 0, 1, 0, 1, 1, 0, 1, 0,
+    ]);
+
+    const off = takeOffArtifact(edit.equipment, 3);
+    expect(off.removed).toEqual([129]);
+    expect(equipmentLocks(off.equipment, 'shadowOfDeath').size).toBe(0);
+  });
+
+  it('takes misc slots from the end and moves other combination artifacts out of the way', () => {
+    const edit = wearArtifact(wearing({ 9: 46, 10: 47, 18: 48 }), 9, 140, 'shadowOfDeath');
+    expect(edit.removed).toEqual([46, 47, 48]);
+    expect([...equipmentLocks(edit.equipment, 'shadowOfDeath').keys()]).toEqual([10, 11, 12, 18]);
+
+    // The Elixir of Life needs both rings, so the Ring of the Magi has to go.
+    const elixir = wearArtifact(wearing({ 6: 139, 7: 94 }), 11, 131, 'shadowOfDeath');
+    expect(elixir.removed).toEqual([139, 94]);
+    expect(elixir.equipment).toEqual(wearing({ 11: 131 }));
+
+    // A plain artifact put into a taken slot frees it first.
+    const plain = wearArtifact(edit.equipment, 12, 46, 'shadowOfDeath');
+    expect(plain.removed).toEqual([140]);
+    expect(plain.equipment).toEqual(wearing({ 12: 46 }));
+  });
+
+  it('lists the war machines of an edition with their slots', () => {
+    const machines = (edition: 'shadowOfDeath' | 'hornOfTheAbyss'): [number, number][] =>
+      warMachines(edition).map(({ slot, artifactId }) => [slot, artifactId]);
+    expect(machines('shadowOfDeath')).toEqual([
+      [13, 4],
+      [14, 5],
+      [15, 6],
+      [16, 3],
+    ]);
+    expect(machines('hornOfTheAbyss')).toEqual([
+      [13, 4],
+      [13, 146],
+      [14, 5],
+      [15, 6],
+      [16, 3],
+    ]);
+  });
+
+  it('moves the counters of combination artifacts by the difference', () => {
+    const buffer = new SaveBuffer(buildSave(4000, [GELU]));
+    buffer.writeU8(1000 + 877 + 1, 7); // a byte Horn of the Abyss also uses for other data
+    const hero = readHero(buffer, 1000, SOD, 'windows-1252');
+    const worn = wearArtifact(hero.equipment, 3, 129, 'shadowOfDeath').equipment;
+    writeHero(buffer, 1000, SOD, 'windows-1252', { ...hero, equipment: worn }, 'shadowOfDeath');
+    const counters = (): number[] =>
+      Array.from({ length: 9 }, (_, index) => buffer.readU8(1000 + 878 + index)!);
+    expect(counters()).toEqual([8, 0, 1, 0, 1, 1, 0, 1, 0]);
+    writeHero(
+      buffer,
+      1000,
+      SOD,
+      'windows-1252',
+      { ...hero, equipment: wearing() },
+      'shadowOfDeath',
+    );
+    expect(counters()).toEqual([7, 0, 0, 0, 0, 0, 0, 0, 0]);
+  });
+
+  it('reports worn artifacts that do not fit their slot or the edition', () => {
+    const hero = readHero(new SaveBuffer(buildSave(4000, [GELU])), 1000, SOD, 'windows-1252');
+    expect(validateHero(hero, 'shadowOfDeath')).toEqual([]);
+    const problems = validateHero(
+      { ...hero, equipment: wearing({ 0: 11, 3: 129, 9: 1 }) },
+      'armageddonsBlade',
+    );
+    expect(problems.filter((problem) => problem.code === 'equipmentNotAllowed')).toEqual([
+      { code: 'equipmentNotAllowed', slot: 0, artifactId: 11 },
+      { code: 'equipmentNotAllowed', slot: 3, artifactId: 129 },
+    ]);
+    expect(requiredEdition({ ...hero, equipment: wearing({ 3: 129 }) }, 'armageddonsBlade')).toBe(
+      'shadowOfDeath',
+    );
   });
 });
 
@@ -511,7 +672,7 @@ describe('Horn of the Abyss layouts', () => {
       { skillId: 0, level: 1 },
       { skillId: 28, level: 2 },
     ]);
-    writeHero(buffer, 1000, HOTA, 'windows-1252', hero);
+    writeHero(buffer, 1000, HOTA, 'windows-1252', hero, 'hornOfTheAbyss');
     expect(buffer.readU8(1000 + 41)).toBe(2);
     expect(buffer.readU8(1000 + 42)).toBe(3);
     expect(buffer.readU8(1000 + 923 + 29)).toBe(1);
@@ -525,7 +686,7 @@ describe('Horn of the Abyss layouts', () => {
   it('never writes past the 29 skills of an older save', () => {
     const { buffer, hero } = withSkills([{ skillId: 28, level: 1 }]);
     buffer.writeU8(1000 + 923 + 29, 0x0c); // the next field, not a skill slot
-    writeHero(buffer, 1000, EARLY, 'windows-1252', hero);
+    writeHero(buffer, 1000, EARLY, 'windows-1252', hero, 'hornOfTheAbyss');
     expect(buffer.readU8(1000 + 923 + 29)).toBe(0x0c);
     expect(readHero(buffer, 1000, EARLY, 'windows-1252').secondarySkills).toEqual([
       { skillId: 28, level: 1 },
@@ -535,7 +696,7 @@ describe('Horn of the Abyss layouts', () => {
       { skillId: 28, level: 2 },
     ]);
     runes.buffer.writeU8(1000 + 923 + 29, 0x0c);
-    writeHero(runes.buffer, 1000, EARLY, 'windows-1252', runes.hero);
+    writeHero(runes.buffer, 1000, EARLY, 'windows-1252', runes.hero, 'hornOfTheAbyss');
     expect(runes.buffer.readU8(1000 + 923 + 29)).toBe(0x0c);
     expect(readHero(runes.buffer, 1000, EARLY, 'windows-1252').secondarySkills).toEqual([
       { skillId: 28, level: 2 },
@@ -647,7 +808,7 @@ describe('save format', () => {
     const buffer = new SaveBuffer(bytes);
     const hero = readHero(buffer, 1000, SOD, 'windows-1252');
     expect(hero.spells).not.toContain(54);
-    writeHero(buffer, 1000, SOD, 'windows-1252', hero);
+    writeHero(buffer, 1000, SOD, 'windows-1252', hero, 'shadowOfDeath');
     expect([...bytes]).toEqual([...before]);
   });
 

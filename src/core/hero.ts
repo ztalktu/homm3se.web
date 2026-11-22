@@ -1,8 +1,11 @@
 /** Reading and writing one hero record around a known position in the save. */
 
+import type { Edition } from '../data/editions';
+import { SPELL_BOOK_SLOT, WORN_SLOT_KINDS } from '../data/equipment';
 import { PLAYER_COLORS, type PlayerColor } from '../data/players';
 import { MAX_SECONDARY_SKILLS, type SkillLevel } from '../data/skills';
 import { SPELLS } from '../data/spells';
+import { combinationCounters } from './equipment';
 import { COMMON_HERO_FIELDS, type HeroLayout } from './layouts';
 import { EMPTY_SLOT, type SaveBuffer } from './saveBuffer';
 import { decodeText, encodeText, type CodePage } from './textEncoding';
@@ -36,9 +39,18 @@ export interface Hero {
   /** Ids of the spells the hero knows. */
   spells: number[];
   hasSpellBook: boolean;
+  /**
+   * Worn artifact ids by equipment slot (see EQUIPMENT_SLOTS), null for an empty slot: as many
+   * slots as the save has (18 without the fifth misc slot). The spell book slot is always null
+   * here, the book is `hasSpellBook`.
+   */
+  equipment: (number | null)[];
   /** Artifact ids in the backpack, in slot order, at most 64. */
   backpack: number[];
 }
+
+/** An equipment slot: u32 artifact id, then a u32 extra value (the spell of a scroll). */
+const EQUIPMENT_SLOT_SIZE = 8;
 
 /** Thrown when a field around the position falls outside the file: not a real hero. */
 class HeroOutOfRangeError extends Error {
@@ -105,6 +117,18 @@ function readSecondarySkills(
   return [...bySlot.entries()].sort(([a], [b]) => a - b).map(([, skill]) => skill);
 }
 
+/** Worn artifacts by slot, as `Hero.equipment` holds them. */
+function readEquipment(
+  buffer: SaveBuffer,
+  position: number,
+  layout: HeroLayout,
+): (number | null)[] {
+  return Array.from({ length: layout.equipmentSlots }, (_, slot) => {
+    const artifactId = u32(buffer, position + layout.equipment + slot * EQUIPMENT_SLOT_SIZE);
+    return artifactId === EMPTY_SLOT || slot === SPELL_BOOK_SLOT ? null : artifactId;
+  });
+}
+
 /**
  * Reads the hero whose name starts at `position`, with the hero layout of the save
  * (see `layoutFor`).
@@ -153,6 +177,7 @@ export function readHero(
     secondarySkills: readSecondarySkills(buffer, layout, position),
     spells,
     hasSpellBook: u32(buffer, position + layout.spellBookSlot) === 0,
+    equipment: readEquipment(buffer, position, layout),
     backpack,
   };
 }
@@ -187,13 +212,51 @@ export function encodeHeroName(name: string, codePage: CodePage): Uint8Array {
   return field;
 }
 
-/** Writes every editable field of `hero` back to the record at `position`. */
+/**
+ * Writes the worn artifacts. Only slots whose artifact changed are written, so the extra value
+ * of the others (the spell of a scroll) stays. The counters of slots taken by combination
+ * artifacts move by the difference: Horn of the Abyss keeps other data in those bytes too.
+ */
+function writeEquipment(
+  buffer: SaveBuffer,
+  position: number,
+  layout: HeroLayout,
+  hero: Hero,
+  edition: Edition,
+): void {
+  const before = readEquipment(buffer, position, layout);
+  before.forEach((was, slot) => {
+    const artifactId = hero.equipment[slot] ?? null;
+    if (slot !== SPELL_BOOK_SLOT && artifactId !== was) {
+      const offset = position + layout.equipment + slot * EQUIPMENT_SLOT_SIZE;
+      buffer.writeU32(offset, artifactId ?? EMPTY_SLOT);
+      buffer.writeU32(offset + 4, EMPTY_SLOT);
+    }
+  });
+  const counters = layout.combinationCounters;
+  if (counters === null) {
+    return;
+  }
+  const was = combinationCounters(before, edition);
+  const now = combinationCounters(hero.equipment, edition);
+  WORN_SLOT_KINDS.forEach((_, index) => {
+    // The first byte is unused; the counters follow it in WORN_SLOT_KINDS order.
+    const offset = position + counters + 1 + index;
+    const change = (now[index] ?? 0) - (was[index] ?? 0);
+    if (change !== 0) {
+      buffer.writeU8(offset, Math.max(0, u8(buffer, offset) + change));
+    }
+  });
+}
+
+/** Writes every editable field of `hero`, as in an `edition` save, to the record at `position`. */
 export function writeHero(
   buffer: SaveBuffer,
   position: number,
   layout: HeroLayout,
   codePage: CodePage,
   hero: Hero,
+  edition: Edition,
 ): void {
   // Validate everything that can fail before the first byte is changed.
   const name = encodeHeroName(hero.name, codePage);
@@ -201,7 +264,9 @@ export function writeHero(
   if (
     !buffer.contains(position + layout.heroClass, -layout.heroClass) ||
     !buffer.contains(backpackStart, layout.backpackSlots * layout.backpackSlotSize) ||
-    !buffer.contains(position + layout.secondarySkillSlots, layout.secondarySkillIds)
+    !buffer.contains(position + layout.secondarySkillSlots, layout.secondarySkillIds) ||
+    (layout.combinationCounters !== null &&
+      !buffer.contains(position + layout.combinationCounters, 1 + WORN_SLOT_KINDS.length))
   ) {
     throw new HeroOutOfRangeError(position);
   }
@@ -253,6 +318,7 @@ export function writeHero(
     }
   }
   buffer.writeU32(position + layout.spellBookSlot, hero.hasSpellBook ? 0 : EMPTY_SLOT);
+  writeEquipment(buffer, position, layout, hero, edition);
 
   for (let slot = 0; slot < layout.backpackSlots; slot += 1) {
     const artifactId = hero.backpack[slot];

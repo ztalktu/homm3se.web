@@ -23,6 +23,8 @@ export interface RawHero {
   spellBook?: boolean;
   backpack?: number[];
   backpackOffset?: 357 | 365;
+  /** Worn artifact ids by equipment slot, null or missing for an empty slot. */
+  equipment?: (number | null)[];
 }
 
 export interface RawTreasury {
@@ -77,8 +79,13 @@ export function buildSave(
       bytes[p + 73 + spell] = 1;
       bytes[p + 143 + spell] = 1;
     }
-    u32(p + 349, hero.spellBook === false ? 0xffffffff : 0);
     const backpackOffset = hero.backpackOffset ?? 365;
+    // 19 equipment slots of 8 bytes from +213, 18 when the backpack starts at +357.
+    for (let slot = 0; slot < (backpackOffset - 213) / 8; slot += 1) {
+      u32(p + 213 + slot * 8, hero.equipment?.[slot] ?? 0xffffffff);
+      u32(p + 213 + slot * 8 + 4, 0xffffffff);
+    }
+    u32(p + 349, hero.spellBook === false ? 0xffffffff : 0);
     for (let slot = 0; slot < 64; slot += 1) {
       u32(p + backpackOffset + slot * 8, hero.backpack?.[slot] ?? 0xffffffff);
     }

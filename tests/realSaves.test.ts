@@ -1,6 +1,20 @@
 /**
  * Smoke test on real saves from the local saves/ folder (not in the repository: the files
  * belong to other people). Skipped when the folder is missing.
+ *
+ * Every .cgm and .gm1–.gm8 file under saves/ is opened, searched for heroes and resources,
+ * and edited back. The first-level folder names what wrote the save, and the test checks the
+ * layout (and, where the header tells, the editions) that the header picks for it:
+ * - RoE-Original/ — Restoration of Erathia itself: its own layout, Restoration of Erathia;
+ * - H3HD/ — HD Edition: its own layout;
+ * - RoE-Complete/ — Restoration of Erathia campaigns written by Complete: The Shadow of
+ *   Death's layout, Restoration of Erathia;
+ * - AB-Complete/ — Armageddon's Blade campaigns written by Complete: Armageddon's Blade's
+ *   layout and edition, hero backpacks where The Shadow of Death keeps them;
+ * - SoD/ — The Shadow of Death or Complete, which write the same format: The Shadow of
+ *   Death's layout;
+ * - HotA/ — Horn of the Abyss: the early or the current layout by the header minor.
+ * Saves in any other folder get only the common checks.
  */
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -46,35 +60,38 @@ describe.skipIf(files.length === 0)('real saves', () => {
       const view = new DataView(unpacked.buffer, unpacked.byteOffset);
       const version = [view.getUint32(8, true), view.getUint32(12, true)];
 
-      // The header picks the layout: HD Edition its own, The Shadow of Death the newer one
-      // (also for Restoration of Erathia campaigns written by Complete), Armageddon's Blade its
-      // own, Horn of the Abyss one of its two by the header minor.
+      // The header picks the layout: Restoration of Erathia and HD Edition their own, The Shadow
+      // of Death the newer one (also for Restoration of Erathia campaigns written by Complete),
+      // Armageddon's Blade its own, Horn of the Abyss one of its two by the header minor.
       const inFolder = (folder: string): boolean => file.includes(`${SAVES_DIR}/${folder}/`);
-      const expectedLayout = inFolder('H2HD')
-        ? 'hdEdition'
-        : inFolder('SoD') || inFolder('H3E')
-          ? 'shadowOfDeath'
-          : inFolder('armagedon')
-            ? 'armageddonsBlade'
-            : inFolder('HotA')
-              ? version[1]! >= 10
-                ? 'hornOfTheAbyss'
-                : 'hornOfTheAbyssEarly'
-              : null;
+      const expectedLayout = inFolder('RoE-Original')
+        ? 'restorationOfErathia'
+        : inFolder('H3HD')
+          ? 'hdEdition'
+          : inFolder('SoD') || inFolder('RoE-Complete')
+            ? 'shadowOfDeath'
+            : inFolder('AB-Complete')
+              ? 'armageddonsBlade'
+              : inFolder('HotA')
+                ? version[1]! >= 10
+                  ? 'hornOfTheAbyss'
+                  : 'hornOfTheAbyssEarly'
+                : null;
       if (expectedLayout) {
         expect(layoutFor(save.format, 'restorationOfErathia').id).toBe(expectedLayout);
       }
       // The folders hold saves of these editions' content, which the header names.
-      const expectedEditions = inFolder('H3E')
-        ? ['restorationOfErathia']
-        : inFolder('armagedon')
-          ? ['armageddonsBlade']
-          : null;
+      const expectedEditions =
+        inFolder('RoE-Original') || inFolder('RoE-Complete')
+          ? ['restorationOfErathia']
+          : inFolder('AB-Complete')
+            ? ['armageddonsBlade']
+            : null;
       if (expectedEditions) {
         expect(editionsForHeader(save.format)).toEqual(expectedEditions);
       }
       // Complete writes Armageddon's Blade campaigns with The Shadow of Death's hero records.
-      if (inFolder('armagedon')) {
+      if (inFolder('AB-Complete')) {
         for (const name of names) {
           const match = findHero(save.buffer, name);
           if (match) {
@@ -123,10 +140,7 @@ describe.skipIf(files.length === 0)('real saves', () => {
       // The one-pass name list agrees with searching every name on its own (the loop above).
       expect([...findHeroNames(buffer, names).keys()].sort()).toEqual([...foundNames].sort());
 
-      // Other/ holds service files (for example the list of completed campaigns) without heroes.
-      if (!file.includes(`${SAVES_DIR}/Other/`)) {
-        expect(found.length, 'heroes found').toBeGreaterThan(0);
-      }
+      expect(found.length, 'heroes found').toBeGreaterThan(0);
 
       // Writing every hero back unchanged must not change a single byte (supported formats).
       const first = names.map((name) => findHero(buffer, name)).find(Boolean);

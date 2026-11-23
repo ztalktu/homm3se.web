@@ -11,6 +11,10 @@
       {
         "kind": "changed",
         "text": "The Heroes, Resources and Towns tabs stay inactive until a save is open: a hint says what to do first."
+      },
+      {
+        "kind": "changed",
+        "text": "On the first visit the interface language follows the browser. A language you pick yourself is still remembered."
       }
     ]
   },

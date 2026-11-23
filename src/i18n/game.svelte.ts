@@ -50,6 +50,15 @@ export const creatureName = (id: number, edition: Edition): string =>
 export const artifactName = (id: number, edition: Edition): string =>
   lookup(isHotaArtifact(id, edition) ? `artifact.hota.${id}` : `artifact.${id}`);
 export const skillName = (id: number): string => lookup(`skill.${id}`);
+
+/** Town buildings: a faction's own text first, then the one every town shares. */
+function buildingText(kind: 'building' | 'buildingDescription', town: Town, id: number): string {
+  const texts: Record<string, string> = gameDictionaries[preferences.locale];
+  return texts[`${kind}.${town}.${id}`] ?? texts[`${kind}.${id}`] ?? `#${id}`;
+}
+export const buildingName = (town: Town, id: number): string => buildingText('building', town, id);
+export const buildingDescription = (town: Town, id: number): string =>
+  buildingText('buildingDescription', town, id);
 export const skillLevelName = (level: SkillLevel): string => lookup(`skillLevel.${level}`);
 export const spellName = (id: number): string => lookup(`spell.${id}`);
 

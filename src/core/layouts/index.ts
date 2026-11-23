@@ -27,7 +27,7 @@ import type { HeroLayout, LayoutId, SaveLayout } from './types';
 
 export * from './common';
 export * from './players';
-export type { HeroLayout, LayoutId, SaveLayout } from './types';
+export type { HeroLayout, LayoutId, SaveLayout, TownLayout } from './types';
 export { armageddonsBladeLayoutAt } from './armageddonsBlade';
 
 export const LAYOUTS: Record<LayoutId, SaveLayout> = {

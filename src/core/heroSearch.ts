@@ -25,6 +25,8 @@ export interface HeroInSave {
   owners: HeroOwner[];
   /** Town of the hero's class, from the first record; undefined for an unknown class. */
   town: Town | undefined;
+  /** Record positions, one for each owner, in the order of `owners`. */
+  positions: number[];
 }
 
 function looksLikeHero(buffer: SaveBuffer, position: number): boolean {
@@ -146,11 +148,13 @@ export function findHeroNames(
       }
       if (known) {
         known.owners.push(owner);
+        known.positions.push(start);
       } else {
         const classId = buffer.readU8(start + COMMON_HERO_FIELDS.heroClass);
         found.set(name, {
           owners: [owner],
           town: classId === undefined ? undefined : classTown(classId),
+          positions: [start],
         });
       }
     }

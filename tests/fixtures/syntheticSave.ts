@@ -96,3 +96,70 @@ export function buildSave(
   }
   return bytes;
 }
+
+/**
+ * A town record built byte by byte, with the offsets repeated on purpose: a counted name (The
+ * Shadow of Death, 382 bytes besides the name) unless `fixedName` gives a name field length.
+ */
+export interface RawTown {
+  owner?: number;
+  faction?: number;
+  xyz?: [number, number, number];
+  name: string;
+  garrison?: ([number, number] | null)[];
+  built?: bigint;
+  builtAll?: bigint;
+  allowed?: bigint;
+  guildSlots?: number[];
+  guildSpells?: number[];
+}
+
+export function writeTowns(
+  bytes: Uint8Array,
+  start: number,
+  towns: RawTown[],
+  layout: { recordSize: number; fixedName?: number },
+): number[] {
+  const view = new DataView(bytes.buffer);
+  const positions: number[] = [];
+  let p = start;
+  towns.forEach((town, number) => {
+    positions.push(p);
+    bytes[p + 8] = number;
+    bytes[p + 9] = town.owner ?? 0xff;
+    bytes[p + 12] = town.faction ?? 0;
+    const [x, y, z] = town.xyz ?? [10, 20, 0];
+    bytes[p + 13] = x;
+    bytes[p + 14] = y;
+    bytes[p + 15] = z;
+    for (let slot = 0; slot < 7; slot += 1) {
+      const troop = town.garrison?.[slot] ?? null;
+      view.setUint32(p + 0x12 + slot * 4, troop ? troop[0] : 0xffffffff, true);
+      view.setUint32(p + 0x2e + slot * 4, troop ? troop[1] : 0, true);
+    }
+    const name = [...town.name].map((character) => character.charCodeAt(0));
+    let after: number;
+    let next: number;
+    if (layout.fixedName) {
+      bytes.set(name, p + 0x4e);
+      after = p + 0x4e + layout.fixedName;
+      next = p + layout.recordSize;
+    } else {
+      view.setUint16(p + 0x4e, name.length, true);
+      bytes.set(name, p + 0x50);
+      after = p + 0x50 + name.length;
+      next = p + layout.recordSize + name.length;
+    }
+    (town.guildSlots ?? [0, 0, 0, 0, 0]).forEach((slots, level) => {
+      bytes[after + 0x54 + level] = slots;
+    });
+    view.setBigUint64(after + 0x59, town.built ?? 1n << 10n, true);
+    view.setBigUint64(after + 0x61, town.builtAll ?? 1n << 10n, true);
+    view.setBigUint64(after + 0x69, town.allowed ?? 0xfffffffffffn, true);
+    (town.guildSpells ?? []).forEach((spell, index) => {
+      view.setUint32(after + 0x71 + index * 4, spell, true);
+    });
+    p = next;
+  });
+  return positions;
+}

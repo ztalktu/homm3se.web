@@ -4,16 +4,13 @@
   import { validateHero, type HeroProblem } from '../../core/rules';
   import { artifactName, spellName } from '../../i18n/game.svelte';
   import { equipmentSlotName, t } from '../../i18n/index.svelte';
-  import Button from '../components/Button.svelte';
-  import Dialog from '../components/Dialog.svelte';
-  import Tabs from '../components/Tabs.svelte';
+  import EditorDialog from '../components/EditorDialog.svelte';
   import HeroAttributesTab from './hero/HeroAttributesTab.svelte';
   import HeroBackpackTab from './hero/HeroBackpackTab.svelte';
   import HeroEquipmentTab from './hero/HeroEquipmentTab.svelte';
   import HeroSkillsTab from './hero/HeroSkillsTab.svelte';
   import HeroSpellsTab from './hero/HeroSpellsTab.svelte';
   import HeroTroopsTab from './hero/HeroTroopsTab.svelte';
-  import UnsavedDialog from './UnsavedDialog.svelte';
 
   interface Props {
     open: boolean;
@@ -30,20 +27,10 @@
   let hero: Hero = $state(structuredClone($state.snapshot(original)));
   let activeTab: TabId = $state('attributes');
   let problems: string[] = $state([]);
-  let askToApply = $state(false);
 
   // svelte-ignore state_referenced_locally
   const startedAs = JSON.stringify($state.snapshot(original));
   const changed = $derived(JSON.stringify($state.snapshot(hero)) !== startedAs);
-
-  /** Escape, the backdrop or the close button with changes made: ask before losing them. */
-  function canClose(): boolean {
-    if (changed) {
-      askToApply = true;
-      return false;
-    }
-    return true;
-  }
   /** Spells as in the file when it was opened, before any "Apply": the Spells tab marks changes. */
   const openedSpells = $derived(originalHero()?.spells ?? original.spells);
   /** Worn artifacts as in the file when it was opened: the Equipment tab marks changes. */
@@ -107,106 +94,30 @@
     applyHero($state.snapshot(hero));
     open = false;
   }
-
-  function applyFromQuestion(): void {
-    askToApply = false;
-    // A problem keeps the window open and lists it, as with the Apply button.
-    apply();
-  }
-
-  function discard(): void {
-    askToApply = false;
-    open = false;
-  }
 </script>
 
-<Dialog
+<EditorDialog
   bind:open
   title={t('heroDialog.title', { name: original.name })}
-  size="large"
-  scrollable={false}
-  {canClose}
+  {tabs}
+  bind:active={activeTab}
+  tabsLabel={t('heroDialog.tabs')}
+  {changed}
+  {problems}
+  unsavedText={t('heroDialog.unsavedText')}
+  onapply={apply}
 >
-  <div class="body">
-    <Tabs items={tabs} bind:active={activeTab} label={t('heroDialog.tabs')} />
-    <div
-      class="panel"
-      role="tabpanel"
-      id={`panel-${activeTab}`}
-      aria-labelledby={`tab-${activeTab}`}
-      tabindex="-1"
-    >
-      {#if activeTab === 'attributes'}
-        <HeroAttributesTab bind:hero {nameError} />
-      {:else if activeTab === 'troops'}
-        <HeroTroopsTab bind:hero />
-      {:else if activeTab === 'skills'}
-        <HeroSkillsTab bind:hero />
-      {:else if activeTab === 'equipment'}
-        <HeroEquipmentTab bind:hero opened={openedEquipment} {openedSpellBook} />
-      {:else if activeTab === 'artifacts'}
-        <HeroBackpackTab bind:hero />
-      {:else}
-        <HeroSpellsTab bind:hero opened={openedSpells} />
-      {/if}
-    </div>
-  </div>
-
-  {#snippet footer()}
-    {#if problems.length > 0}
-      <div class="problems" role="alert">
-        <strong>{t('problem.title')}</strong>
-        <ul>
-          {#each problems as problem (problem)}
-            <li>{problem}</li>
-          {/each}
-        </ul>
-      </div>
-    {/if}
-    <Button onclick={() => (open = false)}>{t('heroDialog.cancel')}</Button>
-    <Button variant="primary" icon="check" onclick={apply}>{t('heroDialog.ok')}</Button>
-  {/snippet}
-</Dialog>
-
-<UnsavedDialog
-  bind:open={askToApply}
-  text={t('heroDialog.unsavedText')}
-  saveLabel={t('heroDialog.ok')}
-  discardLabel={t('heroDialog.unsavedDiscard')}
-  onsave={applyFromQuestion}
-  ondiscard={discard}
-/>
-
-<style>
-  .body {
-    --tabs-inset: 0;
-    flex: 1;
-    min-height: 0;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
-  }
-
-  /* Only the panel scrolls, so the tabs stay in sight. */
-  .panel {
-    min-height: min(360px, 40vh);
-    overflow-y: auto;
-    padding: var(--space-4);
-    border: 1px solid var(--color-frame);
-    border-radius: 0 var(--radius) var(--radius) var(--radius);
-    background: var(--color-panel);
-  }
-
-  .problems {
-    flex-basis: 100%;
-    padding: var(--space-2) var(--space-3);
-    border: 1px solid var(--color-danger);
-    border-radius: var(--radius-small);
-    color: var(--color-error-text);
-    font-size: 13px;
-  }
-
-  .problems ul {
-    margin: var(--space-1) 0 0;
-    padding-left: var(--space-4);
-  }
-</style>
+  {#if activeTab === 'attributes'}
+    <HeroAttributesTab bind:hero {nameError} />
+  {:else if activeTab === 'troops'}
+    <HeroTroopsTab bind:hero />
+  {:else if activeTab === 'skills'}
+    <HeroSkillsTab bind:hero />
+  {:else if activeTab === 'equipment'}
+    <HeroEquipmentTab bind:hero opened={openedEquipment} {openedSpellBook} />
+  {:else if activeTab === 'artifacts'}
+    <HeroBackpackTab bind:hero />
+  {:else}
+    <HeroSpellsTab bind:hero opened={openedSpells} />
+  {/if}
+</EditorDialog>

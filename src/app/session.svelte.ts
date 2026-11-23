@@ -88,8 +88,11 @@ interface Session {
   editionAutoChanges: number;
   /** File name and time (ms since epoch) of the last successful save. */
   savedAs: { fileName: string; at: number } | null;
-  /** Hero records and treasuries (gold positions) changed since the save was opened. */
-  edited: { heroes: EditedHero[]; treasuries: number[] };
+  /**
+   * Hero records, treasuries (gold positions) and towns (record positions) changed since the save
+   * was opened.
+   */
+  edited: { heroes: EditedHero[]; treasuries: number[]; towns: number[] };
   heroName: string;
   heroMatch: HeroMatch | null;
   /** Name `heroMatch` was found by: "Find hero" continues only while the name stays the same. */
@@ -144,7 +147,7 @@ export const session: Session = $state({
   edition: stored.edition,
   editionAutoChanges: 0,
   savedAs: null,
-  edited: { heroes: [], treasuries: [] },
+  edited: { heroes: [], treasuries: [], towns: [] },
   heroName: '',
   heroMatch: null,
   heroMatchName: null,
@@ -178,7 +181,7 @@ export async function openSaveFile(file: File): Promise<void> {
     const sameVersion = session.save !== null && isSameFormat(session.save.format, save.format);
     session.save = save;
     session.savedAs = null;
-    session.edited = { heroes: [], treasuries: [] };
+    session.edited = { heroes: [], treasuries: [], towns: [] };
     session.heroNamesInSave = findHeroNames(save.buffer, KNOWN_HERO_NAMES);
     if (session.ownerFilter !== undefined && !heroOwnersInSave().includes(session.ownerFilter)) {
       session.ownerFilter = undefined;

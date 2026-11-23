@@ -2,10 +2,16 @@
   /**
    * Accessible tab list (WAI-ARIA tabs pattern): arrow keys, Home and End move between tabs.
    * The caller renders the panel with id `panel-{id}` and aria-labelledby `tab-{id}`.
+   * A disabled tab stays visible with a hint why; it cannot be picked, the arrows skip it.
    */
+  import { tooltip } from '../actions/tooltip';
+
   interface TabItem {
     id: Id;
     label: string;
+    disabled?: boolean | undefined;
+    /** Shown on hover; for a disabled tab, what to do first. */
+    hint?: string | undefined;
   }
 
   interface Props {
@@ -21,20 +27,30 @@
 
   function select(index: number): void {
     const item = items[index];
-    if (!item) {
+    if (!item || item.disabled) {
       return;
     }
     active = item.id;
     buttons[index]?.focus();
   }
 
+  /** The next tab that can be picked from `index` in `step` direction, wrapping around. */
+  function nextEnabled(index: number, step: 1 | -1): number {
+    for (let offset = 1; offset <= items.length; offset += 1) {
+      const candidate = (index + step * offset + items.length) % items.length;
+      if (!items[candidate]?.disabled) {
+        return candidate;
+      }
+    }
+    return index;
+  }
+
   function onKeydown(event: KeyboardEvent, index: number): void {
-    const last = items.length - 1;
     const next: Record<string, number> = {
-      ArrowRight: index === last ? 0 : index + 1,
-      ArrowLeft: index === 0 ? last : index - 1,
-      Home: 0,
-      End: last,
+      ArrowRight: nextEnabled(index, 1),
+      ArrowLeft: nextEnabled(index, -1),
+      Home: nextEnabled(-1, 1),
+      End: nextEnabled(items.length, -1),
     };
     const target = next[event.key];
     if (target !== undefined) {
@@ -55,7 +71,9 @@
       aria-selected={item.id === active}
       aria-controls={`panel-${item.id}`}
       tabindex={item.id === active ? 0 : -1}
-      onclick={() => (active = item.id)}
+      aria-disabled={item.disabled}
+      use:tooltip={item.hint}
+      onclick={() => select(index)}
       onkeydown={(event) => onKeydown(event, index)}
     >
       {item.label}
@@ -84,8 +102,14 @@
     transition: color var(--transition-fast);
   }
 
-  .tab:hover {
+  .tab:hover:not([aria-disabled='true']) {
     color: var(--color-text);
+  }
+
+  /* Not disabled for the browser, so the hint still shows on hover. */
+  .tab[aria-disabled='true'] {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .tab[aria-selected='true'] {

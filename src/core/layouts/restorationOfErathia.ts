@@ -14,5 +14,8 @@ export const RESTORATION_OF_ERATHIA_LAYOUT: SaveLayout = {
     equipmentSlots: 18,
     combinationCounters: null,
     recordSize: 1065,
+    coordinates: -189,
   },
+  // Header 42/0 (Restoration of Erathia content written by Complete) is The Shadow of Death's.
+  town: { name: 13, recordSize: 393, fullyStudied: false },
 };

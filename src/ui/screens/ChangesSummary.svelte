@@ -4,17 +4,20 @@
    * been written, a tick marks what it already holds, and the rest stands out with a star.
    */
   import { changeSummary, session } from '../../app/session.svelte';
-  import type { HeroAttribute, ListChange } from '../../core/changes';
+  import { townChangeSummary } from '../../app/towns.svelte';
+  import type { HeroAttribute, ListChange, ValueChange } from '../../core/changes';
   import type { Troop } from '../../core/hero';
   import type { SkillLevel } from '../../data/skills';
   import {
     artifactName,
+    buildingName,
     creatureName,
     heroClassName,
     playerLabel,
     skillLevelName,
     skillName,
     spellName,
+    townName,
   } from '../../i18n/game.svelte';
   import { isWarMachineSlot } from '../../data/equipment';
   import { equipmentSlotName, t, type MessageKey } from '../../i18n/index.svelte';
@@ -24,6 +27,7 @@
   import { formatDelta, formatNumber } from '../format';
 
   const summary = $derived(changeSummary());
+  const towns = $derived(townChangeSummary());
   // Ticks and stars only make sense once there is a written file to compare with.
   const marked = $derived(session.savedAs !== null);
 
@@ -96,11 +100,30 @@
   </span>
 {/snippet}
 
+{#snippet troopChanges(changes: (ValueChange<Troop | null> & { slot: number })[])}
+  <ul>
+    {#each changes as change (change.slot)}
+      {@const { before, after } = change}
+      <li class:unsaved={marked && !change.saved}>
+        {@render mark(change.saved)}{t('heroDialog.slot', { slot: change.slot + 1 })}:
+        {#if before && after && before.creatureId === after.creatureId}
+          {creatureName(after.creatureId, session.edition)}: {formatNumber(
+            before.count,
+          )}{@render arrow()}{formatNumber(after.count)}
+          ({@render delta(before.count, after.count)})
+        {:else}
+          {troopText(before)}{@render arrow()}{troopText(after)}
+        {/if}
+      </li>
+    {/each}
+  </ul>
+{/snippet}
+
 {#snippet group(icon: IconName, title: string)}
   <h5><Icon name={icon} size={16} />{title}</h5>
 {/snippet}
 
-{#if summary.treasuries.length === 0 && summary.heroes.length === 0}
+{#if summary.treasuries.length === 0 && summary.heroes.length === 0 && towns.length === 0}
   <p class="empty">{t('info.noChanges')}</p>
 {:else}
   {#if marked}
@@ -169,22 +192,7 @@
 
             {#if changes.troops.length > 0}
               {@render group('troops', t('heroDialog.tab.troops'))}
-              <ul>
-                {#each changes.troops as change (change.slot)}
-                  {@const { before, after } = change}
-                  <li class:unsaved={marked && !change.saved}>
-                    {@render mark(change.saved)}{t('heroDialog.slot', { slot: change.slot + 1 })}:
-                    {#if before && after && before.creatureId === after.creatureId}
-                      {creatureName(after.creatureId, session.edition)}: {formatNumber(
-                        before.count,
-                      )}{@render arrow()}{formatNumber(after.count)}
-                      ({@render delta(before.count, after.count)})
-                    {:else}
-                      {troopText(before)}{@render arrow()}{troopText(after)}
-                    {/if}
-                  </li>
-                {/each}
-              </ul>
+              {@render troopChanges(changes.troops)}
             {/if}
 
             {#if changes.skills.length > 0}
@@ -250,6 +258,45 @@
                     t('heroDialog.spellBook'),
                   )}
                 {/if}
+                {@render chips(changes.spells, spellName)}
+              </div>
+            {/if}
+          </article>
+        {/each}
+      </div>
+    </section>
+  {/if}
+
+  {#if towns.length > 0}
+    <section>
+      <h3><Icon name="town" />{t('info.changedTowns')}</h3>
+      <div class="heroes">
+        {#each towns as town, index (index)}
+          {@const changes = town.changes}
+          {@const faction = town.faction}
+          <article>
+            <header>
+              <Icon name="town" />
+              <h4>{town.name}</h4>
+              <span class="subtitle"
+                >{faction ? townName(faction) : ''} · {town.owner
+                  ? playerLabel(town.owner)
+                  : t('town.neutral')}</span
+              >
+            </header>
+            {#if changes.buildings.length > 0 && faction}
+              {@render group('town', t('townDialog.tab.buildings'))}
+              <div class="chips">
+                {@render chips(changes.buildings, (id) => buildingName(faction, id))}
+              </div>
+            {/if}
+            {#if changes.troops.length > 0}
+              {@render group('troops', t('townDialog.tab.garrison'))}
+              {@render troopChanges(changes.troops)}
+            {/if}
+            {#if changes.spells.length > 0}
+              {@render group('spells', t('townDialog.tab.guild'))}
+              <div class="chips">
                 {@render chips(changes.spells, spellName)}
               </div>
             {/if}

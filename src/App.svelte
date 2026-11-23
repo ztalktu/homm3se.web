@@ -33,10 +33,11 @@
   import HistoryDialog from './ui/screens/HistoryDialog.svelte';
   import InfoTab from './ui/screens/InfoTab.svelte';
   import ResourceEditorTab from './ui/screens/ResourceEditorTab.svelte';
+  import TownEditorTab from './ui/screens/TownEditorTab.svelte';
   import UnsavedDialog from './ui/screens/UnsavedDialog.svelte';
   import WelcomeDialog from './ui/screens/WelcomeDialog.svelte';
 
-  type TabId = 'info' | 'heroEditor' | 'resourceEditor';
+  type TabId = 'info' | 'heroEditor' | 'resourceEditor' | 'townEditor';
 
   const CURRENT_YEAR = new Date().getFullYear();
 
@@ -58,10 +59,28 @@
   // Edits keep the same SaveGame, so a new reference means a newly opened file.
   const save = $derived(session.save);
 
+  // The editors need a save: until one is open, their tabs say so in a hint.
+  const noSave = $derived(!session.save);
   const tabs = $derived([
     { id: 'info' as const, label: t('tabs.info') },
-    { id: 'heroEditor' as const, label: t('tabs.heroEditor') },
-    { id: 'resourceEditor' as const, label: t('tabs.resourceEditor') },
+    {
+      id: 'heroEditor' as const,
+      label: t('tabs.heroEditor'),
+      disabled: noSave,
+      hint: noSave ? t('hero.noSave') : undefined,
+    },
+    {
+      id: 'resourceEditor' as const,
+      label: t('tabs.resourceEditor'),
+      disabled: noSave,
+      hint: noSave ? t('resources.noSave') : undefined,
+    },
+    {
+      id: 'townEditor' as const,
+      label: t('tabs.townEditor'),
+      disabled: noSave,
+      hint: noSave ? t('town.noSave') : undefined,
+    },
   ]);
 
   const editionFixed = $derived(editionFixedBySave());
@@ -280,8 +299,10 @@
           <InfoTab onopen={chooseFile} />
         {:else if activeTab === 'heroEditor'}
           <HeroEditorTab />
-        {:else}
+        {:else if activeTab === 'resourceEditor'}
           <ResourceEditorTab />
+        {:else}
+          <TownEditorTab />
         {/if}
       </div>
     {/if}

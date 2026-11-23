@@ -24,6 +24,7 @@ import { readHero, writeHero } from '../src/core/hero';
 import { findHero, findHeroNames, findNextHero } from '../src/core/heroSearch';
 import { decompressGzip } from '../src/core/gzip';
 import { findPlayerTreasuries, readResources } from '../src/core/resources';
+import { findTowns, readTown, writeTown } from '../src/core/town';
 import { SaveBuffer } from '../src/core/saveBuffer';
 import { SaveGame } from '../src/core/saveGame';
 import { editionsForHeader, isEditingTested } from '../src/core/saveFormat';
@@ -214,11 +215,43 @@ describe.skipIf(files.length === 0)('real saves', () => {
       const empty = amounts.every((treasury) => Object.values(treasury).every((v) => v === 0));
       expect(empty || amounts.some((treasury) => treasury.gold > 0)).toBe(true);
 
+      // Towns: a numbered run of records, read and written back unchanged byte for byte; a
+      // garrison edit touches only that slot.
+      const townLayout = layoutFor(save.format, edition).town;
+      const towns = findTowns(buffer, townLayout);
+      expect(towns.length, 'towns').toBeGreaterThan(0);
+      towns.forEach((town, index) => {
+        expect(town.number).toBe(index);
+        expect(town.faction).toBeLessThanOrEqual(11);
+        expect(town.guildSlots.every((slots) => slots <= 6)).toBe(true);
+      });
+      const townCopy = new SaveBuffer(buffer.bytes.slice());
+      for (const town of towns) {
+        writeTown(townCopy, readTown(townCopy, town.position, townLayout));
+      }
+      expect(townCopy.bytes.findIndex((byte, index) => byte !== buffer.bytes[index])).toBe(-1);
+      const target = towns[0]!;
+      const slot = target.garrison.findIndex((troop) => troop === null);
+      if (slot >= 0) {
+        writeTown(townCopy, {
+          ...target,
+          garrison: target.garrison.map((troop, i) =>
+            i === slot ? { creatureId: 1, count: 5 } : troop,
+          ),
+        });
+        expect(readTown(townCopy, target.position, townLayout).garrison[slot]).toEqual({
+          creatureId: 1,
+          count: 5,
+        });
+        const touched = townCopy.bytes.filter((byte, index) => byte !== buffer.bytes[index]).length;
+        expect(touched).toBeLessThanOrEqual(8);
+      }
+
       if (process.env['SHOW_SAVES']) {
         console.log(
           `${relative(SAVES_DIR, file)}: ${header} v${version.join('.')} ${save.format.kind} ` +
             `${unpacked.length} bytes, edition ${edition} (${EDITIONS.indexOf(edition)}), ` +
-            `${found.length} heroes\n  ${found.slice(0, 6).join('\n  ')}`,
+            `${found.length} heroes, ${towns.length} towns: ${towns.map((t) => t.name).join(', ')}\n  ${found.slice(0, 6).join('\n  ')}`,
         );
       }
     },

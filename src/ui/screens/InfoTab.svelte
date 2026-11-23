@@ -80,7 +80,10 @@
     <h2>{t('info.aboutTitle')}</h2>
     <p>{t('info.aboutIntro')}</p>
     <p>{t('info.aboutHeroes')}</p>
+    <p>{t('info.aboutEquipment')}</p>
     <p>{t('info.aboutResources')}</p>
+    <p>{t('info.aboutTowns')}</p>
+    <p>{t('info.aboutChanges')}</p>
     <p>{t('info.aboutEditions')}</p>
 
     <h2>{t('info.authorTitle')}</h2>

@@ -4,6 +4,8 @@
  */
 
 import type { Hero, Troop } from './hero';
+import { BUILDING_COUNT, type Town } from './town';
+import { guildChoice } from './townBuildings';
 import { RESOURCES, type Resource } from './layouts';
 import type { ResourceAmounts } from './resources';
 import type { SkillLevel } from '../data/skills';
@@ -180,4 +182,49 @@ export function resourceChanges(
     const change = valueChange(original[resource], current[resource], saved?.[resource]);
     return change ? [{ ...change, resource }] : [];
   });
+}
+
+export interface TownChanges {
+  /** By garrison slot: an empty slot is null. */
+  troops: (ValueChange<Troop | null> & { slot: number })[];
+  /** Buildings by id, as the full mask holds them. */
+  buildings: ListChange[];
+  /** Spells in the mage guild slots. */
+  spells: ListChange[];
+}
+
+function maskIds(mask: bigint): number[] {
+  return Array.from({ length: BUILDING_COUNT }, (_, id) => id).filter(
+    (id) => (mask & (1n << BigInt(id))) !== 0n,
+  );
+}
+
+/** Changes from `original` to `current`; `saved` is the town in the last written file. */
+export function townChanges(original: Town, current: Town, saved: Town | null): TownChanges {
+  const troops = current.garrison.flatMap((troop, slot) => {
+    const change = valueChange(
+      original.garrison[slot] ?? null,
+      troop,
+      saved ? (saved.garrison[slot] ?? null) : undefined,
+      sameTroop,
+    );
+    return change ? [{ ...change, slot }] : [];
+  });
+  return {
+    troops,
+    buildings: listChanges(
+      maskIds(original.builtAll),
+      maskIds(current.builtAll),
+      saved ? maskIds(saved.builtAll) : undefined,
+    ),
+    spells: listChanges(
+      guildChoice(original).flat(),
+      guildChoice(current).flat(),
+      saved ? guildChoice(saved).flat() : undefined,
+    ),
+  };
+}
+
+export function hasTownChanges(changes: TownChanges): boolean {
+  return [changes.troops, changes.buildings, changes.spells].some((list) => list.length > 0);
 }

@@ -1,5 +1,20 @@
 [
   {
+    "version": "3.1.0",
+    "date": "2026-11-24",
+    "changes": [
+      {
+        "kind": "major",
+        "title": "Town editor!",
+        "text": "New Towns tab: every town of the save, with filters by player, faction and name, and a summary of the town hall, fort, mage guild, dwellings, Grail, garrison and heroes in town. The town window changes the buildings (laid out as in the game's town hall; what a building needs is built by itself, and the editor asks when other buildings change), the garrison and the mage guild spells, by level and school as in the hero's spell book. Neutral towns are not edited. The changes show up in the Changed block."
+      },
+      {
+        "kind": "changed",
+        "text": "The Heroes, Resources and Towns tabs stay inactive until a save is open: a hint says what to do first."
+      }
+    ]
+  },
+  {
     "version": "3.0.1",
     "date": "2026-11-22",
     "changes": [

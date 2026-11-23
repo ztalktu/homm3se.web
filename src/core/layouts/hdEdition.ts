@@ -11,4 +11,7 @@ import type { SaveLayout } from './types';
 export const HD_EDITION_LAYOUT: SaveLayout = {
   id: 'hdEdition',
   hero: { ...RESTORATION_OF_ERATHIA_LAYOUT.hero },
+  // A longer name field than Restoration of Erathia: 13 bytes of name and 24 more, all zero
+  // in every save seen.
+  town: { name: 37, recordSize: 417, fullyStudied: true },
 };

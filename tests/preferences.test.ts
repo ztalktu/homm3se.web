@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { resolveTheme } from '../src/app/preferences.svelte';
+import { detectLocale, resolveTheme } from '../src/app/preferences.svelte';
 
 describe('resolveTheme', () => {
   it('follows the operating system when set to system', () => {
@@ -16,8 +16,13 @@ describe('resolveTheme', () => {
 describe('stored preferences', () => {
   afterEach(() => {
     localStorage.clear();
+    vi.restoreAllMocks();
     vi.resetModules();
   });
+
+  const browserSpeaks = (...languages: string[]): void => {
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(languages);
+  };
 
   const load = async (): Promise<typeof import('../src/app/preferences.svelte')> => {
     vi.resetModules();
@@ -38,8 +43,32 @@ describe('stored preferences', () => {
     });
   });
 
+  it('starts in the browser language until the user picks one', async () => {
+    browserSpeaks('ru-RU', 'en');
+    (await load()).setThemePreference('dark');
+    browserSpeaks('en-US');
+    const { preferences, setLocale } = await load();
+    expect(preferences.locale).toBe('en');
+
+    setLocale('ru');
+    browserSpeaks('en-US');
+    expect((await load()).preferences.locale).toBe('ru');
+  });
+
   it('remembers whether taken-off artifacts go to the backpack', async () => {
     (await load()).setMoveToBackpack(true);
     expect((await load()).preferences.moveToBackpack).toBe(true);
+  });
+});
+
+describe('detectLocale', () => {
+  it('takes the first browser language the interface is translated into', () => {
+    expect(detectLocale(['de-DE', 'ru-RU', 'en-US'])).toBe('ru');
+    expect(detectLocale(['EN-gb', 'ru'])).toBe('en');
+  });
+
+  it('falls back to English', () => {
+    expect(detectLocale(['de', 'fr'])).toBe('en');
+    expect(detectLocale([])).toBe('en');
   });
 });

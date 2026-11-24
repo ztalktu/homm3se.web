@@ -32,6 +32,8 @@ export const ICONS = {
   // A sword, for what the hero wears.
   equipment: 'M14 4h6v6L9.5 20.5l-6-6zM5.5 12.5l6 6M3 21l3-3',
   spells: 'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11',
+  // Towers and a gate, for a town.
+  town: 'M3 21V10l3-2 3 2V6l3-3 3 3v4l3-2 3 2v11zM10 21v-4a2 2 0 0 1 4 0v4',
 } as const;
 
 export type IconName = keyof typeof ICONS;

@@ -15,12 +15,14 @@ import type { SaveLayout } from './types';
 
 export const ARMAGEDDONS_BLADE_LAYOUT: SaveLayout = {
   id: 'armageddonsBlade',
-  hero: { ...RESTORATION_OF_ERATHIA_LAYOUT.hero, recordSize: null },
+  hero: { ...RESTORATION_OF_ERATHIA_LAYOUT.hero, recordSize: null, coordinates: -195 },
+  town: { name: 'counted', recordSize: 382, fullyStudied: true },
 };
 
 export const ARMAGEDDONS_BLADE_GOG_LAYOUT: SaveLayout = {
   id: 'armageddonsBladeGog',
   hero: { ...ARMAGEDDONS_BLADE_LAYOUT.hero, backpack: 365 },
+  town: ARMAGEDDONS_BLADE_LAYOUT.town,
 };
 
 /** Highest artifact id in Armageddon's Blade. */

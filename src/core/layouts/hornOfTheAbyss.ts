@@ -24,6 +24,7 @@ export const HORN_OF_THE_ABYSS_LAYOUT: SaveLayout = {
     secondarySkillIds: 30,
     recordSize: 1160,
   },
+  town: { name: 'counted', recordSize: 567, fullyStudied: true },
 };
 
 export const HORN_OF_THE_ABYSS_EARLY_LAYOUT: SaveLayout = {
@@ -34,6 +35,7 @@ export const HORN_OF_THE_ABYSS_EARLY_LAYOUT: SaveLayout = {
     secondarySkillIds: 29,
     recordSize: 1147,
   },
+  town: { name: 'counted', recordSize: 546, fullyStudied: true },
 };
 
 /** The Horn of the Abyss layout for a header minor version. */

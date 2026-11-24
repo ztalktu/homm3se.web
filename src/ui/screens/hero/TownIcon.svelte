@@ -6,7 +6,7 @@
    */
   import type { CreatureGroup } from '../../../data/creatures';
   import Badge from './Badge.svelte';
-  import { cannon, skull } from './SharedGlyphs.svelte';
+  import { cannon, ship, skull, wall } from './SharedGlyphs.svelte';
   import SpellPurposeIcon from './SpellPurposeIcon.svelte';
 
   interface Props {
@@ -31,11 +31,7 @@
 {:else}
   <Badge color="var(--color-town-{group})" {size}>
     {#if group === 'castle'}
-      <!-- Wall with a gate -->
-      <path
-        d="M2.5 21V9h3V5.5h2.6V9h2.6V5.5h2.6V9h2.6V5.5h2.6V9h3v12h-7v-4.5a2.5 2.5 0 0 0-5 0V21z"
-        fill="currentColor"
-      />
+      {@render wall()}
     {:else if group === 'rampart'}
       <!-- Walking tree: a crown, branch arms, a face in the trunk, root legs -->
       <g fill="currentColor">
@@ -109,12 +105,7 @@
       <circle cx="19.2" cy="6" r="2.6" fill="currentColor" />
       <circle cx="19.8" cy="5.4" r=".8" class="cut" />
     {:else if group === 'cove'}
-      <!-- Sailing ship -->
-      <path d="M11.2 2.5v13" fill="none" stroke="currentColor" stroke-width="1.6" />
-      <path
-        d="M12.6 3.2 19.5 13.5h-6.9zM9.9 5.8 4.8 13.5h5.1zM2.5 15.5h19l-3.2 5.2H5.7z"
-        fill="currentColor"
-      />
+      {@render ship()}
     {:else if group === 'factory'}
       <!-- Workshop with a smoking chimney -->
       <path d="M2 22V12.5l5 3v-3l5 3v-3l5 3V5h4v17z" fill="currentColor" />

@@ -1,5 +1,29 @@
 [
   {
+    "version": "3.1.0",
+    "date": "2026-11-24",
+    "changes": [
+      {
+        "kind": "major",
+        "title": "Town editor!",
+        "text": "New Towns tab: every town of the save, with filters by player, faction and name, and a summary of the town hall, fort, mage guild, dwellings, Grail, garrison and heroes in town. The town window changes the buildings (laid out as in the game's town hall; what a building needs is built by itself, and the editor asks when other buildings change), the garrison and the mage guild spells, by level and school as in the hero's spell book. Neutral towns are not edited. The changes show up in the Changed block."
+      },
+      {
+        "kind": "major",
+        "title": "Presets!",
+        "text": "As in version 2.05, only for every editor: the hero window, the town window and the Resources tab got the “Save preset…” and “Load preset…” buttons. A preset is kept in the browser under its own name; checkboxes pick what to save and what to load: each hero attribute on its own and the other tabs as a whole (the backpack and the spells can be added or replaced), a town's buildings, garrison and mage guild, each resource. The hint of a checkbox shows what will be saved or what loading changes. What the save's edition lacks is skipped; a town of another faction gets only the buildings every town has. Loading changes only the window; the save gets the changes after “Apply”."
+      },
+      {
+        "kind": "changed",
+        "text": "The Heroes, Resources and Towns tabs stay inactive until a save is open: a hint says what to do first."
+      },
+      {
+        "kind": "changed",
+        "text": "On the first visit the interface language follows the browser. A language you pick yourself is still remembered."
+      }
+    ]
+  },
+  {
     "version": "3.0.1",
     "date": "2026-11-22",
     "changes": [

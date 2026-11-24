@@ -20,6 +20,21 @@
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="./favicon-32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <!-- Heading fonts start loading with the page, not after the app script (see fonts.css). -->
+    <link
+      rel="preload"
+      href="/node_modules/@fontsource/cinzel/files/cinzel-latin-500-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/node_modules/@fontsource/forum/files/forum-cyrillic-400-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Heroes III SaveEditor" />
@@ -115,7 +130,21 @@
         }
       }
     </script>
+    <style>
+      /* Until the app styles load: the page colour of each theme (--color-page in tokens.css)
+         and no unstyled static description, which the app replaces anyway. */
+      html[data-theme='dark'] {
+        background: #24140c;
+      }
+      html[data-theme='light'] {
+        background: #f1e8d4;
+      }
+      html.js #app > main {
+        visibility: hidden;
+      }
+    </style>
     <script>
+      document.documentElement.classList.add('js');
       // Paint the right theme before the app loads, so a dark system never flashes light.
       try {
         var stored = JSON.parse(localStorage.getItem('homm3se.preferences') || 'null');

@@ -24,9 +24,34 @@ export interface HeroLayout extends CommonHeroFields {
   readonly combinationCounters: number | null;
   /** Record size from one hero to the next when the biography is empty; null if not measured. */
   readonly recordSize: number | null;
+  /**
+   * u16 X, u16 Y, u8 Z of the hero on the map, then two bytes on: 1 when the hero stands on the
+   * map (a visitor in a town), 0 when in a town garrison or inactive.
+   */
+  readonly coordinates: number;
+}
+
+/**
+ * Town record shape. Every layout keeps the fields up to the name at the same offsets
+ * (COMMON_TOWN_FIELDS); the name itself and the record size differ.
+ */
+export interface TownLayout {
+  /**
+   * How the name is stored at COMMON_TOWN_FIELDS.name: `counted` is a u16 length and that many
+   * bytes; a number is a field of that many bytes, the name NUL-terminated in it.
+   */
+  readonly name: 'counted' | number;
+  /** Record size without the name text for a counted name, the whole record otherwise. */
+  readonly recordSize: number;
+  /**
+   * The town fields of this layout were checked on few saves: the editor warns before
+   * changing towns.
+   */
+  readonly fullyStudied: boolean;
 }
 
 export interface SaveLayout {
   readonly id: LayoutId;
   readonly hero: HeroLayout;
+  readonly town: TownLayout;
 }

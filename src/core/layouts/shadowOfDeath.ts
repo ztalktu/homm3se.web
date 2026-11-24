@@ -16,4 +16,5 @@ export const SHADOW_OF_DEATH_LAYOUT: SaveLayout = {
     combinationCounters: 877,
     recordSize: 1094,
   },
+  town: { name: 'counted', recordSize: 382, fullyStudied: true },
 };

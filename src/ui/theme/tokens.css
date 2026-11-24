@@ -136,6 +136,9 @@
   --color-popover-text: #3a2210;
   --color-tooltip: #1a0e08;
   --color-tooltip-text: #ecdcb0;
+  --color-tooltip-added: #8fb2f0;
+  --color-tooltip-removed: #f0a35a;
+  --color-tooltip-changed: #9fd07a;
 
   --color-success: #3f6b2a;
   --color-success-text: #e9f2d8;
@@ -210,6 +213,9 @@
   --color-popover-text: #2e2617;
   --color-tooltip: #1f2d4a;
   --color-tooltip-text: #fbf6ea;
+  --color-tooltip-added: #9cc2ff;
+  --color-tooltip-removed: #ffb46b;
+  --color-tooltip-changed: #a9dc85;
 
   --color-success: #3f6b2a;
   --color-success-text: #f3f8ea;

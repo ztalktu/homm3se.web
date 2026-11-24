@@ -10,22 +10,24 @@
     searchHero,
     session,
   } from '../../app/session.svelte';
-  import { creatureGroup } from '../../data/creatures';
   import { classTown } from '../../data/heroClasses';
   import { PLAYER_COLORS } from '../../data/players';
   import type { HeroOwner } from '../../core/hero';
-  import { creatureName, heroClassName, playerLabel, townName } from '../../i18n/game.svelte';
+  import { heroClassName, playerLabel, townName } from '../../i18n/game.svelte';
   import { t } from '../../i18n/index.svelte';
   import Button from '../components/Button.svelte';
   import ChoicePicker from '../components/ChoicePicker.svelte';
   import Combobox from '../components/Combobox.svelte';
-  import Fieldset from '../components/Fieldset.svelte';
   import PlayerFlag from '../components/PlayerFlag.svelte';
   import SearchForm from '../components/SearchForm.svelte';
   import type { ComboboxItem } from '../components/combobox';
   import { filePercent, formatNumber } from '../format';
   import HeroDialog from './HeroDialog.svelte';
   import TownIcon from './hero/TownIcon.svelte';
+  import EditorLayout from './shared/EditorLayout.svelte';
+  import PickerRows from './shared/PickerRows.svelte';
+  import SummaryPanel from './shared/SummaryPanel.svelte';
+  import TroopList from './shared/TroopList.svelte';
 
   let dialogOpen = $state(false);
 
@@ -64,224 +66,105 @@
   );
 </script>
 
-{#if !session.save}
-  <p class="muted">{t('hero.noSave')}</p>
-{:else}
-  <div class="layout">
-    <SearchForm
-      legend={t('hero.searchTitle')}
-      findLabel={t('hero.find')}
-      {percent}
-      positionText={t('hero.position', { percent: percent ?? 0 })}
-      onfind={searchHero}
-    >
-      {#if ownersInSave.length > 1 || townsInSave.length > 1}
-        <div class="filters">
-          {#if ownersInSave.length > 1}
-            <ChoicePicker
-              label={t('hero.playerFilter')}
-              options={ownersInSave}
-              selected={session.ownerFilter}
-              optionLabel={playerLabel}
-              onpick={filterHeroesByOwner}
-              round
-              inlineLabel
-            >
-              {#snippet icon(color)}<PlayerFlag {color} size={14} />{/snippet}
-            </ChoicePicker>
-          {/if}
-          {#if townsInSave.length > 1}
-            <ChoicePicker
-              label={t('hero.townFilter')}
-              options={townsInSave}
-              selected={session.townFilter}
-              optionLabel={townName}
-              onpick={filterHeroesByTown}
-              inlineLabel
-            >
-              {#snippet icon(town)}<TownIcon group={town} size={18} />{/snippet}
-            </ChoicePicker>
-          {/if}
-        </div>
-      {/if}
-      <!-- Picking a name from the list searches at once; Enter on typed text submits the form. -->
-      <Combobox
-        label={t('hero.name')}
-        items={nameItems}
-        value={selectedName}
-        bind:text={session.heroName}
-        allowCustom
-        onpick={searchHero}
-        hint={t('hero.nameHint')}
-        hintDelayMs={2000}
-      >
-        {#snippet optionIcon(item)}
-          <TownIcon group={session.heroNamesInSave?.get(item.value)?.town} size={18} />
-        {/snippet}
-      </Combobox>
-    </SearchForm>
-
-    {#if hero}
-      <Fieldset legend={t('hero.summaryTitle')}>
-        <div class="summary">
-          <dl>
-            <dt>{t('hero.player')}</dt>
-            <dd class="player" class:muted={!owner}>
-              <PlayerFlag color={owner} />
-              {playerLabel(owner)}
-            </dd>
-            <dt>{t('hero.class')}</dt>
-            <dd class="hero-class">
-              {#if heroTown}<TownIcon group={heroTown} size={18} />{/if}
-              {heroClassName(hero.classId)}
-              {#if heroTown}<span class="muted">· {townName(heroTown)}</span>{/if}
-            </dd>
-            <dt>{t('hero.level')}</dt>
-            <dd>{hero.level}</dd>
-            <dt>{t('hero.experience')}</dt>
-            <dd>{formatNumber(hero.experience)}</dd>
-            <dt>{t('hero.attack')}</dt>
-            <dd>{hero.attack}</dd>
-            <dt>{t('hero.defense')}</dt>
-            <dd>{hero.defense}</dd>
-            <dt>{t('hero.spellPower')}</dt>
-            <dd>{hero.spellPower}</dd>
-            <dt>{t('hero.knowledge')}</dt>
-            <dd>{hero.knowledge}</dd>
-          </dl>
-          <div>
-            <h3>{t('hero.troops')}</h3>
-            <ol class="troops">
-              {#each hero.troops as troop, slot (slot)}
-                <li>
-                  {#if troop}
-                    <span class="troop">
-                      <TownIcon
-                        group={creatureGroup(troop.creatureId, session.edition)}
-                        size={18}
-                      />
-                      {creatureName(troop.creatureId, session.edition)}
-                    </span>
-                    <span class="count">{formatNumber(troop.count)}</span>
-                  {:else}
-                    <span class="muted">{t('hero.emptySlot')}</span>
-                  {/if}
-                </li>
-              {/each}
-            </ol>
-          </div>
-        </div>
-        <div class="actions">
-          <Button
-            variant="primary"
-            icon="hero"
-            hint={t('hero.parametersHint')}
-            onclick={() => (dialogOpen = true)}
+<EditorLayout>
+  <SearchForm
+    legend={t('hero.searchTitle')}
+    findLabel={t('hero.find')}
+    {percent}
+    positionText={t('hero.position', { percent: percent ?? 0 })}
+    onfind={searchHero}
+  >
+    {#if ownersInSave.length > 1 || townsInSave.length > 1}
+      <PickerRows>
+        {#if ownersInSave.length > 1}
+          <ChoicePicker
+            label={t('hero.playerFilter')}
+            options={ownersInSave}
+            selected={session.ownerFilter}
+            optionLabel={playerLabel}
+            onpick={filterHeroesByOwner}
+            round
+            inlineLabel
           >
-            {t('hero.parameters')}
-          </Button>
-        </div>
-      </Fieldset>
+            {#snippet icon(color)}<PlayerFlag {color} size={14} />{/snippet}
+          </ChoicePicker>
+        {/if}
+        {#if townsInSave.length > 1}
+          <ChoicePicker
+            label={t('hero.townFilter')}
+            options={townsInSave}
+            selected={session.townFilter}
+            optionLabel={townName}
+            onpick={filterHeroesByTown}
+            inlineLabel
+          >
+            {#snippet icon(town)}<TownIcon group={town} size={18} />{/snippet}
+          </ChoicePicker>
+        {/if}
+      </PickerRows>
     {/if}
-  </div>
+    <!-- Picking a name from the list searches at once; Enter on typed text submits the form. -->
+    <Combobox
+      label={t('hero.name')}
+      items={nameItems}
+      value={selectedName}
+      bind:text={session.heroName}
+      allowCustom
+      onpick={searchHero}
+      hint={t('hero.nameHint')}
+      hintDelayMs={2000}
+    >
+      {#snippet optionIcon(item)}
+        <TownIcon group={session.heroNamesInSave?.get(item.value)?.town} size={18} />
+      {/snippet}
+    </Combobox>
+  </SearchForm>
 
-  {#if hero && dialogOpen}
-    <HeroDialog bind:open={dialogOpen} original={hero} />
+  {#if hero}
+    <SummaryPanel legend={t('hero.summaryTitle')}>
+      <dl>
+        <dt>{t('hero.player')}</dt>
+        <dd class="with-icon" class:muted={!owner}>
+          <PlayerFlag color={owner} />
+          {playerLabel(owner)}
+        </dd>
+        <dt>{t('hero.class')}</dt>
+        <dd class="with-icon">
+          {#if heroTown}<TownIcon group={heroTown} size={18} />{/if}
+          {heroClassName(hero.classId)}
+          {#if heroTown}<span class="muted">· {townName(heroTown)}</span>{/if}
+        </dd>
+        <dt>{t('hero.level')}</dt>
+        <dd>{hero.level}</dd>
+        <dt>{t('hero.experience')}</dt>
+        <dd>{formatNumber(hero.experience)}</dd>
+        <dt>{t('hero.attack')}</dt>
+        <dd>{hero.attack}</dd>
+        <dt>{t('hero.defense')}</dt>
+        <dd>{hero.defense}</dd>
+        <dt>{t('hero.spellPower')}</dt>
+        <dd>{hero.spellPower}</dd>
+        <dt>{t('hero.knowledge')}</dt>
+        <dd>{hero.knowledge}</dd>
+      </dl>
+      <div>
+        <h3>{t('hero.troops')}</h3>
+        <TroopList troops={hero.troops} />
+      </div>
+      {#snippet actions()}
+        <Button
+          variant="primary"
+          icon="hero"
+          hint={t('hero.parametersHint')}
+          onclick={() => (dialogOpen = true)}
+        >
+          {t('hero.parameters')}
+        </Button>
+      {/snippet}
+    </SummaryPanel>
   {/if}
+</EditorLayout>
+
+{#if hero && dialogOpen}
+  <HeroDialog bind:open={dialogOpen} original={hero} />
 {/if}
-
-<style>
-  .layout {
-    display: grid;
-    grid-template-columns: minmax(260px, max-content) minmax(0, 1fr);
-    gap: var(--space-4);
-    align-items: start;
-  }
-
-  @media (max-width: 900px) {
-    .layout {
-      grid-template-columns: minmax(0, 1fr);
-    }
-  }
-
-  .filters {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    align-items: center;
-    gap: var(--space-1);
-  }
-
-  .actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: var(--space-2);
-    margin-top: var(--space-4);
-  }
-
-  .summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-    gap: var(--space-4);
-  }
-
-  dl {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: var(--space-1) var(--space-4);
-    margin: var(--space-2) 0 0;
-  }
-
-  dt {
-    color: var(--color-label);
-    font-size: 13px;
-  }
-
-  dd {
-    margin: 0;
-    font-variant-numeric: tabular-nums;
-  }
-
-  h3 {
-    font-size: 14px;
-    margin: var(--space-2) 0 var(--space-2);
-  }
-
-  .troops {
-    margin: 0;
-    padding-left: var(--space-5);
-    display: grid;
-    gap: var(--space-1);
-  }
-
-  .troops li {
-    padding-left: var(--space-1);
-  }
-
-  .troops li span:first-child {
-    margin-right: var(--space-2);
-  }
-
-  .troop {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    vertical-align: middle;
-  }
-
-  .count {
-    color: var(--color-label);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .muted {
-    color: var(--color-text-muted);
-  }
-
-  .player,
-  .hero-class {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-</style>

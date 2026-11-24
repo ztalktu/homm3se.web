@@ -55,6 +55,47 @@ export const COMMON_HERO_FIELDS = {
   /** 64 backpack slots of 8 bytes, the artifact id is the first u32 */
   backpackSlotSize: 8,
   backpackSlots: 64,
+  /** u16 X, u16 Y, u8 Z, then the "on the map" flag two bytes on (Restoration of Erathia: -189) */
+  coordinates: -195,
+} as const;
+
+/**
+ * Town fields relative to the first byte of the record, the same in every layout, and the
+ * fields after the name, relative to the end of the name field.
+ */
+export const COMMON_TOWN_FIELDS = {
+  /** u8, the town's index in the array: 0, 1, 2… */
+  number: 0x08,
+  /** u8, player color 0–7, 0xFF for a neutral town */
+  owner: 0x09,
+  /** u8, faction in TOWNS order */
+  faction: 0x0c,
+  /** u8 each */
+  x: 0x0d,
+  y: 0x0e,
+  z: 0x0f,
+  /** 7 × i32 creature id, EMPTY_SLOT for an empty slot */
+  garrisonTypes: 0x12,
+  /** 7 × i32 creature count, 0 in an empty slot */
+  garrisonCounts: 0x2e,
+  garrisonSlots: 7,
+  /** The name field, see TownLayout.name. */
+  name: 0x4e,
+} as const;
+
+export const TOWN_FIELDS_AFTER_NAME = {
+  /** 5 × u8: spell slots of the mage guild levels 1–5, 0 for a level not built */
+  guildSlots: 0x54,
+  /** u64: built buildings; an upgrade clears the bit of what it replaces */
+  built: 0x59,
+  /** u64: every built building, the replaced ones included */
+  builtAll: 0x61,
+  /** u64: buildings the map allows */
+  allowed: 0x69,
+  /** 5 × 6 × i32: guild spells by level; slots past the level's count hold leftovers */
+  guildSpells: 0x71,
+  guildLevels: 5,
+  guildSlotsPerLevel: 6,
 } as const;
 
 /** The spell flags the hero search checks to tell a real hero from a random name match. */
@@ -82,6 +123,8 @@ export type OtherResource = Exclude<Resource, 'gold'>;
 export const OTHER_RESOURCES = RESOURCES.filter(
   (resource): resource is OtherResource => resource !== 'gold',
 );
+/** Gold first: it is the resource players look for. The order of the resource lists. */
+export const RESOURCES_GOLD_FIRST: readonly Resource[] = ['gold', ...OTHER_RESOURCES];
 
 /** Values above this are not real resources, so the search skips such hits. */
 export const MAX_RESOURCE_AMOUNT = 999_999_999;

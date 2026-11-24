@@ -14,6 +14,7 @@
   import {
     MAX_RESOURCE_AMOUNT,
     OTHER_RESOURCES,
+    RESOURCES_GOLD_FIRST,
     type OtherResource,
     type Resource,
   } from '../../core/layouts';
@@ -27,10 +28,9 @@
   import PlayerFlag from '../components/PlayerFlag.svelte';
   import ResourceIcon from '../components/ResourceIcon.svelte';
   import SearchForm from '../components/SearchForm.svelte';
+  import PresetButtons from './presets/PresetButtons.svelte';
+  import ResourcePresetDialog from './presets/ResourcePresetDialog.svelte';
   import { filePercent, formatDelta, formatNumber } from '../format';
-
-  /** Gold first: it is the resource players look for, as in the search above. */
-  const TABLE_RESOURCES: Resource[] = ['gold', ...OTHER_RESOURCES];
 
   const resourceLabel = (resource: Resource): string => t(`resource.${resource}` as MessageKey);
   const alsoHint = (resource: OtherResource): string =>
@@ -55,6 +55,7 @@
   // Not a writable $derived: that would not be deeply reactive, and the fields bind into it.
   // eslint-disable-next-line svelte/prefer-writable-derived
   let draft: ResourceAmounts | null = $state(null);
+  let presetWindow: 'save' | 'load' | null = $state(null);
 
   // Every new hit (or a write) starts the "new values" column from what is in the save.
   $effect(() => {
@@ -68,138 +69,149 @@
   );
 </script>
 
-{#if !session.save}
-  <p class="muted">{t('resources.noSave')}</p>
-{:else}
-  <div class="layout">
-    <SearchForm
-      legend={t('resources.searchTitle')}
-      findLabel={t('resources.find')}
-      {percent}
-      positionText={t('resources.position', { percent: percent ?? 0 })}
-      onfind={searchResources}
-      disabled={!byAmount}
-    >
-      {#if !byAmountOnly}
-        <ChoicePicker
-          label={t('hero.playerFilter')}
-          options={players}
-          selected={ownerColor}
-          optionLabel={playerLabel}
-          onpick={selectTreasuryByColor}
-          disabled={byAmount}
-          round
-        >
-          {#snippet icon(color)}<PlayerFlag {color} size={14} />{/snippet}
-        </ChoicePicker>
-      {/if}
-      <Checkbox
-        label={t('resources.byAmount')}
-        hint={byAmountOnly ? t('resources.byAmountOnlyHint') : t('resources.byAmountHint')}
-        bind:checked={session.resourceSearchByAmount}
-        disabled={byAmountOnly}
+<div class="layout">
+  <SearchForm
+    legend={t('resources.searchTitle')}
+    findLabel={t('resources.find')}
+    {percent}
+    positionText={t('resources.position', { percent: percent ?? 0 })}
+    onfind={searchResources}
+    disabled={!byAmount}
+  >
+    {#if !byAmountOnly}
+      <ChoicePicker
+        label={t('hero.playerFilter')}
+        options={players}
+        selected={ownerColor}
+        optionLabel={playerLabel}
+        onpick={selectTreasuryByColor}
+        disabled={byAmount}
+        round
+      >
+        {#snippet icon(color)}<PlayerFlag {color} size={14} />{/snippet}
+      </ChoicePicker>
+    {/if}
+    <Checkbox
+      label={t('resources.byAmount')}
+      hint={byAmountOnly ? t('resources.byAmountOnlyHint') : t('resources.byAmountHint')}
+      bind:checked={session.resourceSearchByAmount}
+      disabled={byAmountOnly}
+    />
+    <!-- Gold sits in the same two columns as the filters below: name on the left, amount on
+         the right. The field keeps its own hidden label for screen readers. -->
+    <div class="filters">
+      <span class="gold" class:disabled={!byAmount} aria-hidden="true">
+        <ResourceIcon resource="gold" />{t('resources.gold')}
+      </span>
+      <NumberField
+        label={t('resources.gold')}
+        hideLabel
+        hint={t('resources.goldHint')}
+        bind:value={session.goldQuery}
+        max={MAX_RESOURCE_AMOUNT}
+        bigStep={1000}
+        disabled={!byAmount}
       />
-      <!-- Gold sits in the same two columns as the filters below: name on the left, amount on
-           the right. The field keeps its own hidden label for screen readers. -->
-      <div class="filters">
-        <span class="gold" class:disabled={!byAmount} aria-hidden="true">
-          <ResourceIcon resource="gold" />{t('resources.gold')}
-        </span>
-        <NumberField
-          label={t('resources.gold')}
-          hideLabel
-          hint={t('resources.goldHint')}
-          bind:value={session.goldQuery}
-          max={MAX_RESOURCE_AMOUNT}
-          bigStep={1000}
+    </div>
+    <p class="also" class:disabled={!byAmount}>{t('resources.also')}</p>
+    <div class="filters">
+      {#each OTHER_RESOURCES as resource (resource)}
+        <Checkbox
+          label={resourceLabel(resource)}
+          hint={alsoHint(resource)}
+          bind:checked={session.resourceFilters[resource].enabled}
           disabled={!byAmount}
-        />
-      </div>
-      <p class="also" class:disabled={!byAmount}>{t('resources.also')}</p>
-      <div class="filters">
-        {#each OTHER_RESOURCES as resource (resource)}
-          <Checkbox
-            label={resourceLabel(resource)}
-            hint={alsoHint(resource)}
-            bind:checked={session.resourceFilters[resource].enabled}
-            disabled={!byAmount}
-          >
-            {#snippet icon()}<ResourceIcon {resource} />{/snippet}
-          </Checkbox>
-          <div class="amount">
-            <NumberField
-              label={t('resources.filterAmount', { resource: resourceLabel(resource) })}
-              hideLabel
-              bind:value={session.resourceFilters[resource].amount}
-              max={MAX_RESOURCE_AMOUNT}
-              disabled={!byAmount || !session.resourceFilters[resource].enabled}
-            />
-            {#if byAmount && !session.resourceFilters[resource].enabled}
-              <!-- A disabled input gets no clicks, so this cover takes them. Keyboards have the
-                   checkbox for the same thing. -->
-              <button
-                type="button"
-                class="switch-on"
-                tabindex="-1"
-                aria-label={alsoHint(resource)}
-                onclick={(event) => switchFilterOn(resource, event.currentTarget)}
-              ></button>
+        >
+          {#snippet icon()}<ResourceIcon {resource} />{/snippet}
+        </Checkbox>
+        <div class="amount">
+          <NumberField
+            label={t('resources.filterAmount', { resource: resourceLabel(resource) })}
+            hideLabel
+            bind:value={session.resourceFilters[resource].amount}
+            max={MAX_RESOURCE_AMOUNT}
+            disabled={!byAmount || !session.resourceFilters[resource].enabled}
+          />
+          {#if byAmount && !session.resourceFilters[resource].enabled}
+            <!-- A disabled input gets no clicks, so this cover takes them. Keyboards have the
+                 checkbox for the same thing. -->
+            <button
+              type="button"
+              class="switch-on"
+              tabindex="-1"
+              aria-label={alsoHint(resource)}
+              onclick={(event) => switchFilterOn(resource, event.currentTarget)}
+            ></button>
+          {/if}
+        </div>
+      {/each}
+    </div>
+  </SearchForm>
+
+  {#if found && draft}
+    <Fieldset legend={t('resources.foundTitle')}>
+      <div class="table">
+        <!-- Whose treasury this is, over the resource names, when it is a player's one. -->
+        <span class="head player">
+          {#if ownerColor}<PlayerFlag color={ownerColor} />{playerLabel(ownerColor)}{/if}
+        </span>
+        <span class="head">{t('resources.found')}</span>
+        <span class="head">{t('resources.new')}</span>
+        {#each RESOURCES_GOLD_FIRST as resource (resource)}
+          <span class="name"><ResourceIcon {resource} />{resourceLabel(resource)}</span>
+          {@const before = original?.[resource] ?? found[resource]}
+          {@const after = found[resource]}
+          <!-- Once changes are applied: what the opened file had » what it has now (difference). -->
+          <span class="value">
+            {#if before !== after}
+              <span class="number">{formatNumber(before)}</span>
+              <span class="arrow" aria-hidden="true">»</span><span class="visually-hidden">→</span>
+              <span class="number">{formatNumber(after)}</span>
+              <span class:up={after > before} class:down={after < before}
+                >({formatDelta(after - before)})</span
+              >
+            {:else}
+              {formatNumber(after)}
             {/if}
-          </div>
+          </span>
+          <NumberField
+            label={t('resources.newAmount', { resource: resourceLabel(resource) })}
+            hideLabel
+            bind:value={draft[resource]}
+            max={MAX_RESOURCE_AMOUNT}
+            bigStep={resource === 'gold' ? 1000 : 10}
+          />
         {/each}
       </div>
-    </SearchForm>
-
-    {#if found && draft}
-      <Fieldset legend={t('resources.foundTitle')}>
-        <div class="table">
-          <!-- Whose treasury this is, over the resource names, when it is a player's one. -->
-          <span class="head player">
-            {#if ownerColor}<PlayerFlag color={ownerColor} />{playerLabel(ownerColor)}{/if}
-          </span>
-          <span class="head">{t('resources.found')}</span>
-          <span class="head">{t('resources.new')}</span>
-          {#each TABLE_RESOURCES as resource (resource)}
-            <span class="name"><ResourceIcon {resource} />{resourceLabel(resource)}</span>
-            {@const before = original?.[resource] ?? found[resource]}
-            {@const after = found[resource]}
-            <!-- Once changes are applied: what the opened file had » what it has now (difference). -->
-            <span class="value">
-              {#if before !== after}
-                <span class="number">{formatNumber(before)}</span>
-                <span class="arrow" aria-hidden="true">»</span><span class="visually-hidden">→</span
-                >
-                <span class="number">{formatNumber(after)}</span>
-                <span class:up={after > before} class:down={after < before}
-                  >({formatDelta(after - before)})</span
-                >
-              {:else}
-                {formatNumber(after)}
-              {/if}
-            </span>
-            <NumberField
-              label={t('resources.newAmount', { resource: resourceLabel(resource) })}
-              hideLabel
-              bind:value={draft[resource]}
-              max={MAX_RESOURCE_AMOUNT}
-              bigStep={resource === 'gold' ? 1000 : 10}
-            />
-          {/each}
+      <div class="actions">
+        <div class="presets">
+          <PresetButtons
+            kind="resources"
+            onsave={() => (presetWindow = 'save')}
+            onload={() => (presetWindow = 'load')}
+          />
         </div>
-        <div class="actions">
-          <Button
-            variant="primary"
-            icon="chest"
-            hint={t('resources.applyHint')}
-            onclick={() => draft && applyResources($state.snapshot(draft))}
-          >
-            {t('resources.apply')}
-          </Button>
-        </div>
-      </Fieldset>
+        <Button
+          variant="primary"
+          icon="chest"
+          hint={t('resources.applyHint')}
+          onclick={() => draft && applyResources($state.snapshot(draft))}
+        >
+          {t('resources.apply')}
+        </Button>
+      </div>
+    </Fieldset>
+    {#if presetWindow}
+      <ResourcePresetDialog
+        mode={presetWindow}
+        amounts={$state.snapshot(draft)}
+        owner={ownerColor}
+        onload={(amounts) => draft && Object.assign(draft, amounts)}
+        onclose={() => (presetWindow = null)}
+      />
     {/if}
-  </div>
-{/if}
+  {/if}
+</div>
 
 <style>
   .layout {
@@ -269,6 +281,13 @@
     margin-top: var(--space-4);
   }
 
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-right: auto;
+  }
+
   .table {
     display: grid;
     grid-template-columns: max-content minmax(90px, 1fr) minmax(120px, 1.2fr);
@@ -301,9 +320,5 @@
 
   .down {
     color: var(--color-decrease);
-  }
-
-  .muted {
-    color: var(--color-text-muted);
   }
 </style>

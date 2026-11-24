@@ -1,7 +1,5 @@
 import { mount } from 'svelte';
-import '@fontsource/cinzel/500.css';
-// Cinzel has no Cyrillic; Forum covers the Russian headings in a similar classical style.
-import '@fontsource/forum/cyrillic-400.css';
+import './ui/theme/fonts.css';
 import './ui/theme/tokens.css';
 import './ui/theme/base.css';
 import App from './App.svelte';

@@ -472,7 +472,7 @@
     {/each}
   {/if}
   {#snippet footer()}
-    <Button onclick={() => (questionOpen = false)}>{t('heroDialog.cancel')}</Button>
+    <Button onclick={() => (questionOpen = false)}>{t('common.cancel')}</Button>
     <Button variant={question?.danger ? 'danger' : 'primary'} onclick={answer}>
       {question?.okLabel ?? ''}
     </Button>

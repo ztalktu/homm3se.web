@@ -175,7 +175,7 @@ describe('hero search', () => {
     expect(findHero(buffer, 'Джелу')).toEqual({ position: 1000, codePage: 'windows-1251' });
   });
 
-  it('lists the names that have hero records with their owners and town, in one pass', () => {
+  it('lists the names that have hero records with their owners, town and records, in one pass', () => {
     const bytes = buildSave(8000, [
       GELU,
       { ...GELU, position: 3000, name: [...(encodeText('Джелу', 'windows-1251') ?? [])] },
@@ -188,8 +188,8 @@ describe('hero search', () => {
     bytes[200 + 73] = 7;
     const names = findHeroNames(new SaveBuffer(bytes), ['Gelu', 'Gel', 'Джелу', 'Adela', 'Ash']);
     expect(Object.fromEntries(names)).toEqual({
-      Gelu: { owners: ['blue', null], town: 'rampart' },
-      Джелу: { owners: [null], town: 'rampart' },
+      Gelu: { owners: ['blue', null], town: 'rampart', positions: [1000, 5000] },
+      Джелу: { owners: [null], town: 'rampart', positions: [3000] },
     });
   });
 });
@@ -878,16 +878,38 @@ describe('layouts', () => {
     const roe = LAYOUTS.restorationOfErathia.hero;
     const hd = LAYOUTS.hdEdition.hero;
     expect(hd).toEqual(roe);
-    expect(LAYOUTS.armageddonsBlade.hero).toEqual({ ...roe, recordSize: null });
-    expect(LAYOUTS.armageddonsBladeGog.hero).toEqual({ ...roe, recordSize: null, backpack: 365 });
+    // Armageddon's Blade keeps the hero's coordinates where The Shadow of Death does.
+    expect(LAYOUTS.armageddonsBlade.hero).toEqual({ ...roe, recordSize: null, coordinates: -195 });
+    expect(LAYOUTS.armageddonsBladeGog.hero).toEqual({
+      ...roe,
+      recordSize: null,
+      backpack: 365,
+      coordinates: -195,
+    });
     const differences = Object.keys(SOD).filter(
       (field) => SOD[field as keyof typeof SOD] !== roe[field as keyof typeof roe],
     );
     expect(differences.sort()).toEqual(
-      ['backpack', 'combinationCounters', 'equipmentSlots', 'recordSize'].sort(),
+      ['backpack', 'combinationCounters', 'coordinates', 'equipmentSlots', 'recordSize'].sort(),
     );
     expect(roe.backpack).toBe(357);
     expect(SOD.backpack).toBe(365);
+    expect(roe.coordinates).toBe(-189);
+    expect(SOD.coordinates).toBe(-195);
+  });
+
+  it('warn before changing towns only in Restoration of Erathia saves', () => {
+    const studied = Object.values(LAYOUTS)
+      .filter((layout) => layout.town.fullyStudied)
+      .map((layout) => layout.id);
+    expect(studied.sort()).toEqual([
+      'armageddonsBlade',
+      'armageddonsBladeGog',
+      'hdEdition',
+      'hornOfTheAbyss',
+      'hornOfTheAbyssEarly',
+      'shadowOfDeath',
+    ]);
   });
 });
 

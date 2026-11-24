@@ -10,7 +10,8 @@
   interface Props {
     open: boolean;
     title: string;
-    size?: 'small' | 'medium' | 'large' | undefined;
+    /** `wide` is for content laid out in many columns, such as the town hall. */
+    size?: 'small' | 'medium' | 'large' | 'wide' | undefined;
     /** False: no close button, Escape and backdrop clicks do nothing; only an action closes it. */
     dismissible?: boolean | undefined;
     /** The scrolling content area, for callers that need to scroll it themselves. */
@@ -145,9 +146,18 @@
     width: min(640px, calc(100vw - 2 * var(--space-4)));
   }
 
-  .large {
+  .large,
+  .wide {
     width: min(900px, calc(100vw - 2 * var(--space-4)));
     max-height: min(94vh, 960px);
+  }
+
+  /* The town hall needs 1140px to keep its titles and names on one line (a pair of long names in a
+     row may still take two); 5% more for other systems and fonts, and still narrower than the
+     panel of the main page. */
+  .wide {
+    width: min(1200px, calc(100vw - 2 * var(--space-4)));
+    max-height: min(96vh, 1040px);
   }
 
   dialog::backdrop {

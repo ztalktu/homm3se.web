@@ -20,7 +20,7 @@ function bit(id: number): bigint {
 }
 
 /** Every building the faction has: the hall slots, the Grail and the Village Hall. */
-function knownBuildings(buildings: FactionBuildings): number[] {
+export function knownBuildings(buildings: FactionBuildings): number[] {
   const ids = new Set<number>([BUILDING.villageHall, BUILDING.grail]);
   for (const row of buildings.hall) {
     for (const chain of row) {

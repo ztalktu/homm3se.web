@@ -1,32 +1,48 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { tooltip } from '../actions/tooltip';
+  import { tooltip, tooltipText, type TooltipContent } from '../actions/tooltip';
 
   interface Props {
     label: string;
     checked: boolean;
-    hint?: string | undefined;
+    /** A text, or a list (what a preset holds, say). */
+    hint?: TooltipContent | undefined;
+    /** Wait this long before showing the hint, in place of the usual delay. */
+    hintDelayMs?: number | undefined;
     disabled?: boolean | undefined;
     onchange?: ((checked: boolean) => void) | undefined;
     /** Optional picture between the box and the label. */
     icon?: Snippet | undefined;
   }
 
-  let { label, checked = $bindable(), hint, disabled = false, onchange, icon }: Props = $props();
+  let {
+    label,
+    checked = $bindable(),
+    hint,
+    hintDelayMs,
+    disabled = false,
+    onchange,
+    icon,
+  }: Props = $props();
 
   const hintId = $props.id();
+  const hintText = $derived(tooltipText(hint));
 </script>
 
 <!-- The hint pops up over the whole label; the input points to it for keyboards and readers. -->
-<label class="checkbox" class:disabled use:tooltip={hint}>
+<label
+  class="checkbox"
+  class:disabled
+  use:tooltip={hintDelayMs === undefined ? hint : { text: hint, delayMs: hintDelayMs }}
+>
   <input
     type="checkbox"
     bind:checked
     {disabled}
-    aria-describedby={hint ? hintId : undefined}
+    aria-describedby={hintText ? hintId : undefined}
     onchange={() => onchange?.(checked)}
   />
-  {#if hint}<span id={hintId} class="visually-hidden">{hint}</span>{/if}
+  {#if hintText}<span id={hintId} class="visually-hidden">{hintText}</span>{/if}
   <span class="box" aria-hidden="true"></span>
   {@render icon?.()}
   <span class="text">{label}</span>

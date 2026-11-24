@@ -123,6 +123,8 @@ export type OtherResource = Exclude<Resource, 'gold'>;
 export const OTHER_RESOURCES = RESOURCES.filter(
   (resource): resource is OtherResource => resource !== 'gold',
 );
+/** Gold first: it is the resource players look for. The order of the resource lists. */
+export const RESOURCES_GOLD_FIRST: readonly Resource[] = ['gold', ...OTHER_RESOURCES];
 
 /** Values above this are not real resources, so the search skips such hits. */
 export const MAX_RESOURCE_AMOUNT = 999_999_999;

@@ -11,6 +11,8 @@
   import HeroSkillsTab from './hero/HeroSkillsTab.svelte';
   import HeroSpellsTab from './hero/HeroSpellsTab.svelte';
   import HeroTroopsTab from './hero/HeroTroopsTab.svelte';
+  import HeroPresetDialog from './presets/HeroPresetDialog.svelte';
+  import PresetButtons from './presets/PresetButtons.svelte';
 
   interface Props {
     open: boolean;
@@ -27,6 +29,7 @@
   let hero: Hero = $state(structuredClone($state.snapshot(original)));
   let activeTab: TabId = $state('attributes');
   let problems: string[] = $state([]);
+  let presetWindow: 'save' | 'load' | null = $state(null);
 
   // svelte-ignore state_referenced_locally
   const startedAs = JSON.stringify($state.snapshot(original));
@@ -107,6 +110,13 @@
   unsavedText={t('heroDialog.unsavedText')}
   onapply={apply}
 >
+  {#snippet actions()}
+    <PresetButtons
+      kind="hero"
+      onsave={() => (presetWindow = 'save')}
+      onload={() => (presetWindow = 'load')}
+    />
+  {/snippet}
   {#if activeTab === 'attributes'}
     <HeroAttributesTab bind:hero {nameError} />
   {:else if activeTab === 'troops'}
@@ -121,3 +131,12 @@
     <HeroSpellsTab bind:hero opened={openedSpells} />
   {/if}
 </EditorDialog>
+
+{#if presetWindow}
+  <HeroPresetDialog
+    mode={presetWindow}
+    {hero}
+    onload={(loaded) => (hero = loaded)}
+    onclose={() => (presetWindow = null)}
+  />
+{/if}

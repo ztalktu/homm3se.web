@@ -21,14 +21,20 @@ export function formatSize(bytes: number): string {
   return `${size.toLocaleString(preferences.locale, { maximumFractionDigits: digits })} ${units[unit]}`;
 }
 
+const pad = (value: number): string => String(value).padStart(2, '0');
+
+/** "2026.11.14". */
+export function formatDate(timestamp: number): string {
+  const date = new Date(timestamp);
+  return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())}`;
+}
+
 /** "2026.11.14 20:15", or "today 20:15" when it is today. */
 export function formatDateTime(timestamp: number, now = Date.now()): string {
-  const pad = (value: number): string => String(value).padStart(2, '0');
-  const day = (date: Date): string =>
-    `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())}`;
   const date = new Date(timestamp);
   const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
-  return day(date) === day(new Date(now)) ? t('info.today', { time }) : `${day(date)} ${time}`;
+  const day = formatDate(timestamp);
+  return day === formatDate(now) ? t('info.today', { time }) : `${day} ${time}`;
 }
 
 /** Difference with its sign: "+38", "−4" (a real minus, as wide as the plus). */

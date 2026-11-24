@@ -27,6 +27,7 @@
   import Button from '../components/Button.svelte';
   import ChoicePicker from '../components/ChoicePicker.svelte';
   import Fieldset from '../components/Fieldset.svelte';
+  import OptionList from '../components/OptionList.svelte';
   import PlayerFlag from '../components/PlayerFlag.svelte';
   import TextField from '../components/TextField.svelte';
   import TownIcon from './hero/TownIcon.svelte';
@@ -123,22 +124,24 @@
           placeholder={t('town.namePlaceholder')}
         />
         {#if list.length > 0}
-          <ul class="towns" role="listbox" aria-label={t('town.list')}>
-            {#each list as item (item.position)}
+          <OptionList
+            items={list}
+            key={(item) => item.position}
+            selected={(item) => item.position === town?.position}
+            label={t('town.list')}
+            onpick={(item) => selectTown(item.position)}
+          >
+            {#snippet row(item)}
               {@const itemFaction = townFaction(item)}
-              <li role="option" aria-selected={item.position === town?.position}>
-                <button type="button" onclick={() => selectTown(item.position)}>
-                  <TownIcon group={itemFaction} size={18} />
-                  <span class="name">
-                    {item.name}
-                    {#if !studied && item.position === town?.position}<NotStudiedMark />{/if}
-                    <small>{itemFaction ? townName(itemFaction) : '?'}</small>
-                  </span>
-                  <PlayerFlag color={item.owner} />
-                </button>
-              </li>
-            {/each}
-          </ul>
+              <TownIcon group={itemFaction} size={18} />
+              <span class="name">
+                {item.name}
+                {#if !studied && item.position === town?.position}<NotStudiedMark />{/if}
+                <small>{itemFaction ? townName(itemFaction) : '?'}</small>
+              </span>
+              <PlayerFlag color={item.owner} />
+            {/snippet}
+          </OptionList>
         {:else}
           <p class="muted">{t('town.nothingShown')}</p>
         {/if}
@@ -244,42 +247,9 @@
     gap: var(--space-3);
   }
 
-  .towns {
-    list-style: none;
-    margin: 0;
-    padding: var(--space-1);
-    max-height: 330px;
-    overflow-y: auto;
-    border: 1px solid var(--color-field-border);
-    border-radius: var(--radius-small);
-    background: var(--color-field);
-    color: var(--color-field-text);
-  }
-
-  .towns button {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: var(--space-2);
-    width: 100%;
-    padding: var(--space-1) var(--space-2);
-    border: 0;
-    border-radius: var(--radius-small);
-    background: none;
-    color: inherit;
-    text-align: left;
-    cursor: pointer;
-  }
-
-  .towns button:hover {
-    background: var(--color-option-hover);
-  }
-
-  .towns [aria-selected='true'] button {
-    background: var(--color-option-selected);
-  }
-
   .name {
+    flex: 1;
+    min-width: 0;
     line-height: 1.25;
   }
 

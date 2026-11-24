@@ -27,6 +27,8 @@
     size?: 'large' | 'wide' | undefined;
     /** The panel of the active tab. */
     children: Snippet;
+    /** Buttons at the start of the footer, before Cancel and Apply (the presets). */
+    actions?: Snippet | undefined;
   }
 
   let {
@@ -41,6 +43,7 @@
     onapply,
     size = 'large',
     children,
+    actions,
   }: Props = $props();
 
   let askToApply = $state(false);
@@ -91,6 +94,9 @@
         </ul>
       </div>
     {/if}
+    {#if actions}
+      <div class="actions">{@render actions()}</div>
+    {/if}
     <Button onclick={() => (open = false)}>{t('common.cancel')}</Button>
     <Button variant="primary" icon="check" onclick={onapply}>{t('editor.apply')}</Button>
   {/snippet}
@@ -131,6 +137,13 @@
     border-radius: var(--radius-small);
     color: var(--color-error-text);
     font-size: 13px;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-right: auto;
   }
 
   .problems ul {

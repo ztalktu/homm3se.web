@@ -9,7 +9,7 @@
     townFaction,
     townsFullyStudied,
   } from '../../app/towns.svelte';
-  import type { FactionBuildings } from '../../data/buildings';
+  import { BUILDING, type FactionBuildings } from '../../data/buildings';
   import type { Town } from '../../core/town';
   import {
     buildingMasks,
@@ -25,6 +25,8 @@
   import Button from '../components/Button.svelte';
   import Dialog from '../components/Dialog.svelte';
   import EditorDialog from '../components/EditorDialog.svelte';
+  import TownPresetDialog, { type TownPresetLoad } from './presets/TownPresetDialog.svelte';
+  import PresetButtons from './presets/PresetButtons.svelte';
   import TroopsEditor from './shared/TroopsEditor.svelte';
   import WarningNote from './shared/WarningNote.svelte';
   import TownBuildingsTab from './town/TownBuildingsTab.svelte';
@@ -57,13 +59,20 @@
   let activeTab: TabId = $state('buildings');
   let problems: string[] = $state([]);
   let confirmOpen = $state(false);
+  let presetWindow: 'save' | 'load' | null = $state(null);
+  /** The Capitol cannot go up while another town of the player has one. */
+  const locked: ReadonlySet<number> = new Set(capitolTown ? [BUILDING.capitol] : []);
 
   const haveSet = $derived(new Set(have));
-  const buildingsChanged = $derived(!sameBuildings(haveSet, opened));
+
   /** Unchanged buildings keep the guild's slots as the file has them. */
-  const capacities = $derived(
-    buildingsChanged ? guildCapacities(haveSet, original.faction) : original.guildSlots,
-  );
+  function capacitiesFor(buildingSet: ReadonlySet<number>): number[] {
+    return sameBuildings(buildingSet, opened)
+      ? original.guildSlots
+      : guildCapacities(buildingSet, original.faction);
+  }
+
+  const capacities = $derived(capacitiesFor(haveSet));
 
   // svelte-ignore state_referenced_locally
   const startedAs = JSON.stringify({ have, garrison: $state.snapshot(garrison), chosen });
@@ -81,12 +90,24 @@
     { id: 'guild' as const, label: t('townDialog.tab.guild') },
   ]);
 
-  /** A building change from the Buildings tab; guild levels follow their buildings. */
-  function changeBuildings(change: BuildingChange): void {
-    have = [...change.buildings].sort((a, b) => a - b);
-    chosen = sameBuildings(change.buildings, opened)
+  /** New buildings (from the Buildings tab or a preset); guild levels follow their buildings. */
+  function changeBuildings(buildingSet: ReadonlySet<number>): void {
+    have = [...buildingSet].sort((a, b) => a - b);
+    chosen = sameBuildings(buildingSet, opened)
       ? openedGuild.map((row) => [...row])
-      : fillGuild(chosen, guildCapacities(change.buildings, original.faction), original.faction);
+      : fillGuild(chosen, guildCapacities(buildingSet, original.faction), original.faction);
+  }
+
+  function loadPreset(load: TownPresetLoad): void {
+    if (load.buildings) {
+      changeBuildings(load.buildings);
+    }
+    if (load.garrison) {
+      garrison = load.garrison;
+    }
+    if (load.guild) {
+      chosen = fillGuild(load.guild, capacitiesFor(new Set(have)), original.faction);
+    }
   }
 
   function findProblems(): string[] {
@@ -133,6 +154,13 @@
   onapply={apply}
   size="wide"
 >
+  {#snippet actions()}
+    <PresetButtons
+      kind="town"
+      onsave={() => (presetWindow = 'save')}
+      onload={() => (presetWindow = 'load')}
+    />
+  {/snippet}
   {#if activeTab === 'buildings'}
     <TownBuildingsTab
       have={haveSet}
@@ -141,7 +169,8 @@
       {faction}
       {buildings}
       {capitolTown}
-      onchange={changeBuildings}
+      {locked}
+      onchange={(change: BuildingChange) => changeBuildings(change.buildings)}
     />
   {:else if activeTab === 'garrison'}
     <TroopsEditor bind:troops={garrison} ownTown={faction} label={t('townDialog.tab.garrison')} />
@@ -156,6 +185,22 @@
     />
   {/if}
 </EditorDialog>
+
+{#if presetWindow}
+  <TownPresetDialog
+    mode={presetWindow}
+    town={original}
+    {faction}
+    {buildings}
+    have={haveSet}
+    {garrison}
+    {chosen}
+    {locked}
+    capacities={capacitiesFor}
+    onload={loadPreset}
+    onclose={() => (presetWindow = null)}
+  />
+{/if}
 
 <Dialog bind:open={confirmOpen} title={t('townDialog.applyTitle')} size="small">
   <WarningNote text={t('town.notStudiedHint')} />

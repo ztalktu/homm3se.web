@@ -36,10 +36,12 @@
     buildings: FactionBuildings;
     /** Name of another town of the player with the Capitol, which blocks this one's. */
     capitolTown: string | undefined;
+    /** Buildings that cannot go up here: the Capitol while another town has it. */
+    locked: ReadonlySet<number>;
     onchange: (change: BuildingChange) => void;
   }
 
-  let { have, opened, town, faction, buildings, capitolTown, onchange }: Props = $props();
+  let { have, opened, town, faction, buildings, capitolTown, locked, onchange }: Props = $props();
 
   /** A change that touches other blocks, waiting for the user's answer. */
   let pending: {
@@ -50,9 +52,6 @@
   } | null = $state(null);
   let pendingOpen = $state(false);
 
-  const locked: ReadonlySet<number> = $derived(
-    new Set<number>(capitolTown ? [BUILDING.capitol] : []),
-  );
   /** A map that allows nothing at all keeps no list: then no building is marked. */
   const mapKnown = $derived(town.allowed !== 0n);
 

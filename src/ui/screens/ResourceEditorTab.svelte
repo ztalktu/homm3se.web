@@ -14,6 +14,7 @@
   import {
     MAX_RESOURCE_AMOUNT,
     OTHER_RESOURCES,
+    RESOURCES_GOLD_FIRST,
     type OtherResource,
     type Resource,
   } from '../../core/layouts';
@@ -27,10 +28,9 @@
   import PlayerFlag from '../components/PlayerFlag.svelte';
   import ResourceIcon from '../components/ResourceIcon.svelte';
   import SearchForm from '../components/SearchForm.svelte';
+  import PresetButtons from './presets/PresetButtons.svelte';
+  import ResourcePresetDialog from './presets/ResourcePresetDialog.svelte';
   import { filePercent, formatDelta, formatNumber } from '../format';
-
-  /** Gold first: it is the resource players look for, as in the search above. */
-  const TABLE_RESOURCES: Resource[] = ['gold', ...OTHER_RESOURCES];
 
   const resourceLabel = (resource: Resource): string => t(`resource.${resource}` as MessageKey);
   const alsoHint = (resource: OtherResource): string =>
@@ -55,6 +55,7 @@
   // Not a writable $derived: that would not be deeply reactive, and the fields bind into it.
   // eslint-disable-next-line svelte/prefer-writable-derived
   let draft: ResourceAmounts | null = $state(null);
+  let presetWindow: 'save' | 'load' | null = $state(null);
 
   // Every new hit (or a write) starts the "new values" column from what is in the save.
   $effect(() => {
@@ -156,7 +157,7 @@
         </span>
         <span class="head">{t('resources.found')}</span>
         <span class="head">{t('resources.new')}</span>
-        {#each TABLE_RESOURCES as resource (resource)}
+        {#each RESOURCES_GOLD_FIRST as resource (resource)}
           <span class="name"><ResourceIcon {resource} />{resourceLabel(resource)}</span>
           {@const before = original?.[resource] ?? found[resource]}
           {@const after = found[resource]}
@@ -183,6 +184,13 @@
         {/each}
       </div>
       <div class="actions">
+        <div class="presets">
+          <PresetButtons
+            kind="resources"
+            onsave={() => (presetWindow = 'save')}
+            onload={() => (presetWindow = 'load')}
+          />
+        </div>
         <Button
           variant="primary"
           icon="chest"
@@ -193,6 +201,15 @@
         </Button>
       </div>
     </Fieldset>
+    {#if presetWindow}
+      <ResourcePresetDialog
+        mode={presetWindow}
+        amounts={$state.snapshot(draft)}
+        owner={ownerColor}
+        onload={(amounts) => draft && Object.assign(draft, amounts)}
+        onclose={() => (presetWindow = null)}
+      />
+    {/if}
   {/if}
 </div>
 
@@ -262,6 +279,13 @@
     justify-content: flex-end;
     gap: var(--space-2);
     margin-top: var(--space-4);
+  }
+
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-right: auto;
   }
 
   .table {
